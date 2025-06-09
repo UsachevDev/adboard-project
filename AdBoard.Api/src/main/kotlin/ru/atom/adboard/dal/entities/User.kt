@@ -1,9 +1,8 @@
 package ru.atom.adboard.dal.entities
 
-import jakarta.annotation.Nullable
 import jakarta.persistence.*
 import lombok.Data
-import lombok.NoArgsConstructor
+import org.hibernate.annotations.CreationTimestamp
 import java.util.*
 
 @Entity
@@ -15,24 +14,25 @@ data class User
     val id: UUID = UUID.randomUUID(),
 
     @Column(name = "email", nullable = false)
-    val email: String,
+    var email: String,
 
     @Column(name = "password", nullable = false)
-    val password: String,
+    var password: String,
 
     @Column(name = "createdAt", nullable = false)
+    @CreationTimestamp
     val createdAt: Date,
 
     @Column(name = "name", nullable = false)
-    val name: String,
+    var name: String,
 
     @Column(name = "phoneNumber")
-    val phoneNumber: String?,
+    var phoneNumber: String?,
 
     @Column(name = "address")
-    val address: String?,
+    var address: String?,
 
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val reviews: MutableList<Review> = mutableListOf(),
 
     @ManyToMany
