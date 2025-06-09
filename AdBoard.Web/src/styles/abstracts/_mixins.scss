@@ -1,0 +1,52 @@
+// Медиа-запросы
+$breakpoint-sm: 768px;
+$breakpoint-md: 992px;
+$breakpoint-lg: 1200px;
+
+@mixin media-sm {
+    @media (min-width: $breakpoint-sm) {
+        @content;
+    }
+}
+
+@mixin media-md {
+    @media (min-width: $breakpoint-md) {
+        @content;
+    }
+}
+
+@mixin media-lg {
+    @media (min-width: $breakpoint-lg) {
+        @content;
+    }
+}
+
+// Миксин для центрирования
+@mixin flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+// Миксин для очистки плавающих элементов
+@mixin clearfix {
+    &::after {
+        content: "";
+        display: table;
+        clear: both;
+    }
+}
+
+// Миксин для обрезки текста
+@mixin truncate-text($lines: 1) {
+    @if $lines == 1 {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    } @else {
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: $lines;
+        -webkit-box-orient: vertical;
+    }
+}
