@@ -15,14 +15,6 @@ const Header: React.FC = () => {
                     <ul className={styles.navList}>
                         <li className={styles.navItem}>
                             <Link
-                                href="/announcements"
-                                className={styles.navLink}
-                            >
-                                Объявления
-                            </Link>
-                        </li>
-                        <li className={styles.navItem}>
-                            <Link
                                 href="/add-announcement"
                                 className={styles.navLink}
                             >

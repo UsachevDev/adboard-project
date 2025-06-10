@@ -1,7 +1,11 @@
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import Header from '@/components/layout/Header/Header';
+import Footer from '@/components/layout/Footer/Footer';
+import Search from '@/components/ui/Search/Search';
 import "./globals.scss";
-import type { Metadata } from "next";
-import Header from "../components/layout/Header/Header";
-import Footer from "../components/layout/Footer/Footer";
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
     title: "AdBoard - Доска объявлений",
@@ -10,17 +14,15 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
     children,
-}: {
+}: Readonly<{
     children: React.ReactNode;
-}) {
+}>) {
     return (
         <html lang="ru">
-            <body>
+            <body className={inter.className}>
                 <Header />
-                <div style={{ flexGrow: 1 }}>
-                    {/* Обертка для основного контента, чтобы Header/Footer были фиксированными */}
-                    {children}
-                </div>
+                <Search />
+                <main style={{ flexGrow: 1 }}>{children}</main>
                 <Footer />
             </body>
         </html>
