@@ -37,7 +37,7 @@
 }
 
 .noImage {
-    @include flex-center; // Пример использования миксина
+    @include flex-center;
     background-color: $color-light-gray;
     color: $color-text-tertiary;
     height: 100%;
