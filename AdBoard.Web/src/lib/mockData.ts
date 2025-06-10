@@ -19,23 +19,86 @@ export const mockUsers: User[] = [
 ];
 
 export const mockCategories: Category[] = [
-    { id: "cat-1-uuid", name: "Электроника" },
-    { id: "cat-2-uuid", name: "Недвижимость" },
-    { id: "cat-3-uuid", name: "Транспорт" },
-    { id: "cat-4-uuid", name: "Одежда" },
+    { id: 'cat1', name: 'Недвижимость' },
+    { id: 'cat2', name: 'Транспорт' },
+    { id: 'cat3', name: 'Работа' },
+    { id: 'cat4', name: 'Электроника' },
+    { id: 'cat5', name: 'Личные вещи' },
+    { id: 'cat6', name: 'Для дома и дачи' },
+    { id: 'cat7', name: 'Услуги' },
+    { id: 'cat8', name: 'Хобби и отдых' },
+    { id: 'cat9', name: 'Животные' },
+    { id: 'cat10', name: 'Для бизнеса' },
 ];
 
 export const mockSubcategories: Subcategory[] = [
-    { id: "subcat-1-uuid", name: "Смартфоны", categoryId: "cat-1-uuid" },
-    { id: "subcat-2-uuid", name: "Ноутбуки", categoryId: "cat-1-uuid" },
-    { id: "subcat-3-uuid", name: "Квартиры", categoryId: "cat-2-uuid" },
-    { id: "subcat-4-uuid", name: "Дома", categoryId: "cat-2-uuid" },
-    {
-        id: "subcat-5-uuid",
-        name: "Легковые автомобили",
-        categoryId: "cat-3-uuid",
-    },
-    { id: "subcat-6-uuid", name: "Мотоциклы", categoryId: "cat-3-uuid" },
+    // Недвижимость
+    { id: 'sub1_1', categoryId: 'cat1', name: 'Квартиры' },
+    { id: 'sub1_2', categoryId: 'cat1', name: 'Комнаты' },
+    { id: 'sub1_3', categoryId: 'cat1', name: 'Дома, дачи, коттеджи' },
+    { id: 'sub1_4', categoryId: 'cat1', name: 'Земельные участки' },
+    { id: 'sub1_5', categoryId: 'cat1', name: 'Гаражи и машиноместа' },
+    { id: 'sub1_6', categoryId: 'cat1', name: 'Коммерческая недвижимость' },
+    { id: 'sub1_7', categoryId: 'cat1', name: 'Недвижимость за рубежом' },
+
+    // Транспорт
+    { id: 'sub2_1', categoryId: 'cat2', name: 'Автомобили' },
+    { id: 'sub2_2', categoryId: 'cat2', name: 'Мотоциклы и мототехника' },
+    { id: 'sub2_3', categoryId: 'cat2', name: 'Грузовики и спецтехника' },
+    { id: 'sub2_4', categoryId: 'cat2', name: 'Водный транспорт' },
+    { id: 'sub2_5', categoryId: 'cat2', name: 'Запчасти и аксессуары' },
+
+    // Работа
+    { id: 'sub3_1', categoryId: 'cat3', name: 'Вакансии' },
+    { id: 'sub3_2', categoryId: 'cat3', name: 'Резюме' },
+
+    // Электроника
+    { id: 'sub4_1', categoryId: 'cat4', name: 'Телефоны' },
+    { id: 'sub4_2', categoryId: 'cat4', name: 'Компьютеры' },
+    { id: 'sub4_3', categoryId: 'cat4', name: 'Ноутбуки' },
+    { id: 'sub4_4', categoryId: 'cat4', name: 'Планшеты и электронные книги' },
+    { id: 'sub4_5', categoryId: 'cat4', name: 'Фото- и видеокамеры' },
+    { id: 'sub4_6', categoryId: 'cat4', name: 'Аудио и видео' },
+    { id: 'sub4_7', categoryId: 'cat4', name: 'Игры, приставки и программы' },
+    { id: 'sub4_8', categoryId: 'cat4', name: 'Настольные компьютеры' },
+
+    // Личные вещи
+    { id: 'sub5_1', categoryId: 'cat5', name: 'Одежда, обувь, аксессуары' },
+    { id: 'sub5_2', categoryId: 'cat5', name: 'Детская одежда и обувь' },
+    { id: 'sub5_3', categoryId: 'cat5', name: 'Товары для детей и игрушки' },
+    { id: 'sub5_4', categoryId: 'cat5', name: 'Красота и здоровье' },
+    { id: 'sub5_5', categoryId: 'cat5', name: 'Часы и украшения' },
+
+    // Для дома и дачи
+    { id: 'sub6_1', categoryId: 'cat6', name: 'Мебель и интерьер' },
+    { id: 'sub6_2', categoryId: 'cat6', name: 'Посуда и товары для кухни' },
+    { id: 'sub6_3', categoryId: 'cat6', name: 'Ремонт и строительство' },
+    { id: 'sub6_4', categoryId: 'cat6', name: 'Бытовая техника' },
+    { id: 'sub6_5', categoryId: 'cat6', name: 'Растения' },
+
+    // Услуги (cat7)
+    { id: 'sub7_1', categoryId: 'cat7', name: 'Предложение услуг' },
+    { id: 'sub7_2', categoryId: 'cat7', name: 'Деловые услуги' },
+    { id: 'sub7_3', categoryId: 'cat7', name: 'Обучение, курсы' },
+
+    // Хобби и отдых
+    { id: 'sub8_1', categoryId: 'cat8', name: 'Билеты и путешествия' },
+    { id: 'sub8_2', categoryId: 'cat8', name: 'Спорт и отдых' },
+    { id: 'sub8_3', categoryId: 'cat8', name: 'Книги и журналы' },
+    { id: 'sub8_4', categoryId: 'cat8', name: 'Коллекционирование' },
+    { id: 'sub8_5', categoryId: 'cat8', name: 'Музыкальные инструменты' },
+
+    // Животные
+    { id: 'sub9_1', categoryId: 'cat9', name: 'Кошки' },
+    { id: 'sub9_2', categoryId: 'cat9', name: 'Собаки' },
+    { id: 'sub9_3', categoryId: 'cat9', name: 'Птицы' },
+    { id: 'sub9_4', categoryId: 'cat9', name: 'Аквариум' },
+    { id: 'sub9_5', categoryId: 'cat9', name: 'Товары для животных' },
+
+    // Для бизнеса
+    { id: 'sub10_1', categoryId: 'cat10', name: 'Оборудование для бизнеса' },
+    { id: 'sub10_2', categoryId: 'cat10', name: 'Готовый бизнес' },
+    { id: 'sub10_3', categoryId: 'cat10', name: 'Франшизы' },
 ];
 
 export const mockAnnouncements: Announcement[] = [
@@ -47,9 +110,9 @@ export const mockAnnouncements: Announcement[] = [
         price: 85000.0,
         city: "Москва",
         count: 120,
-        images: ["/iphone-13.jpg", "/iphone-13-2.jpg"], // Пути к изображениям в public/
-        categories: [mockCategories[0]], // Электроника
-        subcategories: [mockSubcategories[0]], // Смартфоны
+        images: ["/iphone-13.jpg", "/iphone-13-2.jpg"],
+        categories: [mockCategories.find(c => c.name === 'Электроника')!],
+        subcategories: [mockSubcategories.find(s => s.name === 'Телефоны')!],
         createdAt: "2025-03-01T09:15:00Z",
     },
     {
@@ -61,8 +124,8 @@ export const mockAnnouncements: Announcement[] = [
         city: "Санкт-Петербург",
         count: 250,
         images: ["/flat-1.jpg", "/flat-2.jpg"],
-        categories: [mockCategories[1]], // Недвижимость
-        subcategories: [mockSubcategories[2]], // Квартиры
+        categories: [mockCategories.find(c => c.name === 'Недвижимость')!],
+        subcategories: [mockSubcategories.find(s => s.name === 'Квартиры')!],
         createdAt: "2025-04-06T19:45:10Z",
     },
     {
@@ -74,8 +137,8 @@ export const mockAnnouncements: Announcement[] = [
         city: "Москва",
         count: 80,
         images: ["/macbook.jpg"],
-        categories: [mockCategories[0]], // Электроника
-        subcategories: [mockSubcategories[1]], // Ноутбуки
+        categories: [mockCategories.find(c => c.name === 'Электроника')!],
+        subcategories: [mockSubcategories.find(s => s.name === 'Ноутбуки')!],
         createdAt: "2024-12-21T04:05:00Z",
     },
     {
@@ -87,8 +150,8 @@ export const mockAnnouncements: Announcement[] = [
         city: "Казань",
         count: 300,
         images: ["/bmw-x5.jpg"],
-        categories: [mockCategories[2]], // Транспорт
-        subcategories: [mockSubcategories[4]], // Легковые автомобили
+        categories: [mockCategories.find(c => c.name === 'Транспорт')!],
+        subcategories: [mockSubcategories.find(s => s.name === 'Автомобили')!],
         createdAt: "2025-06-10T09:15:00Z",
     },
 ];

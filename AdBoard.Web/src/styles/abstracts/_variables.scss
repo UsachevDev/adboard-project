@@ -1,5 +1,7 @@
 // Цвета
 $color-primary: #0070f3; // Основной синий
+$color-primary-light: #69afff; // Основной Светло-синий
+$color-primary-dark: #0052af; // Основной Темно-синий
 $color-secondary: #ff4081; // Вторичный розовый
 $color-accent: #ffd700; // Акцентный золотой
 $color-text-primary: #333; // Основной текст
@@ -44,7 +46,7 @@ $border-radius-md: 8px;
 $border-radius-lg: 12px;
 
 // Тени
-$box-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15), // 
+$box-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15), 
     0 0 0 1px rgba(0, 0, 0, 0.05);
 
 $box-shadow-md: 0 5px 12px rgba(0, 0, 0, 0.2),

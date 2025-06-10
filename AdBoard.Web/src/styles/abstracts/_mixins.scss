@@ -28,6 +28,14 @@ $breakpoint-lg: 1200px;
     align-items: center;
 }
 
+@mixin container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 // Миксин для очистки плавающих элементов
 @mixin clearfix {
     &::after {
