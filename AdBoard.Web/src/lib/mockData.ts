@@ -50,6 +50,7 @@ export const mockAnnouncements: Announcement[] = [
         images: ["/iphone-13.jpg", "/iphone-13-2.jpg"], // Пути к изображениям в public/
         categories: [mockCategories[0]], // Электроника
         subcategories: [mockSubcategories[0]], // Смартфоны
+        createdAt: "2025-03-01T09:15:00Z",
     },
     {
         id: "ann-2-uuid",
@@ -62,6 +63,7 @@ export const mockAnnouncements: Announcement[] = [
         images: ["/flat-1.jpg", "/flat-2.jpg"],
         categories: [mockCategories[1]], // Недвижимость
         subcategories: [mockSubcategories[2]], // Квартиры
+        createdAt: "2025-04-06T19:45:10Z",
     },
     {
         id: "ann-3-uuid",
@@ -74,6 +76,7 @@ export const mockAnnouncements: Announcement[] = [
         images: ["/macbook.jpg"],
         categories: [mockCategories[0]], // Электроника
         subcategories: [mockSubcategories[1]], // Ноутбуки
+        createdAt: "2024-12-21T04:05:00Z",
     },
     {
         id: "ann-4-uuid",
@@ -86,6 +89,7 @@ export const mockAnnouncements: Announcement[] = [
         images: ["/bmw-x5.jpg"],
         categories: [mockCategories[2]], // Транспорт
         subcategories: [mockSubcategories[4]], // Легковые автомобили
+        createdAt: "2025-06-10T09:15:00Z",
     },
 ];
 
