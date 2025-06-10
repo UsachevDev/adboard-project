@@ -1,6 +1,7 @@
 "use client"; // Может быть клиентским, если есть интерактивность
 
 import React from "react";
+import SocialLink from '@/components/ui/SocialLink/SocialLink';
 import styles from "./Footer.module.scss";
 
 const Footer: React.FC = () => {
@@ -11,23 +12,13 @@ const Footer: React.FC = () => {
                     &copy; {new Date().getFullYear()} AdBoard. Все права
                     защищены.
                 </p>
-                <ul className={styles.links}>
-                    <li>
-                        <a href="/about" className={styles.link}>
-                            О нас
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/contact" className={styles.link}>
-                            Контакты
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/privacy" className={styles.link}>
-                            Политика конфиденциальности
-                        </a>
-                    </li>
-                </ul>
+                <div className={styles.links}>
+                    <nav className={styles.socialNav}>
+                        <SocialLink href="https://vk.com/" iconSrc="/icons/vk.svg" alt="vk" label="vk Profile" />
+                        <SocialLink href="https://ok.ru/" iconSrc="/icons/ok.svg" alt="ok" label="ok Profile" />
+                        <SocialLink href="https://www.youtube.com/" iconSrc="/icons/youtube.svg" alt="youtube" label="youtube Profile" />
+                    </nav>
+                </div>
             </div>
         </footer>
     );

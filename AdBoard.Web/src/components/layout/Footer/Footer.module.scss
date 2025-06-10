@@ -3,8 +3,7 @@
 @use "sass:color";
 
 .footer {
-    background-color: $color-text-primary;
-    color: $color-white;
+    color: $color-text-primary;
     padding: $spacing-md $spacing-xl;
     margin-top: auto;
     width: 100%;
@@ -29,12 +28,8 @@
     }
 }
 
-.link {
-    color: $color-white;
-    text-decoration: none;
-    transition: color 0.2s ease;
-
-    &:hover {
-        color: color.adjust($color-white, $lightness: 20%);
-    }
+.socialNav {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
 }
