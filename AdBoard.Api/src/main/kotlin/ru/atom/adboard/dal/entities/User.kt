@@ -1,8 +1,11 @@
 package ru.atom.adboard.dal.entities
 
 import jakarta.persistence.*
-import lombok.Data
+import lombok.Getter
 import org.hibernate.annotations.CreationTimestamp
+import org.springframework.data.annotation.CreatedDate
+import org.springframework.security.core.GrantedAuthority
+import org.springframework.security.core.userdetails.UserDetails
 import java.util.*
 
 @Entity
@@ -17,10 +20,11 @@ data class User
     var email: String,
 
     @Column(name = "password", nullable = false)
+    @get:JvmName("getRawPassword")
     var password: String,
 
-    @Column(name = "createdAt", nullable = false)
-    @CreationTimestamp
+    @Column(name = "createdAt")
+    @CreatedDate
     val createdAt: Date,
 
     @Column(name = "name", nullable = false)
@@ -42,4 +46,18 @@ data class User
         inverseJoinColumns = [JoinColumn(name = "announcement_id", referencedColumnName = "id")]
     )
     val favorites: MutableSet<Announcement> = mutableSetOf()
-)
+) : UserDetails {
+    constructor(email: String, password: String, name: String) : this(UUID.randomUUID(), email, password, Date(), name, "0", "")
+
+    override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
+        return mutableListOf()
+    }
+
+    override fun getPassword(): String {
+        return password
+    }
+
+    override fun getUsername(): String {
+        return email;
+    }
+}

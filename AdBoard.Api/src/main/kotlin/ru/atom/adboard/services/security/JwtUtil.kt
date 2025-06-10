@@ -1,0 +1,82 @@
+package ru.atom.adboard.services.security
+
+import io.jsonwebtoken.Jwts
+import io.jsonwebtoken.Claims
+import io.jsonwebtoken.security.Keys
+import lombok.Getter
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Bean
+import org.springframework.stereotype.Component
+import java.util.*
+import javax.crypto.SecretKey
+
+@Component
+@Getter
+class JwtUtil(
+    @Value("\${jwt.access-token-key}") accessTokenSecret: String,
+    @Value("\${jwt.refresh-token-key}") refreshTokenSecret: String,
+    @Value("\${jwt.access-token-duration}") accessTokenDuration: Long,
+    @Value("\${jwt.refresh-token-duration}") refreshTokenDuration: Long
+)
+{
+    private val accessTokenKey: SecretKey = Keys.hmacShaKeyFor(accessTokenSecret.toByteArray())
+    private val refreshTokenKey: SecretKey = Keys.hmacShaKeyFor(refreshTokenSecret.toByteArray())
+    private val accessTokenExpiration: Long = accessTokenDuration // 10 минут
+    val refreshTokenExpiration: Long = refreshTokenDuration // 7 дней
+
+    fun generateAccessToken(email: String): String {
+        return Jwts.builder()
+            .subject(email)
+            .issuedAt(Date())
+            .expiration(Date(System.currentTimeMillis() + accessTokenExpiration))
+            .signWith(accessTokenKey)
+            .compact()
+    }
+
+    fun generateRefreshToken(email: String): String {
+        return Jwts.builder()
+            .subject(email)
+            .issuedAt(Date())
+            .expiration(Date(System.currentTimeMillis() + refreshTokenExpiration))
+            .signWith(refreshTokenKey)
+            .compact()
+    }
+
+    fun extractEmail(token: String, isRefreshToken: Boolean = false): String {
+        return extractClaims(token, isRefreshToken).subject
+    }
+
+    fun validateAccessToken(token: String): Boolean {
+        return try {
+            Jwts.parser()
+                .verifyWith(accessTokenKey)
+                .build()
+                .parseSignedClaims(token)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    fun validateRefreshToken(token: String): Boolean {
+        return try {
+            Jwts.parser()
+                .verifyWith(refreshTokenKey)
+                .build()
+                .parseSignedClaims(token)
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun extractClaims(token: String, isRefreshToken: Boolean): Claims {
+        val key = if (isRefreshToken) refreshTokenKey else accessTokenKey
+        return Jwts.parser()
+            .verifyWith(key)
+            .build()
+            .parseSignedClaims(token)
+            .payload
+    }
+
+}

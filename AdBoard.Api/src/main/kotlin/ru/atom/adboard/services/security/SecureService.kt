@@ -1,6 +1,7 @@
 package ru.atom.adboard.services.security
 
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.*
 
