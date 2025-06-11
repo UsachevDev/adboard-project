@@ -19,7 +19,7 @@
 }
 
 .logo {
-    font-size: 1.8rem;
+    font-size: $font-size-h3;
     font-weight: 700;
     text-decoration: none;
     color: $color-white;
@@ -30,18 +30,13 @@
     }
 }
 
-.nav {
-    // Styles for navigation
-}
 
 .navList {
     list-style: none;
+    margin: 0;
+    padding: 0;
     display: flex;
     gap: $spacing-lg;
-}
-
-.navItem {
-    // Styles for individual navigation items
 }
 
 .navLink {
@@ -49,7 +44,25 @@
     color: $color-white;
     font-weight: 500;
     padding: $spacing-sm $spacing-md;
-    border-radius: $spacing-xs;
+    border-radius: $border-radius-sm;
+    transition: background-color 0.2s ease, color 0.2s ease;
+
+    &:hover {
+        background-color: color.adjust($color-primary, $lightness: 10%);
+    }
+}
+
+.navLinkButton {
+    background: none;
+    border: none;
+    color: $color-white;
+    text-decoration: none;
+    font-size: 1.1rem;
+    cursor: pointer;
+    padding: $spacing-sm $spacing-md;
+    font-family: $font-family-primary;
+    font-weight: 500;
+    border-radius: $border-radius-sm;
     transition: background-color 0.2s ease, color 0.2s ease;
 
     &:hover {
