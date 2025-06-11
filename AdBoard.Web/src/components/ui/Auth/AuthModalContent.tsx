@@ -1,18 +1,26 @@
+// src/components/ui/Auth/AuthModalContent.tsx
 'use client';
 
-import { useState } from 'react';
-import LoginForm from '@/components/ui/Auth/LoginForm';
-import RegisterForm from '@/components/ui/Auth/RegisterForm';
+import React, { useState } from 'react';
+import LoginForm from './LoginForm';
+import RegisterForm from './RegisterForm';
+import styles from './AuthModalContent.module.scss';
 import { useRouter } from 'next/navigation';
 
-export default function AuthPage() {
+interface AuthModalContentProps {
+    onClose: () => void;
+}
+
+const AuthModalContent: React.FC<AuthModalContentProps> = ({ onClose }) => {
     const [showRegisterForm, setShowRegisterForm] = useState(false);
     const router = useRouter();
 
     const handleLoginSuccess = (token: string) => {
         localStorage.setItem('jwt_token', token);
         console.log('JWT Token сохранен:', token);
-        router.push('/');
+
+        onClose(); // Закрываем модальное окно
+        router.push('/profile'); // Перенаправляем на статическую страницу профиля
     };
 
     const handleRegisterSuccess = () => {
@@ -21,7 +29,7 @@ export default function AuthPage() {
     };
 
     return (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 100px)' }}>
+        <div className={styles.authModalContent}>
             {showRegisterForm ? (
                 <RegisterForm
                     onRegisterSuccess={handleRegisterSuccess}
@@ -35,4 +43,6 @@ export default function AuthPage() {
             )}
         </div>
     );
-}
+};
+
+export default AuthModalContent;

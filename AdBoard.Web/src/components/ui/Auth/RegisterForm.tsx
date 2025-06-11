@@ -1,61 +1,57 @@
+// src/components/ui/Auth/RegisterForm.tsx
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link'; // <--- ДОБАВЛЕНО: Импортируем Link
 import styles from './RegisterForm.module.scss';
+import { mockUsers } from '@/lib/mockData';
+import { User } from '@/types';
 
 interface RegisterFormProps {
-    onRegisterSuccess?: () => void;
+    onRegisterSuccess: () => void;
     onSwitchToLogin: () => void;
 }
 
-export default function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: RegisterFormProps) {
-    const [username, setUsername] = useState('');
+const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitchToLogin }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [message, setMessage] = useState('');
-    const [isError, setIsError] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setMessage('');
-        setIsError(false);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage(null);
 
         if (password !== confirmPassword) {
-            setMessage('Пароли не совпадают!');
-            setIsError(true);
+            setMessage({ type: 'error', text: 'Пароли не совпадают.' });
+            setLoading(false);
             return;
         }
 
-        // --- Подготовка к отправке данных на бэкенд ---
-        // Имитация
-        try {
-            console.log('Попытка регистрации с данными (имитация):', { username, email, password });
+        // Имитация задержки сети
+        // ИСПРАВЛЕНО: setTimeout теперь вызывается с функцией-колбэком
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Имитация задержки сети
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        // Имитация регистрации
+        const existingUser = mockUsers.find(user => user.email === email);
 
-            // Имитация успешного ответа от бэкенда
-            if (username.length >= 3 && password.length >= 6) { // Простая валидация
-                setMessage('Регистрация прошла успешно! Теперь вы можете войти.');
-                setIsError(false);
-                if (onRegisterSuccess) {
-                    onRegisterSuccess();
-                }
-                // Очистка формы
-                setUsername('');
-                setEmail('');
-                setPassword('');
-                setConfirmPassword('');
-            } else {
-                setMessage('Имя пользователя должно быть не менее 3 символов, а пароль - не менее 6.');
-                setIsError(true);
-            }
-        } catch (error) {
-            console.error('Ошибка при регистрации (имитация):', error);
-            setMessage('Произошла ошибка при попытке регистрации. Попробуйте еще раз.');
-            setIsError(true);
+        if (existingUser) {
+            setMessage({ type: 'error', text: 'Пользователь с таким email уже существует.' });
+        } else {
+            const newUser: User = {
+                id: `user-${mockUsers.length + 1}-uuid`,
+                email: email,
+                createdAt: new Date().toISOString(),
+            };
+            mockUsers.push(newUser);
+
+            setMessage({ type: 'success', text: 'Регистрация успешна! Теперь вы можете войти.' });
+            onRegisterSuccess();
         }
+
+        setLoading(false);
     };
 
     return (
@@ -63,63 +59,56 @@ export default function RegisterForm({ onRegisterSuccess, onSwitchToLogin }: Reg
             <h2 className={styles.title}>Регистрация</h2>
             <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="username" className={styles.label}>Имя пользователя:</label>
-                    <input
-                        type="text"
-                        id="username"
-                        className={styles.input}
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
-                        required
-                        autoComplete="username"
-                    />
-                </div>
-                <div className={styles.formGroup}>
-                    <label htmlFor="email" className={styles.label}>Email (опционально):</label>
+                    <label htmlFor="regEmail" className={styles.label}>Email</label>
                     <input
                         type="email"
-                        id="email"
+                        id="regEmail"
                         className={styles.input}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        autoComplete="email"
+                        required
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="password" className={styles.label}>Пароль:</label>
+                    <label htmlFor="regPassword" className={styles.label}>Пароль</label>
                     <input
                         type="password"
-                        id="password"
+                        id="regPassword"
                         className={styles.input}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        autoComplete="new-password"
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="confirmPassword" className={styles.label}>Подтвердите пароль:</label>
+                    <label htmlFor="regConfirmPassword" className={styles.label}>Подтвердите пароль</label>
                     <input
                         type="password"
-                        id="confirmPassword"
+                        id="regConfirmPassword"
                         className={styles.input}
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
-                        autoComplete="new-password"
                     />
                 </div>
-                <button type="submit" className={styles.button}>Зарегистрироваться</button>
-                {message && (
-                    <div className={`${styles.message} ${isError ? styles.error : styles.success}`}>
-                        {message}
-                    </div>
-                )}
+                <button type="submit" className={styles.button} disabled={loading}>
+                    {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                </button>
             </form>
+            {message && (
+                <p className={`${styles.message} ${message.type === 'success' ? styles.success : styles.error}`}>
+                    {message.text}
+                </p>
+            )}
             <div className={styles.formFooter}>
                 Уже есть аккаунт?{' '}
-                <a href="#" onClick={(e) => { e.preventDefault(); onSwitchToLogin(); }}>Войти</a>
+                {/* ИСПРАВЛЕНО: Link теперь компонент */}
+                <Link href="#" onClick={onSwitchToLogin}>
+                    Войти
+                </Link>
             </div>
         </div>
     );
-}
+};
+
+export default RegisterForm;

@@ -1,59 +1,43 @@
+// src/components/ui/Auth/LoginForm.tsx
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link'; // <--- ДОБАВЛЕНО: Импортируем Link
 import styles from './LoginForm.module.scss';
+import { mockUsers } from '@/lib/mockData';
 
 interface LoginFormProps {
-    onLoginSuccess?: (token: string) => void;
+    onLoginSuccess: (token: string) => void;
     onSwitchToRegister: () => void;
 }
 
-export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginFormProps) {
-    const [username, setUsername] = useState('');
+const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegister }) => {
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [message, setMessage] = useState('');
-    const [isError, setIsError] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    const handleSubmit = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setMessage('');
-        setIsError(false);
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setLoading(true);
+        setMessage(null);
 
-        // --- Подготовка к отправке данных на бэкенд и обработке JWT ---
-        // Имитация
-        try {
-            console.log('Попытка входа с данными (имитация):', { username, password });
+        // Имитация задержки сети
+        // ИСПРАВЛЕНО: setTimeout теперь вызывается с функцией-колбэком
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
-            // Имитация задержки сети, как если бы запрос шел на сервер
-            await new Promise(resolve => setTimeout(resolve, 2000));
+        // Имитация аутентификации на основе mockUsers
+        const userFound = mockUsers.find(user => user.email === email);
 
-            // Имитация ответа от бэкенда (успешный или неуспешный логин)
-            if (username === 'test' && password === 'password') {
-                const fakeToken = `fake-jwt-token-for-${username}-${Date.now()}`;
-                setMessage('Вход выполнен успешно! Токен получен (имитация).');
-                setIsError(false);
-
-                // *** Здесь будет реальная логика сохранения JWT и перенаправления ***
-                // 1. Сохранение токена:
-                localStorage.setItem('jwt_token', fakeToken);
-
-                // 2. Вызов колбэка для родительского компонента
-                if (onLoginSuccess) {
-                    onLoginSuccess(fakeToken);
-                }
-
-                console.log('Имитация успешного входа, токен сохранен:', fakeToken);
-                // В реальном приложении: перенаправление на главную страницу или дашборд
-                // router.push('/dashboard');
-            } else {
-                setMessage('Неверное имя пользователя или пароль (имитация).');
-                setIsError(true);
-            }
-        } catch (error) {
-            console.error('Ошибка при входе (имитация):', error);
-            setMessage('Произошла ошибка при попытке входа. Попробуйте еще раз.');
-            setIsError(true);
+        if (userFound) {
+            const fakeToken = `fake-jwt-token-for-${email}-uuid-${Date.now()}`;
+            onLoginSuccess(fakeToken);
+            setMessage({ type: 'success', text: 'Успешный вход! Перенаправление...' });
+        } else {
+            setMessage({ type: 'error', text: 'Неверный email или пароль.' });
         }
+
+        setLoading(false);
     };
 
     return (
@@ -61,19 +45,18 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
             <h2 className={styles.title}>Вход</h2>
             <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="username" className={styles.label}>Имя пользователя:</label>
+                    <label htmlFor="email" className={styles.label}>Email</label>
                     <input
-                        type="text"
-                        id="username"
+                        type="email"
+                        id="email"
                         className={styles.input}
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
                         required
-                        autoComplete="username"
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="password" className={styles.label}>Пароль:</label>
+                    <label htmlFor="password" className={styles.label}>Пароль</label>
                     <input
                         type="password"
                         id="password"
@@ -81,20 +64,26 @@ export default function LoginForm({ onLoginSuccess, onSwitchToRegister }: LoginF
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
-                        autoComplete="current-password"
                     />
                 </div>
-                <button type="submit" className={styles.button}>Войти</button>
-                {message && (
-                    <div className={`${styles.message} ${isError ? styles.error : styles.success}`}>
-                        {message}
-                    </div>
-                )}
+                <button type="submit" className={styles.button} disabled={loading}>
+                    {loading ? 'Вход...' : 'Войти'}
+                </button>
             </form>
+            {message && (
+                <p className={`${styles.message} ${message.type === 'success' ? styles.success : styles.error}`}>
+                    {message.text}
+                </p>
+            )}
             <div className={styles.formFooter}>
-                Ещё нет аккаунта?{' '}
-                <a href="#" onClick={(e) => { e.preventDefault(); onSwitchToRegister(); }}>Зарегистрироваться</a>
+                Нет аккаунта?{' '}
+                {/* ИСПРАВЛЕНО: Link теперь компонент */}
+                <Link href="#" onClick={onSwitchToRegister}>
+                    Зарегистрироваться
+                </Link>
             </div>
         </div>
     );
-}
+};
+
+export default LoginForm;

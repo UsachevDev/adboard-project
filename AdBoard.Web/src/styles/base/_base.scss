@@ -2,16 +2,6 @@
 @use "@/styles/abstracts/variables" as *;
 @use "@/styles/abstracts/mixins" as *;
 
-a {
-    color: $color-primary;
-    text-decoration: none;
-    transition: color 0.2s ease;
-
-    &:hover {
-        color: color.adjust($color-primary, $lightness: -10%);
-    }
-}
-
 .container {
     max-width: 1200px;
     margin: 0 auto;
