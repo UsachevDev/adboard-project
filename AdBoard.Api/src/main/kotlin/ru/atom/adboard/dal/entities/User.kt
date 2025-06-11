@@ -34,7 +34,7 @@ data class User
     var phoneNumber: String?,
 
     @Column(name = "address")
-    var address: String?,
+    var city: String?,
 
     @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val reviews: MutableList<Review> = mutableListOf(),
@@ -47,7 +47,8 @@ data class User
     )
     val favorites: MutableSet<Announcement> = mutableSetOf()
 ) : UserDetails {
-    constructor(email: String, password: String, name: String) : this(UUID.randomUUID(), email, password, Date(), name, "0", "")
+    constructor(email: String, password: String, name: String, phoneNumber: String?, city: String?) : this(UUID.randomUUID(), email, password, Date(), name, phoneNumber, city)
+    constructor(email: String, password: String, name: String) : this(UUID.randomUUID(), email, password, Date(), name, null, null)
 
     override fun getAuthorities(): MutableCollection<out GrantedAuthority> {
         return mutableListOf()

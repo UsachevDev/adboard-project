@@ -24,11 +24,12 @@ class JwtUtil(
     private val accessTokenExpiration: Long = accessTokenDuration // 10 минут
     val refreshTokenExpiration: Long = refreshTokenDuration // 7 дней
 
-    fun generateAccessToken(email: String): String {
+    fun generateAccessToken(email: String, username: String): String {
         return Jwts.builder()
             .subject(email)
             .issuedAt(Date())
             .expiration(Date(System.currentTimeMillis() + accessTokenExpiration))
+            .claims(mutableMapOf(Pair("username", username)))
             .signWith(accessTokenKey)
             .compact()
     }

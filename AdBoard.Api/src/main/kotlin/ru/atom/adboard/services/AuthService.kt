@@ -5,26 +5,32 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
+import org.springframework.security.core.Authentication
+import org.springframework.security.core.AuthenticationException
 import org.springframework.stereotype.Service
-import org.springframework.web.bind.annotation.RequestBody
 import ru.atom.adboard.dal.entities.RefreshToken
 import ru.atom.adboard.dal.entities.User
 import ru.atom.adboard.dal.repositories.RefreshTokenRepository
+import ru.atom.adboard.dal.repositories.UserRepository
+import ru.atom.adboard.services.response.ServiceResponse
 import ru.atom.adboard.services.security.JwtUtil
+import ru.atom.adboard.services.request.AuthRequest
+import ru.atom.adboard.services.request.RegistrationRequest
+import ru.atom.adboard.services.response.TokensDto
+import ru.atom.adboard.services.response.ServiceError
 import ru.atom.adboard.services.security.SecureService
-import ru.atom.adboard.services.security.dtos.AuthRequest
-import ru.atom.adboard.services.security.dtos.AuthResponse
 import java.util.*
 
 
 @Service
-class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refreshRepo: RefreshTokenRepository)
+class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refreshRepo: RefreshTokenRepository, _userRepo: UserRepository)
 {
     private val authManager = _authManager
     private val jwtUtil = _jwtUtil
     private val refreshRepo = _refreshRepo
+    private val userRepo = _userRepo
 
-    fun logout(request: HttpServletRequest): ResponseEntity.BodyBuilder {
+    fun logout(request: HttpServletRequest): ServiceResponse {
         try {
             val authHeader: String = request.getHeader("Authorization")
             if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -35,52 +41,96 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
                 if(refreshToken.isPresent) refreshRepo.delete(refreshToken.get())
             }
 
-            return ResponseEntity.ok()
+            return ServiceResponse(HttpStatus.OK)
         } catch (ex: java.lang.Exception) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
-    fun refresh(refresh_token: String): Any {
+    fun refresh(refresh_token: String): ServiceResponse {
         try {
             val refreshTokenFromDb: Optional<RefreshToken> = refreshRepo.findByToken(refresh_token)
 
             if (refreshTokenFromDb.isEmpty || refreshTokenFromDb.get().expiryDate
                     .before(Date())
             ) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                return ServiceResponse(HttpStatus.UNAUTHORIZED, ServiceError("Login required"))
             }
 
             val validRefreshToken = refreshTokenFromDb.get()
             val userDetails = validRefreshToken.user
 
             val newJwt: String =
-                jwtUtil.generateAccessToken(userDetails.email)
+                jwtUtil.generateAccessToken(userDetails.email, userDetails.name)
             val newRefreshToken = jwtUtil.generateRefreshToken(userDetails.username)
 
             validRefreshToken.token = newRefreshToken
             validRefreshToken.expiryDate =  Date(System.currentTimeMillis() + jwtUtil.refreshTokenExpiration)
             refreshRepo.save(validRefreshToken)
 
-            return ResponseEntity.ok<AuthResponse>(AuthResponse(newJwt, newRefreshToken))
+            return ServiceResponse(TokensDto(newJwt,newRefreshToken), HttpStatus.OK)
         } catch (ex: Exception) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+            return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }
 
-    fun login(request: AuthRequest): Any {
+    fun login(request: AuthRequest): ServiceResponse {
+        val authentication: Authentication
 
-        //TODO()
-        val authentication = authManager.authenticate(UsernamePasswordAuthenticationToken(request.email,request.password))
+        try { authentication = authManager.authenticate(UsernamePasswordAuthenticationToken(request.email,request.password)) }
+        catch (ex: AuthenticationException) { return ServiceResponse(HttpStatus.FORBIDDEN, ServiceError("Incorrect email or password")) }
+
         val userDetails: User = authentication.principal as User
+        val accessToken = jwtUtil.generateAccessToken(userDetails.email, userDetails.name)
+        val refreshToken = jwtUtil.generateRefreshToken(userDetails.email)
 
-        val accessToken = jwtUtil.generateAccessToken(authentication.name)
-        val refreshToken = jwtUtil.generateRefreshToken(authentication.name)
+        try{
+            val refreshTokenFromDb: Optional<RefreshToken> = refreshRepo.findByUser_Email(userDetails.email)
+            if(refreshTokenFromDb.isPresent)
+            {
+                refreshTokenFromDb.get().token = refreshToken
+                refreshTokenFromDb.get().expiryDate = Date(System.currentTimeMillis() + jwtUtil.refreshTokenExpiration)
+                refreshRepo.save(refreshTokenFromDb.get())
+            }
+            else
+                refreshRepo.save(RefreshToken(refreshToken, Date(System.currentTimeMillis() + jwtUtil.refreshTokenExpiration), userDetails))
+        }
+        catch (ex: Exception)
+        {
+            return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
 
-        refreshRepo.save(
-            RefreshToken(refreshToken, Date(System.currentTimeMillis() + jwtUtil.refreshTokenExpiration), userDetails)
-        )
-        return ResponseEntity<AuthResponse>(AuthResponse(accessToken,refreshToken), HttpStatus.OK)
+        return ServiceResponse(TokensDto(accessToken,refreshToken), HttpStatus.OK)
+    }
+
+    fun registration(request: RegistrationRequest) : ServiceResponse
+    {
+        try{
+            if(userRepo.existsUserByEmail(request.email))
+                return ServiceResponse(HttpStatus.OK, ServiceError("The user already exists"))
+
+            val user = User(
+                request.email,
+                SecureService.getBCryptHash(request.password).get(),
+                request.name,
+                request.phoneNumber,
+                request.city
+            )
+
+            val accessToken = jwtUtil.generateAccessToken(user.email, request.name)
+            val refreshToken = jwtUtil.generateRefreshToken(user.email)
+
+            userRepo.save(user)
+            refreshRepo.save(
+                RefreshToken(refreshToken, Date(System.currentTimeMillis() + jwtUtil.refreshTokenExpiration), user)
+            )
+
+            return ServiceResponse(TokensDto(accessToken,refreshToken), HttpStatus.CREATED)
+        }
+        catch (ex: Exception)
+        {
+            return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
     }
 
 }

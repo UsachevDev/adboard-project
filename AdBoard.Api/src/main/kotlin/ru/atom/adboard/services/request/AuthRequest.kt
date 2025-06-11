@@ -1,4 +1,4 @@
-package ru.atom.adboard.services.security.dtos
+package ru.atom.adboard.services.request
 
 data class AuthRequest(
     val email: String,
