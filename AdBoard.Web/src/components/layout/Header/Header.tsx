@@ -1,4 +1,3 @@
-// src/components/layout/Header/Header.tsx
 'use client';
 
 import React, { useEffect, useState } from "react";
@@ -14,22 +13,28 @@ const Header: React.FC = () => {
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
     const router = useRouter();
 
-    useEffect(() => {
-        const checkAuthStatus = () => {
-            const token = localStorage.getItem('jwt_token');
-            if (token) {
-                setIsLoggedIn(true);
-                // Для имитации: извлекаем имя пользователя
-                const match = token.match(/fake-jwt-token-for-(\w+)-/);
-                setUsername(match && match[1] ? match[1] : 'Пользователь');
+    const checkAuthStatus = () => {
+        const token = localStorage.getItem('jwt_token');
+        if (token) {
+            setIsLoggedIn(true);
+            // Для имитации: извлекаем имя пользователя
+            const match = token.match(/fake-jwt-token-for-(\w+)@example.com-/);
+            if (match && match[1]) {
+                setUsername(match[1]);
             } else {
-                setIsLoggedIn(false);
-                setUsername(null);
+                setUsername('Пользователь');
             }
-        };
+        } else {
+            setIsLoggedIn(false);
+            setUsername(null);
+        }
+    };
 
+    useEffect(() => {
         checkAuthStatus();
+
         window.addEventListener('storage', checkAuthStatus);
+
         return () => {
             window.removeEventListener('storage', checkAuthStatus);
         };
@@ -48,17 +53,7 @@ const Header: React.FC = () => {
 
     const closeAuthModal = () => {
         setIsModalOpen(false);
-        // После закрытия модального окна (например, после логина),
-        // принудительно перепроверяем статус авторизации,
-        // чтобы Header обновился.
-        const token = localStorage.getItem('jwt_token');
-        if (token && !isLoggedIn) {
-            const match = token.match(/fake-jwt-token-for-(\w+)-/);
-            if (match && match[1]) {
-                setIsLoggedIn(true);
-                setUsername(match[1]);
-            }
-        }
+        checkAuthStatus();
     };
 
     return (
@@ -81,7 +76,6 @@ const Header: React.FC = () => {
                             {isLoggedIn ? (
                                 <>
                                     <li className={styles.navItem}>
-                                        {/* Ссылка на статический профиль */}
                                         <Link href="/profile" className={styles.navLink}>
                                             {username || 'Профиль'}
                                         </Link>

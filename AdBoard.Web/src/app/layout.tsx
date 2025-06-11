@@ -1,8 +1,7 @@
-// src/app/layout.tsx (Остается таким, каким он был до этого)
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import LayoutContent from '@/components/layout/LayoutContent'; // Импортируем новый компонент
-import "./globals.scss"; // <-- ЭТА СТРОКА ДОЛЖНА ОСТАТЬСЯ ЗДЕСЬ И ТОЛЬКО ЗДЕСЬ!
+import LayoutContent from '@/components/layout/LayoutContent';
+import "./globals.scss";
 
 const inter = Inter({ subsets: ['latin'] });
 

@@ -1,5 +1,5 @@
 html {
-    font-size: $font-size-base; // Используем Sass-переменную
+    font-size: $font-size-base;
 }
 
 body {
@@ -17,14 +17,13 @@ h6 {
     margin-top: 0;
     margin-bottom: $spacing-md;
     line-height: 1.2;
-    color: $color-text-primary; // Установка цвета по умолчанию для заголовков
+    color: $color-text-primary;
 }
 
 h1 {
     font-size: $font-size-h1;
     @include media-md {
-        // Используем миксин для адаптивности
-        font-size: $font-size-h1-md; // Используем адаптивную переменную
+        font-size: $font-size-h1-md;
     }
     @include media-sm {
         // font-size: 2rem;

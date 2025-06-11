@@ -1,8 +1,7 @@
-// src/components/ui/Auth/RegisterForm.tsx
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link'; // <--- ДОБАВЛЕНО: Импортируем Link
+import Link from 'next/link';
 import styles from './RegisterForm.module.scss';
 import { mockUsers } from '@/lib/mockData';
 import { User } from '@/types';
@@ -31,7 +30,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
         }
 
         // Имитация задержки сети
-        // ИСПРАВЛЕНО: setTimeout теперь вызывается с функцией-колбэком
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Имитация регистрации
@@ -102,7 +100,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
             )}
             <div className={styles.formFooter}>
                 Уже есть аккаунт?{' '}
-                {/* ИСПРАВЛЕНО: Link теперь компонент */}
                 <Link href="#" onClick={onSwitchToLogin}>
                     Войти
                 </Link>

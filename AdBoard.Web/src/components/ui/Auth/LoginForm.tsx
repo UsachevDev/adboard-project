@@ -1,8 +1,7 @@
-// src/components/ui/Auth/LoginForm.tsx
 'use client';
 
 import React, { useState } from 'react';
-import Link from 'next/link'; // <--- ДОБАВЛЕНО: Импортируем Link
+import Link from 'next/link';
 import styles from './LoginForm.module.scss';
 import { mockUsers } from '@/lib/mockData';
 
@@ -22,11 +21,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
         setLoading(true);
         setMessage(null);
 
-        // Имитация задержки сети
-        // ИСПРАВЛЕНО: setTimeout теперь вызывается с функцией-колбэком
         await new Promise(resolve => setTimeout(resolve, 2000));
 
-        // Имитация аутентификации на основе mockUsers
         const userFound = mockUsers.find(user => user.email === email);
 
         if (userFound) {
@@ -77,7 +73,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
             )}
             <div className={styles.formFooter}>
                 Нет аккаунта?{' '}
-                {/* ИСПРАВЛЕНО: Link теперь компонент */}
                 <Link href="#" onClick={onSwitchToRegister}>
                     Зарегистрироваться
                 </Link>

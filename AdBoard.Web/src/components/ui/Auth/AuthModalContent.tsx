@@ -1,4 +1,3 @@
-// src/components/ui/Auth/AuthModalContent.tsx
 'use client';
 
 import React, { useState } from 'react';
@@ -18,9 +17,8 @@ const AuthModalContent: React.FC<AuthModalContentProps> = ({ onClose }) => {
     const handleLoginSuccess = (token: string) => {
         localStorage.setItem('jwt_token', token);
         console.log('JWT Token сохранен:', token);
-
-        onClose(); // Закрываем модальное окно
-        router.push('/profile'); // Перенаправляем на статическую страницу профиля
+        onClose();
+        router.push('/profile');
     };
 
     const handleRegisterSuccess = () => {

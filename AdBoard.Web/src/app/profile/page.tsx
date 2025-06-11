@@ -1,16 +1,15 @@
-// src/app/profile/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './ProfilePage.module.scss';
-import { mockUsers, mockAnnouncements } from '@/lib/mockData'; // Импортируем моковые данные
-import { User, Announcement } from '@/types'; // Импортируем типы
+import { mockUsers, mockAnnouncements } from '@/lib/mockData';
+import { User, Announcement } from '@/types';
 
 const ProfilePage: React.FC = () => {
-    const [userData, setUserData] = useState<User | null>(null); // Указываем тип User
-    const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>([]); // Для объявлений пользователя
+    const [userData, setUserData] = useState<User | null>(null);
+    const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const router = useRouter();
@@ -28,8 +27,6 @@ const ProfilePage: React.FC = () => {
             }
 
             // Имитация получения User ID из токена
-            // В нашем текущем имитированном токене мы сохраняем "username" как часть токена
-            // Предположим, что username из токена соответствует email в mockUsers для нахождения ID.
             const match = token.match(/fake-jwt-token-for-(\w+)@example.com-/);
             let userEmailFromToken: string | null = null;
             if (match && match[1]) {
@@ -39,21 +36,19 @@ const ProfilePage: React.FC = () => {
             if (!userEmailFromToken) {
                 setError('Не удалось определить пользователя из токена.');
                 setLoading(false);
-                localStorage.removeItem('jwt_token'); // Удаляем некорректный токен
+                localStorage.removeItem('jwt_token');
                 return;
             }
 
-            // Находим пользователя в mockUsers по email
             const foundUser = mockUsers.find(user => user.email === userEmailFromToken);
 
             if (foundUser) {
                 setUserData(foundUser);
-                // Находим все объявления, созданные этим пользователем
                 const announcements = mockAnnouncements.filter(ann => ann.creatorId === foundUser.id);
                 setUserAnnouncements(announcements);
             } else {
                 setError('Пользователь не найден в системе (mock-данных).');
-                localStorage.removeItem('jwt_token'); // Удаляем токен, если пользователь не найден
+                localStorage.removeItem('jwt_token');
             }
             setLoading(false);
         };
@@ -87,7 +82,6 @@ const ProfilePage: React.FC = () => {
                 <h1 className={styles.title}>Вам необходимо авторизоваться</h1>
                 <p className={styles.loginPrompt}>
                     Для просмотра профиля, пожалуйста, <Link href="#" onClick={() => {
-                        // В реальном приложении можно было бы открыть модальное окно логина
                         alert('Пожалуйста, используйте кнопку "Войти" в шапке сайта для авторизации.');
                     }}>войдите</Link> или <Link href="#" onClick={() => {
                         alert('Пожалуйста, используйте кнопку "Войти" в шапке сайта, затем "Зарегистрироваться" для создания аккаунта.');
@@ -99,15 +93,13 @@ const ProfilePage: React.FC = () => {
 
     return (
         <div className={styles.container}>
-            <h1 className={styles.title}>Привет, {userData.email.split('@')[0]}!</h1> {/* Отображаем часть email как имя */}
+            <h1 className={styles.title}>Привет, {userData.email.split('@')[0]}!</h1>
             <p className={styles.welcomeMessage}>Добро пожаловать в ваш личный кабинет AdBoard.</p>
 
             <h2 className={styles.sectionTitle}>Мои объявления ({userAnnouncements.length})</h2>
-            <div className={styles.announcementsGrid}> {/* Новый класс для сетки объявлений */}
+            <div className={styles.announcementsGrid}>
                 {userAnnouncements.length > 0 ? (
                     userAnnouncements.map(announcement => (
-                        // Здесь вы можете использовать компонент AnnouncementCard, если он у вас есть
-                        // Или просто отобразить заголовок объявления
                         <div key={announcement.id} className={styles.announcementItem}>
                             <h3>{announcement.title}</h3>
                             <p>{announcement.description.substring(0, 100)}...</p>
@@ -132,7 +124,6 @@ const ProfilePage: React.FC = () => {
             <div className={styles.infoBlock}>
                 <p><span>Email:</span> {userData.email}</p>
                 <p><span>Дата регистрации:</span> {new Date(userData.createdAt).toLocaleDateString()}</p>
-                {/* Здесь можно добавить другие поля профиля, если они появятся в User типе */}
             </div>
             <div className={styles.placeholder}>
                 Здесь будут настройки вашего профиля (изменение пароля, email и т.д.).

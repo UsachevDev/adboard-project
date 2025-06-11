@@ -1,15 +1,8 @@
-/* src/components/ui/Auth/AuthModalContent.module.scss */
-
 @use "@/styles/abstracts/variables" as *;
 
 .authModalContent {
-    // Просто чтобы обернуть формы и дать им контекст при необходимости
     width: 100%;
-    max-width: 400px; // Ограничиваем ширину содержимого модального окна
-    text-align: center; // Центрируем формы внутри
+    max-width: 400px;
+    text-align: center;
 }
 
-// Заметьте: основные стили форм (container, title, button, input и т.д.)
-// остаются в LoginForm.module.scss и RegisterForm.module.scss.
-// Этот файл может быть использован для стилизации обертки или общих элементов,
-// если они появятся в будущем (например, вкладки "Вход" / "Регистрация").
