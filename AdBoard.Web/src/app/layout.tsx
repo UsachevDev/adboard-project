@@ -1,9 +1,8 @@
+// src/app/layout.tsx (Остается таким, каким он был до этого)
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
-import Header from '@/components/layout/Header/Header';
-import Footer from '@/components/layout/Footer/Footer';
-import Search from '@/components/ui/Search/Search';
-import "./globals.scss";
+import LayoutContent from '@/components/layout/LayoutContent'; // Импортируем новый компонент
+import "./globals.scss"; // <-- ЭТА СТРОКА ДОЛЖНА ОСТАТЬСЯ ЗДЕСЬ И ТОЛЬКО ЗДЕСЬ!
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -20,10 +19,7 @@ export default function RootLayout({
     return (
         <html lang="ru">
             <body className={inter.className}>
-                <Header />
-                <Search />
-                <main style={{ flexGrow: 1 }}>{children}</main>
-                <Footer />
+                <LayoutContent>{children}</LayoutContent>
             </body>
         </html>
     );
