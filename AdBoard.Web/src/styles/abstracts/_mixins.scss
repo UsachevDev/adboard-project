@@ -1,3 +1,6 @@
+@use "sass:color";
+@use "@/styles/abstracts/variables" as *;
+
 // Медиа-запросы
 $breakpoint-sm: 768px;
 $breakpoint-md: 992px;
@@ -56,5 +59,66 @@ $breakpoint-lg: 1200px;
         display: -webkit-box;
         -webkit-line-clamp: $lines;
         -webkit-box-orient: vertical;
+    }
+}
+
+// Миксины для кнопок
+@mixin button-base {
+    padding: $spacing-md $spacing-lg;
+    border-radius: $border-radius-sm;
+    font-size: $font-size-base;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: none;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+    border: 1px solid transparent;
+}
+
+@mixin button-primary {
+    @include button-base;
+    background-color: $color-primary;
+    color: $color-white;
+    border-color: $color-primary;
+
+    &:hover {
+        background-color: $color-primary-dark;
+        border-color: $color-primary-dark;
+    }
+
+    &:active {
+        background-color: color.adjust($color-primary-dark, $lightness: -5%);
+        border-color: color.adjust($color-primary-dark, $lightness: -5%);
+    }
+
+    &:disabled {
+        background-color: $color-light-gray;
+        color: $color-text-tertiary;
+        border-color: $color-light-gray;
+        cursor: not-allowed;
+    }
+}
+
+@mixin button-secondary {
+    @include button-base;
+    background-color: $color-white;
+    color: $color-primary;
+    border-color: $color-primary;
+
+    &:hover {
+        background-color: $color-primary-light;
+        color: $color-white;
+    }
+
+    &:active {
+        background-color: $color-primary-dark;
+        color: $color-white;
+    }
+
+    &:disabled {
+        background-color: $color-light-gray;
+        color: $color-text-tertiary;
+        border-color: $color-light-gray;
+        cursor: not-allowed;
     }
 }

@@ -1,24 +1,27 @@
-// Это Server Component по умолчанию
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
-import { mockAnnouncements } from "@/lib/mockData";
+import { getMockAnnouncements } from "@/lib/mockData";
 import { Announcement } from "@/types";
 import styles from "@/styles/pages/Home.module.scss";
 
-// Функция для получения данных (может быть async)
-async function getAnnouncements(): Promise<Announcement[]> {
-    // В реальном приложении здесь будет запрос к бэкенду
-    // const res = await fetch('http://localhost:8080/api/announcements', { next: { revalidate: 60 } });
-    // if (!res.ok) {
-    //   throw new Error('Failed to fetch announcements');
-    // }
-    // return res.json();
+export default function HomePage() {
+    const [announcements, setAnnouncements] = useState<Announcement[]>([]);
 
-    // Пока используем заглушки:
-    return mockAnnouncements;
-}
+    useEffect(() => {
+        const fetchAnnouncements = () => {
+            setAnnouncements(getMockAnnouncements());
+        };
 
-export default async function HomePage() {
-    const announcements = await getAnnouncements();
+        fetchAnnouncements();
+
+        window.addEventListener('storage', fetchAnnouncements);
+
+        return () => {
+            window.removeEventListener('storage', fetchAnnouncements);
+        };
+    }, []);
 
     return (
         <div className={styles.container}>
@@ -26,12 +29,16 @@ export default async function HomePage() {
                 <h1 className={styles.title}>Последние объявления</h1>
 
                 <div className={styles.grid}>
-                    {announcements.map((announcement) => (
-                        <AnnouncementCard
-                            key={announcement.id}
-                            announcement={announcement}
-                        />
-                    ))}
+                    {announcements.length > 0 ? (
+                        announcements.map((announcement) => (
+                            <AnnouncementCard
+                                key={announcement.id}
+                                announcement={announcement}
+                            />
+                        ))
+                    ) : (
+                        <p>Объявлений пока нет.</p>
+                    )}
                 </div>
             </main>
         </div>

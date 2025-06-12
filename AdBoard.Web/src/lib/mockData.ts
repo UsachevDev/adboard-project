@@ -76,7 +76,7 @@ export const mockSubcategories: Subcategory[] = [
     { id: 'sub6_4', categoryId: 'cat6', name: 'Бытовая техника' },
     { id: 'sub6_5', categoryId: 'cat6', name: 'Растения' },
 
-    // Услуги (cat7)
+    // Услуги
     { id: 'sub7_1', categoryId: 'cat7', name: 'Предложение услуг' },
     { id: 'sub7_2', categoryId: 'cat7', name: 'Деловые услуги' },
     { id: 'sub7_3', categoryId: 'cat7', name: 'Обучение, курсы' },
@@ -101,7 +101,28 @@ export const mockSubcategories: Subcategory[] = [
     { id: 'sub10_3', categoryId: 'cat10', name: 'Франшизы' },
 ];
 
-export const mockAnnouncements: Announcement[] = [
+
+export const mockReviews: Review[] = [
+    {
+        id: "rev-1-uuid",
+        buyerId: "user-2-uuid",
+        sellerId: "user-1-uuid",
+        score: 5,
+        description: "Отличный продавец, всё быстро и четко!",
+        announcementId: "ann-1-uuid",
+    },
+    {
+        id: "rev-2-uuid",
+        buyerId: "user-1-uuid",
+        sellerId: "user-2-uuid",
+        score: 4,
+        description: "Квартира соответствует описанию, хозяин приветливый.",
+        announcementId: "ann-2-uuid",
+    },
+];
+
+// Начальные объявления (если localStorage пуст)
+const initialAnnouncements: Announcement[] = [
     {
         id: "ann-1-uuid",
         creatorId: "user-1-uuid",
@@ -156,21 +177,41 @@ export const mockAnnouncements: Announcement[] = [
     },
 ];
 
-export const mockReviews: Review[] = [
-    {
-        id: "rev-1-uuid",
-        buyerId: "user-2-uuid",
-        sellerId: "user-1-uuid",
-        score: 5,
-        description: "Отличный продавец, всё быстро и четко!",
-        announcementId: "ann-1-uuid",
-    },
-    {
-        id: "rev-2-uuid",
-        buyerId: "user-1-uuid",
-        sellerId: "user-2-uuid",
-        score: 4,
-        description: "Квартира соответствует описанию, хозяин приветливый.",
-        announcementId: "ann-2-uuid",
-    },
-];
+// Функция для загрузки объявлений из localStorage
+const loadAnnouncements = (): Announcement[] => {
+    if (typeof window !== 'undefined') {
+        const storedAnnouncements = localStorage.getItem('mock_announcements');
+        if (storedAnnouncements) {
+            try {
+                return JSON.parse(storedAnnouncements);
+            } catch (e) {
+                console.error("Error parsing stored announcements:", e);
+                return initialAnnouncements;
+            }
+        }
+    }
+    return initialAnnouncements;
+};
+
+// Функция для сохранения объявлений в localStorage
+const saveAnnouncements = (announcements: Announcement[]) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('mock_announcements', JSON.stringify(announcements));
+    }
+};
+
+export let mockAnnouncements: Announcement[] = loadAnnouncements();
+
+// Функция для добавления нового объявления
+export const addMockAnnouncement = (newAnn: Announcement) => {
+    mockAnnouncements.push(newAnn);
+    saveAnnouncements(mockAnnouncements);
+    console.log("Mock Announcement added:", newAnn);
+    console.log("Current Mock Announcements:", mockAnnouncements);
+};
+
+export const getMockAnnouncements = (): Announcement[] => {
+    return mockAnnouncements;
+};
+
+

@@ -1,7 +1,10 @@
-import { notFound } from "next/navigation";
+'use client';
+
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 
-import { mockAnnouncements } from '@/lib/mockData';
+import { getMockAnnouncements } from '@/lib/mockData';
 import { Announcement } from '@/types';
 import styles from './AnnouncementDetails.module.scss';
 
@@ -11,19 +14,46 @@ interface AnnouncementPageProps {
     };
 }
 
-async function getAnnouncement(id: string): Promise<Announcement | undefined> {
-    return mockAnnouncements.find((ann) => ann.id === id);
-}
-
-export default async function AnnouncementPage({
-    params,
+export default function AnnouncementPage({
+    params: { id },
 }: AnnouncementPageProps) {
-    const { id } = params;
+    const [announcement, setAnnouncement] = useState<Announcement | undefined>(undefined);
+    const router = useRouter();
 
-    const announcement = await getAnnouncement(id);
+    useEffect(() => {
+        const fetchAnnouncement = () => {
+            const allAnnouncements = getMockAnnouncements();
+            const foundAnn = allAnnouncements.find((ann) => ann.id === id);
+
+            if (foundAnn) {
+                setAnnouncement(foundAnn);
+            } else {
+                router.replace('/404');
+            }
+        };
+
+        fetchAnnouncement();
+        window.addEventListener('storage', fetchAnnouncement);
+
+        return () => {
+            window.removeEventListener('storage', fetchAnnouncement);
+        };
+    }, [id, router]);
+
+    if (announcement === undefined) {
+        return (
+            <div className={styles.loadingContainer}>
+                <p>Загрузка объявления...</p>
+            </div>
+        );
+    }
 
     if (!announcement) {
-        notFound();
+        return (
+            <div className={styles.notFoundContainer}>
+                <p>Объявление не найдено.</p>
+            </div>
+        );
     }
 
     return (

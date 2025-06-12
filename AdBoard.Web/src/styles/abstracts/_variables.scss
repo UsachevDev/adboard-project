@@ -1,44 +1,58 @@
 // Цвета
-$color-primary: #0070f3; // Основной синий
+$color-primary: #0070f3;       // Основной синий
 $color-primary-light: #69afff; // Основной Светло-синий
-$color-primary-dark: #0052af; // Основной Темно-синий
-$color-secondary: #ff4081; // Вторичный розовый
-$color-accent: #ffd700; // Акцентный золотой
-$color-text-primary: #333; // Основной текст
-$color-text-secondary: #666; // Второстепенный текст
-$color-text-tertiary: #999; // Третичный текст (например, для метаданных)
-$color-background: #f8f8f8; // Фон страницы
-$color-white: #fff; // Белый
-$color-light-gray: #eee; // Светло-серый
-$color-dark-gray: #525252; // Темно-серый
-$color-border: #ddd; // Цвет границ
+$color-primary-dark: #0052af;  // Основной Темно-синий
+
+$color-secondary: #ff4081;     // Вторичный розовый (для ошибок и негативных действий)
+$color-secondary-dark: #cc3367; // Темнее вторичного розового
+
+$color-accent: #ffd700;        // Акцентный золотой
+
+$color-success: #28a745;       // Цвет успеха (зеленый)
+$color-success-dark: #1e7e34;  // Темнее зеленого успеха
+
+$color-warning: #ffc107;       // Цвет предупреждения (желтый)
+$color-warning-dark: #d39e00;  // Темнее желтого предупреждения
+
+$color-info: #17a2b8;          // Информационный цвет (голубой)
+$color-info-dark: #117a8b;     // Темнее голубого
+
+$color-text-primary: #333;     // Основной текст
+$color-text-secondary: #666;   // Второстепенный текст
+$color-text-tertiary: #999;    // Третичный текст (например, для метаданных)
+
+$color-background: #f8f8f8;    // Фон страницы
+$color-white: #fff;            // Белый
+$color-light-gray: #eee;       // Светло-серый
+$color-dark-gray: #525252;     // Темно-серый
+$color-border: #ddd;          // Цвет границ
 
 // Шрифты
 $font-family-primary: 'Roboto', sans-serif;
 $font-family-secondary: 'Open Sans', sans-serif; // Пример дополнительного шрифта
 
 // Размеры шрифтов
-$font-size-base: 1rem; // 16px
-$font-size-sm: 0.875rem; // 14px
-$font-size-lg: 1.125rem; // 18px
-$font-size-xl: 1.25rem; // 20px
+$font-size-base: 1rem;       // 16px
+$font-size-sm: 0.875rem;     // 14px
+$font-size-lg: 1.125rem;     // 18px
+$font-size-xl: 1.25rem;      // 20px
 
-$font-size-h1: 2.5rem; // H1 для десктопа
-$font-size-h2: 2rem; // H2 для десктопа
-$font-size-h3: 1.75rem; // H3 для десктопа
-$font-size-h4: 1.5rem; // H4 для десктопа
+$font-size-h1: 2.5rem;       // H1 для десктопа
+$font-size-h2: 2rem;         // H2 для десктопа
+$font-size-h3: 1.75rem;      // H3 для десктопа
+$font-size-h4: 1.5rem;       // H4 для десктопа
 
 // Адаптивные размеры шрифтов
 $font-size-h1-md: 2rem;
 $font-size-h2-sm: 1.5rem;
 
 // Отступы и интервалы
-$spacing-xs: 0.25rem; // 4px
-$spacing-sm: 0.5rem; // 8px
-$spacing-md: 1rem; // 16px
-$spacing-lg: 1.5rem; // 24px
-$spacing-xl: 2rem; // 32px
-$spacing-xxl: 3rem; // 48px
+$spacing-xs: 0.25rem;        // 4px
+$spacing-sm: 0.5rem;         // 8px
+$spacing-md: 1rem;           // 16px
+$spacing-lg: 1.5rem;         // 24px
+$spacing-xl: 2rem;           // 32px
+$spacing-xxl: 3rem;          // 48px
 
 // Скругления углов
 $border-radius-sm: 4px;
@@ -46,14 +60,14 @@ $border-radius-md: 8px;
 $border-radius-lg: 12px;
 
 // Тени
-$box-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15), 
-    0 0 0 1px rgba(0, 0, 0, 0.05);
+$box-shadow-sm: 0 2px 5px rgba(0, 0, 0, 0.15),
+                 0 0 0 1px rgba(0, 0, 0, 0.05);
 
 $box-shadow-md: 0 5px 12px rgba(0, 0, 0, 0.2),
-    0 0 0 2px rgba(0, 0, 0, 0.08);
+                 0 0 0 2px rgba(0, 0, 0, 0.08);
 
 $box-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.3),
-    0 0 0 4px rgba(0, 0, 0, 0.1);
+                 0 0 0 4px rgba(0, 0, 0, 0.1);
 
 // Line height
 $line-height-base: 1.5;
