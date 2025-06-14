@@ -34,19 +34,7 @@ data class Announcement(
     @ManyToMany(mappedBy = "favorites")
     val favoritedBy: MutableSet<User> = mutableSetOf(),
 
-    @ManyToMany
-    @JoinTable(
-        name = "announcements_category",
-        joinColumns = [JoinColumn(name = "announcement_id", referencedColumnName = "id")],
-        inverseJoinColumns = [JoinColumn(name = "category_id", referencedColumnName = "id")]
-    )
-    val categories: MutableSet<Category> = mutableSetOf(),
-
-    @ManyToMany
-    @JoinTable(
-        name = "announcements_subcategory",
-        joinColumns = [JoinColumn(name = "announcement_id", referencedColumnName = "id")],
-        inverseJoinColumns = [JoinColumn(name = "subcategory_id", referencedColumnName = "id")]
-    )
-    val subcategories: MutableSet<Subcategory> = mutableSetOf(),
+    @ManyToOne
+    @JoinColumn(name = "subcategory_id")
+    val subcategory: Subcategory,
 )

@@ -1,5 +1,6 @@
 package ru.atom.adboard.services.security
 
+import jakarta.servlet.http.HttpServletRequest
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
@@ -28,6 +29,18 @@ object SecureService
     fun validateBCryptHash(data: String, hash: String) : Boolean
     {
         return encoder.matches(data,hash)
+    }
+
+    @JvmStatic
+    fun getTokenFromHeader(request: HttpServletRequest) : Optional<String> {
+        val AUTH_PREFIX = "Bearer "
+        val authHeader = request.getHeader("Authorization")
+
+        if (authHeader != null && authHeader.startsWith(AUTH_PREFIX))
+            return Optional.of(authHeader.substring(AUTH_PREFIX.length))
+        return Optional.empty()
+
+
     }
 
 

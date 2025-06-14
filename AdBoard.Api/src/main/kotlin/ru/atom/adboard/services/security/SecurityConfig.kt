@@ -27,7 +27,8 @@ class SecurityFilterChainConfig(_userDetails: CustomUserDetails)
         http
             .csrf { conf -> conf.disable()}
             .authorizeHttpRequests { request ->
-                request.requestMatchers(HttpMethod.POST, "/api/auth/registration", "/api/auth/login", "/api/auth/refresh").permitAll().anyRequest().authenticated()
+                request
+                    .requestMatchers(HttpMethod.POST, "/api/auth/logout").authenticated().anyRequest().permitAll()
             }
             .httpBasic(Customizer.withDefaults())
             .sessionManagement{ session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
