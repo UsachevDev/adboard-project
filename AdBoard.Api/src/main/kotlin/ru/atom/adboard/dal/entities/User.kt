@@ -1,8 +1,6 @@
 package ru.atom.adboard.dal.entities
 
 import jakarta.persistence.*
-import lombok.Getter
-import org.hibernate.annotations.CreationTimestamp
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
@@ -36,9 +34,11 @@ data class User
     @Column(name = "address")
     var city: String?,
 
-    @OneToMany(mappedBy = "user", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "sellerId", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val reviews: MutableList<Review> = mutableListOf(),
 
+    @OneToMany(mappedBy = "buyerId", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
+    val userReviews: MutableList<Review> = mutableListOf(),
     @ManyToMany
     @JoinTable(
         name = "favorites",

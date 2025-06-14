@@ -13,9 +13,10 @@ data class Subcategory(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @Column(name = "category", nullable = false)
-    val category: String,
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    val category: Category,
 
-    @ManyToMany(mappedBy = "subcategories")
+    @OneToMany(mappedBy = "subcategory")
     val announcements: MutableSet<Announcement> = mutableSetOf()
 )
