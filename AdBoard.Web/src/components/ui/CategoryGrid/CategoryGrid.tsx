@@ -1,30 +1,27 @@
-// src/components/ui/CategoryGrid/CategoryGrid.tsx
 'use client';
 
 import React from 'react';
 import Image from 'next/image';
-import Link from 'next/link'; // <-- Убедитесь, что Link импортирован
+import Link from 'next/link';
 import styles from './CategoryGrid.module.scss';
-import { Category, Subcategory } from '@/types'; // Убедитесь, что типы импортированы
+import { Category, Subcategory } from '@/types';
 
 interface CategoryGridProps {
     items: (Category | Subcategory)[];
-    basePath: string; // /search
-    isCategoryGrid?: boolean; // Новый пропс: true для основных категорий, false/undefined для подкатегорий
+    basePath: string;
+    isCategoryGrid?: boolean;
 }
 
 const CategoryGrid: React.FC<CategoryGridProps> = ({ items, basePath, isCategoryGrid = false }) => {
     return (
         <div className={styles.gridContainer}>
             {items.map((item) => {
-                const isCategory = 'subcategories' in item; // Простая проверка, является ли элемент Category
+                const isCategory = 'subcategories' in item;
                 let href = '';
 
                 if (isCategoryGrid) {
-                    // Если это сетка основных категорий, ссылка ведет на /search?categoryId=
                     href = `${basePath}?categoryId=${item.id}`;
                 } else {
-                    // Если это сетка подкатегорий, ссылка ведет на /search?subcategoryId=
                     href = `${basePath}?subcategoryId=${item.id}`;
                 }
 
@@ -36,7 +33,7 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ items, basePath, isCategory
                                     src={item.image}
                                     alt={item.name}
                                     layout="fill"
-                                    objectFit="contain" // Используйте "contain" для логотипов/иконок категорий
+                                    objectFit="contain"
                                 />
                             )}
                         </div>

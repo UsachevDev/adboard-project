@@ -10,7 +10,7 @@
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    height: 100%; // Для карточек в grid, чтобы они были одной высоты
+    height: 100%;
 
     &:hover {
         transform: translateY(-5px);
@@ -21,7 +21,7 @@
 .imageWrapper {
     position: relative;
     width: 100%;
-    padding-top: 66.66%; // 3:2 aspect ratio
+    padding-top: 66.66%;
     margin-bottom: $spacing-md;
     border-radius: $border-radius-sm;
     overflow: hidden;
@@ -55,14 +55,14 @@
     font-weight: 600;
     color: $color-primary;
     margin-bottom: $spacing-sm;
-    @include truncate-text(2); // Обрезка текста на 2 строках
+    @include truncate-text(2);
 }
 
 .price {
     font-size: $font-size-xl;
     font-weight: bold;
     color: $color-secondary;
-    margin-top: auto; // Отталкивает цену вниз
+    margin-top: auto;
     margin-bottom: $spacing-sm;
 }
 

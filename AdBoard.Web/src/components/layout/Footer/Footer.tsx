@@ -1,4 +1,4 @@
-"use client"; // Может быть клиентским, если есть интерактивность
+"use client";
 
 import React from "react";
 import SocialLink from '@/components/ui/SocialLink/SocialLink';

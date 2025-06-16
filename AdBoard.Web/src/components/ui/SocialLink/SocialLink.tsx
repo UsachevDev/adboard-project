@@ -4,9 +4,9 @@ import styles from './SocialLink.module.scss';
 
 interface SocialLinkProps {
   href: string;
-  iconSrc: string; // Путь к SVG иконке
+  iconSrc: string;
   alt: string;
-  label: string; // Для aria-label
+  label: string;
 }
 
 const SocialLink: React.FC<SocialLinkProps> = ({ href, iconSrc, alt, label }) => {

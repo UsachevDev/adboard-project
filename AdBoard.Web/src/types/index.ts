@@ -49,7 +49,7 @@ export interface Subcategory {
     image?: string;
 }
 
-// Интерфейсы для заглушек, если нужно будет расширить данные для отображения
+// Интерфейсы для заглушек
 export interface AnnouncementWithDetails extends Announcement {
     creator?: User; // Для отображения информации о создателе
     reviews?: Review[]; // Отзывы к объявлению

@@ -19,7 +19,7 @@ export const mockUsers: User[] = [
 ];
 
 export const mockCategories: Category[] = [
-    { id: 'cat1', name: 'Недвижимость', image: '/images/cat_realestate.png' }, // Пример пути
+    { id: 'cat1', name: 'Недвижимость', image: '/images/cat_realestate.png' },
     { id: 'cat2', name: 'Транспорт', image: '/images/cat_transport.png' },
     { id: 'cat3', name: 'Работа', image: '/images/cat_job.png' },
     { id: 'cat4', name: 'Электроника', image: '/images/cat_electronics.png' },
@@ -115,8 +115,6 @@ export const mockReviews: Review[] = [
     },
 ];
 
-// Обновите initialAnnouncements, чтобы они использовали новые ID и ссылались на объекты, а не на find.
-// Убедитесь, что creatorId ссылается на существующие mockUsers.
 const initialAnnouncements: Announcement[] = [
     {
         id: "ann-1-uuid",
@@ -127,7 +125,6 @@ const initialAnnouncements: Announcement[] = [
         city: "Москва",
         count: 120,
         images: ["/iphone-13.jpg", "/iphone-13-2.jpg"],
-        // Ссылки на объекты категорий и подкатегорий
         categories: [mockCategories.find(c => c.id === 'cat4')!], // 'Электроника' - cat4
         subcategories: [mockSubcategories.find(s => s.id === 'sub4_1')!], // 'Телефоны' - sub4_1
         createdAt: "2025-03-01T09:15:00Z",
@@ -187,15 +184,13 @@ const initialAnnouncements: Announcement[] = [
 ];
 
 // Функция для загрузки объявлений из localStorage
-const LOCAL_STORAGE_KEY = 'adboard_announcements'; // Используйте одно и то же имя ключа
+const LOCAL_STORAGE_KEY = 'adboard_announcements';
 
 const loadAnnouncements = (): Announcement[] => {
     if (typeof window !== 'undefined') {
         const storedAnnouncements = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedAnnouncements) {
             try {
-                // Преобразуем строковые даты обратно в объекты Date (или оставляем ISO-строки)
-                // Для использования в React-компонентах лучше оставить ISO-строки и форматировать их при отображении
                 return JSON.parse(storedAnnouncements);
             } catch (e) {
                 console.error("Error parsing stored announcements:", e);
@@ -230,14 +225,13 @@ export const addMockAnnouncement = (newAnn: Announcement) => {
     console.log("Mock Announcement added:", newAnn);
     console.log("Current Mock Announcements:", mockAnnouncements);
 
-    // Опционально: Вызываем событие storage для оповещения других частей приложения
+    // Вызываем событие storage для оповещения других частей приложения
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new Event('storage'));
     }
 };
 
 export const getMockAnnouncements = (): Announcement[] => {
-    // При каждом запросе читаем из localStorage, чтобы всегда иметь актуальные данные
-    // Это важно для клиентских компонентов
+    // При каждом запросе читаем из localStorage
     return loadAnnouncements();
 };

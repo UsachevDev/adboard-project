@@ -13,7 +13,7 @@ interface AnnouncementCardProps {
 const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
     announcement,
 }) => {
-    const router = useRouter(); // Инициализируем роутер внутри клиентского компонента
+    const router = useRouter();
 
     const handleCardClick = () => {
         router.push(`/announcements/${announcement.id}`);
