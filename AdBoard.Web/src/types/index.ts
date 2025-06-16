@@ -1,9 +1,10 @@
-export type UUID = string; // Или number, если UUID на бэке будет числом, но обычно это строка
+// src/types/index.ts
+export type UUID = string;
 
 export interface User {
     id: UUID;
     email: string;
-    password?: string; // Пароль не будем получать на фронт, но для формы регистрации он нужен
+    password?: string;
     createdAt: string; // ISO Date string
 }
 
@@ -16,8 +17,8 @@ export interface Announcement {
     city: string;
     count: number; // INTEGER (количество просмотров)
     images?: string[]; // Array of image URLs
-    categories?: Category[]; // Для связи Many-to-Many
-    subcategories?: Subcategory[]; // Для связи Many-to-Many
+    categories?: Category[]; // Array of Category objects
+    subcategories?: Subcategory[]; // Array of Subcategory objects
     createdAt: string;
 }
 
@@ -38,12 +39,14 @@ export interface Review {
 export interface Category {
     id: UUID;
     name: string;
+    image?: string;
 }
 
 export interface Subcategory {
     id: UUID;
     name: string;
     categoryId: UUID; // Связь с категорией
+    image?: string;
 }
 
 // Интерфейсы для заглушек, если нужно будет расширить данные для отображения

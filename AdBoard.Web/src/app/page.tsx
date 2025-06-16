@@ -1,8 +1,10 @@
+// src/app/page.tsx
 'use client';
 
 import React, { useEffect, useState } from 'react';
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
-import { getMockAnnouncements } from "@/lib/mockData";
+import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
+import { getMockAnnouncements, mockCategories } from "@/lib/mockData";
 import { Announcement } from "@/types";
 import styles from "@/styles/pages/Home.module.scss";
 
@@ -11,7 +13,11 @@ export default function HomePage() {
 
     useEffect(() => {
         const fetchAnnouncements = () => {
-            setAnnouncements(getMockAnnouncements());
+            const allAnnouncements = getMockAnnouncements();
+            const latestAnnouncements = allAnnouncements
+                                            .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                            .slice(0, 12);
+            setAnnouncements(latestAnnouncements);
         };
 
         fetchAnnouncements();
@@ -26,6 +32,10 @@ export default function HomePage() {
     return (
         <div className={styles.container}>
             <main className={styles.main}>
+                <CategoryGrid items={mockCategories} basePath="/search" isCategoryGrid={true} />
+
+                <hr className={styles.sectionDivider} />
+
                 <h1 className={styles.title}>Последние объявления</h1>
 
                 <div className={styles.grid}>
@@ -37,7 +47,7 @@ export default function HomePage() {
                             />
                         ))
                     ) : (
-                        <p>Объявлений пока нет.</p>
+                        <p className={styles.noAnnouncementsMessage}>Объявлений пока нет.</p>
                     )}
                 </div>
             </main>

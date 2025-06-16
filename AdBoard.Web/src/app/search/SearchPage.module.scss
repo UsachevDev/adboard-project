@@ -1,31 +1,58 @@
-@use '@/styles/abstracts/variables' as *;
-@use '@/styles/abstracts/mixins' as *;
+/* src/app/search/SearchPage.module.scss */
+
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
 
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: $spacing-xl $spacing-md;
-  flex-grow: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: $spacing-md;
 
-  @include media-md {
-    padding: $spacing-xxl $spacing-lg;
-  }
+    @include media-md {
+        padding: $spacing-lg;
+    }
 }
 
 .title {
-  text-align: center;
-  margin-bottom: $spacing-xl;
-  font-size: $font-size-h2;
-  color: $color-text-primary;
+    font-size: $font-size-h2;
+    color: $color-text-primary;
+    margin-bottom: $spacing-xxl;
+    text-align: center;
+
+    @include media-sm {
+        font-size: $font-size-h2-sm;
+    }
+}
+
+.subcategoriesTitle { // <-- НОВЫЙ СТИЛЬ ДЛЯ ЗАГОЛОВКА ПОДКАТЕГОРИЙ
+    font-size: $font-size-h3; // Например, H3
+    color: $color-text-primary;
+    margin-top: $spacing-xxl; // Отступ сверху
+    margin-bottom: $spacing-lg; // Отступ снизу
+    text-align: center;
+
+    @include media-sm {
+        font-size: $font-size-h4; // Адаптивный размер
+    }
 }
 
 .resultsGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: $spacing-lg;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: $spacing-lg;
+    padding: $spacing-md 0;
+}
 
-  @include media-md {
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: $spacing-xl;
-  }
+.message {
+    text-align: center;
+    font-size: $font-size-lg;
+    color: $color-text-secondary;
+    padding: $spacing-xl 0;
+    grid-column: 1 / -1; /* Чтобы сообщение занимало всю ширину грида */
+}
+
+.sectionDivider { // <-- СТИЛЬ ДЛЯ РАЗДЕЛИТЕЛЯ
+    border: none;
+    border-top: 1px solid $color-border;
+    margin: $spacing-xxl 0;
 }

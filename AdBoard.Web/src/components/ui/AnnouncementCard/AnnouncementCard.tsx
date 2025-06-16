@@ -50,7 +50,7 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
                 {announcement.categories &&
                     announcement.categories.length > 0 && (
                         <p className={styles.categories}>
-                            Категории:{" "}
+                            Категория:{" "}
                             {announcement.categories
                                 .map((cat) => cat.name)
                                 .join(", ")}

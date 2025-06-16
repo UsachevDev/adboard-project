@@ -1,39 +1,44 @@
 @use "@/styles/abstracts/variables" as *;
 @use "@/styles/abstracts/mixins" as *;
-@use "sass:color";
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .main {
-    padding: $spacing-xl 0;
-    flex-grow: 1;
-}
+    padding-top: $spacing-xl;
 
-.title {
-    text-align: center;
-    margin-bottom: $spacing-xl;
-    font-size: $font-size-h2;
-    color: $color-text-primary;
-}
+    .title {
+        font-size: $font-size-h1;
+        color: $color-text-primary;
+        margin-bottom: $spacing-xxl;
+        text-align: center;
 
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: $spacing-lg;
-    padding: 0;
-
-    @include media-md {
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: $spacing-xl;
+        @include media-sm {
+            font-size: $font-size-h1-md;
+        }
     }
 
-    @include media-lg {
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+
+    .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: $spacing-lg;
+        padding: $spacing-md 0;
+    }
+
+    .sectionDivider {
+        border: none;
+        border-top: 1px solid $color-border;
+        margin: $spacing-xxl 0;
+    }
+
+    .noAnnouncementsMessage {
+        text-align: center;
+        font-size: $font-size-lg;
+        color: $color-text-secondary;
+        padding: $spacing-xl 0;
+        grid-column: 1 / -1;
     }
 }

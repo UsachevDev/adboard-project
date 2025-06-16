@@ -19,86 +19,80 @@ export const mockUsers: User[] = [
 ];
 
 export const mockCategories: Category[] = [
-    { id: 'cat1', name: 'Недвижимость' },
-    { id: 'cat2', name: 'Транспорт' },
-    { id: 'cat3', name: 'Работа' },
-    { id: 'cat4', name: 'Электроника' },
-    { id: 'cat5', name: 'Личные вещи' },
-    { id: 'cat6', name: 'Для дома и дачи' },
-    { id: 'cat7', name: 'Услуги' },
-    { id: 'cat8', name: 'Хобби и отдых' },
-    { id: 'cat9', name: 'Животные' },
-    { id: 'cat10', name: 'Для бизнеса' },
+    { id: 'cat1', name: 'Недвижимость', image: '/images/cat_realestate.png' }, // Пример пути
+    { id: 'cat2', name: 'Транспорт', image: '/images/cat_transport.png' },
+    { id: 'cat3', name: 'Работа', image: '/images/cat_job.png' },
+    { id: 'cat4', name: 'Электроника', image: '/images/cat_electronics.png' },
+    { id: 'cat5', name: 'Личные вещи', image: '/images/cat_personal.png' },
+    { id: 'cat6', name: 'Для дома и дачи', image: '/images/cat_home_garden.png' },
+    { id: 'cat7', name: 'Услуги', image: '/images/cat_services.png' },
+    { id: 'cat8', name: 'Хобби и отдых', image: '/images/cat_hobby.png' },
+    { id: 'cat9', name: 'Животные', image: '/images/cat_animals.png' },
+    { id: 'cat10', name: 'Для бизнеса', image: '/images/cat_business.png' },
 ];
 
 export const mockSubcategories: Subcategory[] = [
     // Недвижимость
-    { id: 'sub1_1', categoryId: 'cat1', name: 'Квартиры' },
-    { id: 'sub1_2', categoryId: 'cat1', name: 'Комнаты' },
-    { id: 'sub1_3', categoryId: 'cat1', name: 'Дома, дачи, коттеджи' },
-    { id: 'sub1_4', categoryId: 'cat1', name: 'Земельные участки' },
-    { id: 'sub1_5', categoryId: 'cat1', name: 'Гаражи и машиноместа' },
-    { id: 'sub1_6', categoryId: 'cat1', name: 'Коммерческая недвижимость' },
-    { id: 'sub1_7', categoryId: 'cat1', name: 'Недвижимость за рубежом' },
+    { id: 'sub1_1', categoryId: 'cat1', name: 'Квартиры', image: '/images/sub_apartments.png' },
+    { id: 'sub1_2', categoryId: 'cat1', name: 'Дома, дачи, коттеджи', image: '/images/sub_houses.png' },
+    { id: 'sub1_3', categoryId: 'cat1', name: 'Земельные участки', image: '/images/sub_land.png' },
+    { id: 'sub1_4', categoryId: 'cat1', name: 'Гаражи и машиноместа', image: '/images/sub_garages.png' },
+    { id: 'sub1_5', categoryId: 'cat1', name: 'Коммерческая недвижимость', image: '/images/sub_commercial.png' },
 
     // Транспорт
-    { id: 'sub2_1', categoryId: 'cat2', name: 'Автомобили' },
-    { id: 'sub2_2', categoryId: 'cat2', name: 'Мотоциклы и мототехника' },
-    { id: 'sub2_3', categoryId: 'cat2', name: 'Грузовики и спецтехника' },
-    { id: 'sub2_4', categoryId: 'cat2', name: 'Водный транспорт' },
-    { id: 'sub2_5', categoryId: 'cat2', name: 'Запчасти и аксессуары' },
+    { id: 'sub2_1', categoryId: 'cat2', name: 'Автомобили', image: '/images/sub_cars.png' },
+    { id: 'sub2_2', categoryId: 'cat2', name: 'Мотоциклы и мототехника', image: '/images/sub_motorcycles.png' },
+    { id: 'sub2_3', categoryId: 'cat2', name: 'Грузовики и спецтехника', image: '/images/sub_trucks.png' },
+    { id: 'sub2_4', categoryId: 'cat2', name: 'Водный транспорт', image: '/images/sub_water.png' },
+    { id: 'sub2_5', categoryId: 'cat2', name: 'Запчасти и аксессуары', image: '/images/sub_parts.png' },
 
     // Работа
-    { id: 'sub3_1', categoryId: 'cat3', name: 'Вакансии' },
-    { id: 'sub3_2', categoryId: 'cat3', name: 'Резюме' },
+    { id: 'sub3_1', categoryId: 'cat3', name: 'Вакансии', image: '/images/sub_vacancies.png' },
+    { id: 'sub3_2', categoryId: 'cat3', name: 'Резюме', image: '/images/sub_resumes.png' },
 
     // Электроника
-    { id: 'sub4_1', categoryId: 'cat4', name: 'Телефоны' },
-    { id: 'sub4_2', categoryId: 'cat4', name: 'Компьютеры' },
-    { id: 'sub4_3', categoryId: 'cat4', name: 'Ноутбуки' },
-    { id: 'sub4_4', categoryId: 'cat4', name: 'Планшеты и электронные книги' },
-    { id: 'sub4_5', categoryId: 'cat4', name: 'Фото- и видеокамеры' },
-    { id: 'sub4_6', categoryId: 'cat4', name: 'Аудио и видео' },
-    { id: 'sub4_7', categoryId: 'cat4', name: 'Игры, приставки и программы' },
-    { id: 'sub4_8', categoryId: 'cat4', name: 'Настольные компьютеры' },
+    { id: 'sub4_1', categoryId: 'cat4', name: 'Телефоны', image: '/images/sub_phones.png' },
+    { id: 'sub4_2', categoryId: 'cat4', name: 'Компьютеры', image: '/images/sub_computers.png' },
+    { id: 'sub4_3', categoryId: 'cat4', name: 'Ноутбуки', image: '/images/sub_laptops.png' },
+    { id: 'sub4_4', categoryId: 'cat4', name: 'Планшеты и электронные книги', image: '/images/sub_tablets.png' },
+    { id: 'sub4_5', categoryId: 'cat4', name: 'Аудио и видео', image: '/images/sub_audio_video.png' },
+    { id: 'sub4_6', categoryId: 'cat4', name: 'Игровые приставки', image: '/images/sub_games.png' },
+    { id: 'sub4_7', categoryId: 'cat4', name: 'Бытовая техника', image: '/images/sub_appliances.png' },
 
     // Личные вещи
-    { id: 'sub5_1', categoryId: 'cat5', name: 'Одежда, обувь, аксессуары' },
-    { id: 'sub5_2', categoryId: 'cat5', name: 'Детская одежда и обувь' },
-    { id: 'sub5_3', categoryId: 'cat5', name: 'Товары для детей и игрушки' },
-    { id: 'sub5_4', categoryId: 'cat5', name: 'Красота и здоровье' },
-    { id: 'sub5_5', categoryId: 'cat5', name: 'Часы и украшения' },
+    { id: 'sub5_1', categoryId: 'cat5', name: 'Одежда, обувь, аксессуары', image: '/images/sub_clothes.png' },
+    { id: 'sub5_2', categoryId: 'cat5', name: 'Детская одежда и обувь', image: '/images/sub_kid_clothes.png' },
+    { id: 'sub5_3', categoryId: 'cat5', name: 'Красота и здоровье', image: '/images/sub_beauty_health.png' },
+    { id: 'sub5_4', categoryId: 'cat5', name: 'Часы и украшения', image: '/images/sub_jewelry.png' },
 
     // Для дома и дачи
-    { id: 'sub6_1', categoryId: 'cat6', name: 'Мебель и интерьер' },
-    { id: 'sub6_2', categoryId: 'cat6', name: 'Посуда и товары для кухни' },
-    { id: 'sub6_3', categoryId: 'cat6', name: 'Ремонт и строительство' },
-    { id: 'sub6_4', categoryId: 'cat6', name: 'Бытовая техника' },
-    { id: 'sub6_5', categoryId: 'cat6', name: 'Растения' },
+    { id: 'sub6_1', categoryId: 'cat6', name: 'Мебель и интерьер', image: '/images/sub_furniture.png' },
+    { id: 'sub6_2', categoryId: 'cat6', name: 'Посуда и товары для кухни', image: '/images/sub_kitchen.png' },
+    { id: 'sub6_3', categoryId: 'cat6', name: 'Ремонт и строительство', image: '/images/sub_renovation.png' },
+    { id: 'sub6_4', categoryId: 'cat6', name: 'Растения', image: '/images/sub_plants.png' },
 
     // Услуги
-    { id: 'sub7_1', categoryId: 'cat7', name: 'Предложение услуг' },
-    { id: 'sub7_2', categoryId: 'cat7', name: 'Деловые услуги' },
-    { id: 'sub7_3', categoryId: 'cat7', name: 'Обучение, курсы' },
+    { id: 'sub7_1', categoryId: 'cat7', name: 'Предложение услуг', image: '/images/sub_offers.png' },
+    { id: 'sub7_2', categoryId: 'cat7', name: 'Деловые услуги', image: '/images/sub_business_services.png' },
+    { id: 'sub7_3', categoryId: 'cat7', name: 'Обучение, курсы', image: '/images/sub_courses.png' },
 
     // Хобби и отдых
-    { id: 'sub8_1', categoryId: 'cat8', name: 'Билеты и путешествия' },
-    { id: 'sub8_2', categoryId: 'cat8', name: 'Спорт и отдых' },
-    { id: 'sub8_3', categoryId: 'cat8', name: 'Книги и журналы' },
-    { id: 'sub8_4', categoryId: 'cat8', name: 'Коллекционирование' },
-    { id: 'sub8_5', categoryId: 'cat8', name: 'Музыкальные инструменты' },
+    { id: 'sub8_1', categoryId: 'cat8', name: 'Билеты и путешествия', image: '/images/sub_tickets.png' },
+    { id: 'sub8_2', categoryId: 'cat8', name: 'Спорт и отдых', image: '/images/sub_sport.png' },
+    { id: 'sub8_3', categoryId: 'cat8', name: 'Книги и журналы', image: '/images/sub_books.png' },
+    { id: 'sub8_4', categoryId: 'cat8', name: 'Музыкальные инструменты', image: '/images/sub_instruments.png' },
 
     // Животные
-    { id: 'sub9_1', categoryId: 'cat9', name: 'Кошки' },
-    { id: 'sub9_2', categoryId: 'cat9', name: 'Собаки' },
-    { id: 'sub9_3', categoryId: 'cat9', name: 'Птицы' },
-    { id: 'sub9_4', categoryId: 'cat9', name: 'Аквариум' },
-    { id: 'sub9_5', categoryId: 'cat9', name: 'Товары для животных' },
+    { id: 'sub9_1', categoryId: 'cat9', name: 'Кошки', image: '/images/sub_cats.png' },
+    { id: 'sub9_2', categoryId: 'cat9', name: 'Собаки', image: '/images/sub_dogs.png' },
+    { id: 'sub9_3', categoryId: 'cat9', name: 'Птицы', image: '/images/sub_birds.png' },
+    { id: 'sub9_4', categoryId: 'cat9', name: 'Аквариум', image: '/images/sub_aquarium.png' },
+    { id: 'sub9_5', categoryId: 'cat9', name: 'Товары для животных', image: '/images/sub_pet_supplies.png' },
 
     // Для бизнеса
-    { id: 'sub10_1', categoryId: 'cat10', name: 'Оборудование для бизнеса' },
-    { id: 'sub10_2', categoryId: 'cat10', name: 'Готовый бизнес' },
-    { id: 'sub10_3', categoryId: 'cat10', name: 'Франшизы' },
+    { id: 'sub10_1', categoryId: 'cat10', name: 'Оборудование для бизнеса', image: '/images/sub_equipment.png' },
+    { id: 'sub10_2', categoryId: 'cat10', name: 'Готовый бизнес', image: '/images/sub_ready_business.png' },
+    { id: 'sub10_3', categoryId: 'cat10', name: 'Франшизы', image: '/images/sub_franchises.png' },
 ];
 
 
@@ -121,7 +115,8 @@ export const mockReviews: Review[] = [
     },
 ];
 
-// Начальные объявления (если localStorage пуст)
+// Обновите initialAnnouncements, чтобы они использовали новые ID и ссылались на объекты, а не на find.
+// Убедитесь, что creatorId ссылается на существующие mockUsers.
 const initialAnnouncements: Announcement[] = [
     {
         id: "ann-1-uuid",
@@ -132,8 +127,9 @@ const initialAnnouncements: Announcement[] = [
         city: "Москва",
         count: 120,
         images: ["/iphone-13.jpg", "/iphone-13-2.jpg"],
-        categories: [mockCategories.find(c => c.name === 'Электроника')!],
-        subcategories: [mockSubcategories.find(s => s.name === 'Телефоны')!],
+        // Ссылки на объекты категорий и подкатегорий
+        categories: [mockCategories.find(c => c.id === 'cat4')!], // 'Электроника' - cat4
+        subcategories: [mockSubcategories.find(s => s.id === 'sub4_1')!], // 'Телефоны' - sub4_1
         createdAt: "2025-03-01T09:15:00Z",
     },
     {
@@ -145,8 +141,8 @@ const initialAnnouncements: Announcement[] = [
         city: "Санкт-Петербург",
         count: 250,
         images: ["/flat-1.jpg", "/flat-2.jpg"],
-        categories: [mockCategories.find(c => c.name === 'Недвижимость')!],
-        subcategories: [mockSubcategories.find(s => s.name === 'Квартиры')!],
+        categories: [mockCategories.find(c => c.id === 'cat1')!], // 'Недвижимость' - cat1
+        subcategories: [mockSubcategories.find(s => s.id === 'sub1_1')!], // 'Квартиры' - sub1_1
         createdAt: "2025-04-06T19:45:10Z",
     },
     {
@@ -158,8 +154,8 @@ const initialAnnouncements: Announcement[] = [
         city: "Москва",
         count: 80,
         images: ["/macbook.jpg"],
-        categories: [mockCategories.find(c => c.name === 'Электроника')!],
-        subcategories: [mockSubcategories.find(s => s.name === 'Ноутбуки')!],
+        categories: [mockCategories.find(c => c.id === 'cat4')!], // 'Электроника' - cat4
+        subcategories: [mockSubcategories.find(s => s.id === 'sub4_3')!], // 'Ноутбуки' - sub4_3
         createdAt: "2024-12-21T04:05:00Z",
     },
     {
@@ -171,18 +167,35 @@ const initialAnnouncements: Announcement[] = [
         city: "Казань",
         count: 300,
         images: ["/bmw-x5.jpg"],
-        categories: [mockCategories.find(c => c.name === 'Транспорт')!],
-        subcategories: [mockSubcategories.find(s => s.name === 'Автомобили')!],
+        categories: [mockCategories.find(c => c.id === 'cat2')!], // 'Транспорт' - cat2
+        subcategories: [mockSubcategories.find(s => s.id === 'sub2_1')!], // 'Автомобили' - sub2_1
         createdAt: "2025-06-10T09:15:00Z",
+    },
+    {
+        id: "ann-5-uuid",
+        creatorId: "user-1-uuid",
+        title: "Коттедж на берегу озера",
+        description: "Шикарный вид, свежий воздух. Идеальное место для отдыха.",
+        price: 15000000,
+        city: "Сочи",
+        count: 50,
+        images: ["/flat-1.jpg"], // Используйте существующую картинку как заглушку
+        categories: [mockCategories.find(c => c.id === 'cat1')!], // 'Недвижимость' - cat1
+        subcategories: [mockSubcategories.find(s => s.id === 'sub1_3')!], // 'Дома, дачи, коттеджи' - sub1_3
+        createdAt: "2025-05-20T10:00:00Z",
     },
 ];
 
 // Функция для загрузки объявлений из localStorage
+const LOCAL_STORAGE_KEY = 'adboard_announcements'; // Используйте одно и то же имя ключа
+
 const loadAnnouncements = (): Announcement[] => {
     if (typeof window !== 'undefined') {
-        const storedAnnouncements = localStorage.getItem('mock_announcements');
+        const storedAnnouncements = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (storedAnnouncements) {
             try {
+                // Преобразуем строковые даты обратно в объекты Date (или оставляем ISO-строки)
+                // Для использования в React-компонентах лучше оставить ISO-строки и форматировать их при отображении
                 return JSON.parse(storedAnnouncements);
             } catch (e) {
                 console.error("Error parsing stored announcements:", e);
@@ -196,22 +209,35 @@ const loadAnnouncements = (): Announcement[] => {
 // Функция для сохранения объявлений в localStorage
 const saveAnnouncements = (announcements: Announcement[]) => {
     if (typeof window !== 'undefined') {
-        localStorage.setItem('mock_announcements', JSON.stringify(announcements));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(announcements));
     }
 };
 
+// Инициализируем mockAnnouncements при загрузке модуля
 export let mockAnnouncements: Announcement[] = loadAnnouncements();
+
+// Убедимся, что initialAnnouncements записаны в localStorage при первом запуске, если они отсутствуют
+if (typeof window !== 'undefined' && !localStorage.getItem(LOCAL_STORAGE_KEY)) {
+    saveAnnouncements(initialAnnouncements);
+}
+
 
 // Функция для добавления нового объявления
 export const addMockAnnouncement = (newAnn: Announcement) => {
-    mockAnnouncements.push(newAnn);
+    // Вставляем в начало для отображения последних объявлений
+    mockAnnouncements.unshift(newAnn);
     saveAnnouncements(mockAnnouncements);
     console.log("Mock Announcement added:", newAnn);
     console.log("Current Mock Announcements:", mockAnnouncements);
+
+    // Опционально: Вызываем событие storage для оповещения других частей приложения
+    if (typeof window !== 'undefined') {
+        window.dispatchEvent(new Event('storage'));
+    }
 };
 
 export const getMockAnnouncements = (): Announcement[] => {
-    return mockAnnouncements;
+    // При каждом запросе читаем из localStorage, чтобы всегда иметь актуальные данные
+    // Это важно для клиентских компонентов
+    return loadAnnouncements();
 };
-
-
