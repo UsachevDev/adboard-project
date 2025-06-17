@@ -12,6 +12,6 @@ data class Category(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @ManyToMany(mappedBy = "categories")
-    val announcements: MutableSet<Announcement> = mutableSetOf()
+    @OneToMany(fetch = FetchType.EAGER, mappedBy = "category")
+    val subcategories:  List<Subcategory> = Collections.emptyList()
 )

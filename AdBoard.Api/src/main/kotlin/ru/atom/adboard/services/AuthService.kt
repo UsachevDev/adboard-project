@@ -32,15 +32,12 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
 
     fun logout(request: HttpServletRequest): ServiceResponse {
         try {
-            val authHeader: String = request.getHeader("Authorization")
-            if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                val jwt = authHeader.substring(7)
-                val email: String = jwtUtil.extractEmail(jwt)
-
+            val token = SecureService.getTokenFromHeader(request)
+            if (token.isPresent) {
+                val email: String = jwtUtil.extractEmail(token.get())
                 val refreshToken = refreshRepo.findByUser_Email(email)
                 if(refreshToken.isPresent) refreshRepo.delete(refreshToken.get())
             }
-
             return ServiceResponse(HttpStatus.OK)
         } catch (ex: java.lang.Exception) {
             return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -61,7 +58,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
             val userDetails = validRefreshToken.user
 
             val newJwt: String =
-                jwtUtil.generateAccessToken(userDetails.email, userDetails.name)
+                jwtUtil.generateAccessToken(userDetails.email, userDetails.id)
             val newRefreshToken = jwtUtil.generateRefreshToken(userDetails.username)
 
             validRefreshToken.token = newRefreshToken
@@ -81,7 +78,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         catch (ex: AuthenticationException) { return ServiceResponse(HttpStatus.FORBIDDEN, ServiceError("Incorrect email or password")) }
 
         val userDetails: User = authentication.principal as User
-        val accessToken = jwtUtil.generateAccessToken(userDetails.email, userDetails.name)
+        val accessToken = jwtUtil.generateAccessToken(userDetails.email, userDetails.id)
         val refreshToken = jwtUtil.generateRefreshToken(userDetails.email)
 
         try{
@@ -116,11 +113,11 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
                 request.phoneNumber,
                 request.city
             )
-
-            val accessToken = jwtUtil.generateAccessToken(user.email, request.name)
+            val dbResponse = userRepo.save(user)
+            val accessToken = jwtUtil.generateAccessToken(dbResponse.email, dbResponse.id)
             val refreshToken = jwtUtil.generateRefreshToken(user.email)
 
-            userRepo.save(user)
+
             refreshRepo.save(
                 RefreshToken(refreshToken, Date(System.currentTimeMillis() + jwtUtil.refreshTokenExpiration), user)
             )

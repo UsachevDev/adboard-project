@@ -43,6 +43,18 @@ object SecureService
 
     }
 
+    @JvmStatic
+    fun isValidId(id: String?) : Boolean
+    {
+        try {
+            if(id == null) return false
+            UUID.fromString(id)
+            return true
+        } catch (e: java.lang.Exception) {
+            return false
+        }
+    }
+
 
 
 }

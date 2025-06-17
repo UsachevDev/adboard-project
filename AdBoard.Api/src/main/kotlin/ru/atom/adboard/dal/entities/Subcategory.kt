@@ -1,5 +1,6 @@
 package ru.atom.adboard.dal.entities
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import java.util.*
 
@@ -13,10 +14,12 @@ data class Subcategory(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
+    @JsonIgnore
     val category: Category,
 
-    @OneToMany(mappedBy = "subcategory")
+    @OneToMany(mappedBy = "subcategory", fetch = FetchType.LAZY)
+    @JsonIgnore
     val announcements: MutableSet<Announcement> = mutableSetOf()
 )

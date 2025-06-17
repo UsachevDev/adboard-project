@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import ru.atom.adboard.dal.repositories.UserRepository
 import ru.atom.adboard.services.response.ServiceResponse
 import ru.atom.adboard.services.response.UserProfileDto
+import ru.atom.adboard.services.security.SecureService
 import java.util.*
 
 
@@ -18,7 +19,7 @@ class UserService(_repo: UserRepository)
     {
         if(id == null && !authentication.isAuthenticated)
             return ServiceResponse(HttpStatus.NOT_FOUND)
-        val isValidId = isValidId(id)
+        val isValidId = SecureService.isValidId(id)
         if(authentication.isAuthenticated && authentication.principal != "anonymousUser")
         {
             try {
@@ -47,7 +48,7 @@ class UserService(_repo: UserRepository)
 
 
         }
-        if(isValidId(id))
+        if(SecureService.isValidId(id))
         {
             try{
                 val user = repo.findUserById(UUID.fromString(id))
@@ -70,16 +71,5 @@ class UserService(_repo: UserRepository)
 
         }
         return ServiceResponse(HttpStatus.BAD_REQUEST)
-    }
-
-    private fun isValidId(id: String?) : Boolean
-    {
-        try {
-            if(id == null) return false
-            UUID.fromString(id)
-            return true
-        } catch (e: java.lang.Exception) {
-            return false
-        }
     }
 }
