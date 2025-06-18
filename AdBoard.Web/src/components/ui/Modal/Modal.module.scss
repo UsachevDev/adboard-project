@@ -1,0 +1,58 @@
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
+
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.6);
+    @include flex-center;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+
+    &.open {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+.modalContent {
+    background-color: $color-white;
+    border-radius: $border-radius-md;
+    box-shadow: $box-shadow-lg;
+    padding: $spacing-xl;
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+
+    .overlay.open & {
+        transform: scale(1);
+    }
+}
+
+.closeButton {
+    position: absolute;
+    top: $spacing-sm;
+    right: $spacing-sm;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: $color-text-tertiary;
+    cursor: pointer;
+    line-height: 1;
+    padding: $spacing-xs;
+    border-radius: $border-radius-sm;
+    transition: color 0.2s ease, background-color 0.2s ease;
+
+    &:hover {
+        color: $color-text-primary;
+        background-color: $color-light-gray;
+    }
+}

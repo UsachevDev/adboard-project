@@ -1,0 +1,247 @@
+@use '@/styles/abstracts/variables' as *;
+@use '@/styles/abstracts/mixins' as *;
+@use "sass:color";
+
+.searchWrapper {
+  background-color: $color-light-gray;
+  padding: $spacing-md 0;
+
+  position: relative;
+  z-index: 10;
+}
+
+.container {
+  @extend .container;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+.searchControls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.browseCategoriesButton {
+  background-color: $color-primary;
+  color: $color-white;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-base;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: color.adjust($color-primary, $lightness: -10%);
+  }
+}
+
+.categoriesOverlay {
+  position: fixed;
+  left: 0;
+  width: 100%;
+  background-color: rgba(0, 0, 0, 0.4);
+  z-index: 900;
+  pointer-events: auto;
+  display: block;
+}
+
+.categoriesPanel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  margin: auto;
+  max-width: 1200px;
+  width: 100%;
+  background-color: $color-white;
+  padding: 0;
+  z-index: 950;
+  max-height: calc(100vh - ($spacing-xl * 2));
+  overflow-y: auto;
+  animation: slideDownFadeIn 0.3s ease-out forwards;
+  border-radius: $border-radius-lg;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+.categoriesPanelContent {
+  margin: 0 auto;
+  padding: $spacing-xl $spacing-md;
+}
+
+.mainAndSubcategoriesContainer {
+  display: flex;
+  gap: $spacing-xl;
+  min-height: 300px;
+}
+
+.mainCategoriesList {
+  flex-shrink: 0;
+  width: 250px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-right: 1px solid $color-border;
+  padding-right: $spacing-xl;
+}
+
+.mainCategoryItem {
+  padding: $spacing-sm $spacing-md;
+  cursor: pointer;
+  font-size: $font-size-base;
+  font-weight: 500;
+  color: $color-text-primary;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  border-radius: $border-radius-sm;
+
+  &:hover {
+    background-color: $color-light-gray;
+    color: $color-primary;
+  }
+
+  &.active {
+    background-color: $color-primary-light;
+    color: $color-primary-dark;
+    font-weight: 600;
+  }
+}
+
+.subcategoriesDisplay {
+  flex-grow: 1;
+  padding-left: $spacing-xl;
+  margin-left: -$spacing-xl;
+}
+
+.subcategoriesTitle {
+  font-size: $font-size-h3;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+}
+
+.subcategoriesListGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: $spacing-md $spacing-lg;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    a {
+      text-decoration: none;
+      color: $color-text-secondary;
+      font-size: $font-size-base;
+      transition: color 0.2s ease;
+
+      &:hover {
+        color: $color-primary;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+.selectCategoryMessage {
+    text-align: center;
+    color: $color-text-tertiary;
+    font-style: italic;
+    padding: $spacing-xl;
+}
+
+@keyframes slideDownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.inputAndSuggestions {
+  flex-grow: 1;
+  position: relative;
+}
+
+.searchForm {
+  display: flex;
+  width: 100%;
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+  box-shadow: $box-shadow-sm;
+  background-color: $color-white;
+}
+
+.searchInput {
+  flex-grow: 1;
+  padding: $spacing-sm $spacing-md;
+  border: none;
+  font-size: $font-size-base;
+  outline: none;
+  color: $color-text-primary;
+  background-color: $color-white;
+
+  &::placeholder {
+    color: $color-text-tertiary;
+  }
+}
+
+.searchButton {
+  background-color: $color-primary;
+  color: $color-white;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  font-size: $font-size-base;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: color.adjust($color-primary, $lightness: -10%);
+  }
+}
+
+.suggestionsList {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background-color: $color-white;
+  border: 1px solid $color-border;
+  border-radius: $border-radius-sm;
+  box-shadow: $box-shadow-md;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  max-height: 250px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.suggestionItem {
+  padding: $spacing-sm $spacing-md;
+  cursor: pointer;
+  color: $color-text-primary;
+  font-size: $font-size-base;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background-color: $color-light-gray;
+    color: $color-primary;
+  }
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $color-border;
+  }
+}
