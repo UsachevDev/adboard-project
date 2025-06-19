@@ -15,10 +15,10 @@ class AnnouncementService(_repo: AnnouncementRepository)
 {
     private final val repo = _repo
     private final val logger = LogManager.getLogger(this.javaClass.name)
-    fun getAll() : ServiceResponse
+    fun getAll() : ServiceResponse<List<Announcement>>
     {
         try{
-            var announcements = repo.findAll()
+            val announcements = repo.findAll()
             return ServiceResponse(announcements, HttpStatus.OK)
         }
         catch (ex: Exception)
@@ -28,7 +28,7 @@ class AnnouncementService(_repo: AnnouncementRepository)
         }
     }
 
-    fun add(announcementDTO: AddAnnouncementDto, userID: String) : ServiceResponse
+    fun add(announcementDTO: AddAnnouncementDto, userID: String) : ServiceResponse<UUID>
     {
         val city =  if (announcementDTO.city.isNullOrEmpty()) "Moscow" else announcementDTO.city
         val announcement = Announcement(

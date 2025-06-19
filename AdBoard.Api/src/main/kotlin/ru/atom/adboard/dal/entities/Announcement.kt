@@ -1,5 +1,6 @@
 package ru.atom.adboard.dal.entities
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
 import java.util.*
 
@@ -29,6 +30,7 @@ data class Announcement(
     val count: Int,
 
     @Column(name = "subcategory_id")
+    @JsonIgnore
     val subcategoryId: UUID,
 
     @OneToMany(mappedBy = "announcement", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
@@ -42,6 +44,7 @@ data class Announcement(
     val subcategory: Subcategory? = null,
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JsonIgnore
     @JoinColumn(name = "creator_Id", insertable = false, updatable = false)
     val creator: User? = null
 )
