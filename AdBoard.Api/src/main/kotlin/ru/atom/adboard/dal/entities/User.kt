@@ -37,7 +37,7 @@ data class User
     @OneToMany(mappedBy = "sellerId", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val reviews: MutableList<Review> = mutableListOf(),
 
-    @OneToMany(mappedBy = "creator")
+    @OneToMany(mappedBy = "creator", fetch = FetchType.EAGER)
     val announcements: List<Announcement> = Collections.emptyList(),
 
     @OneToMany(mappedBy = "buyerId", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
