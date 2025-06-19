@@ -35,6 +35,7 @@ class UserService(_repo: UserRepository)
                                 user.get().name,
                                 user.get().phoneNumber,
                                 user.get().city,
+                                user.get().announcements,
                                 user.get().reviews,
                                 user.get().userReviews
                             ),
@@ -59,6 +60,7 @@ class UserService(_repo: UserRepository)
                     UserProfileDto(
                         user.get().name,
                         user.get().createdAt,
+                        user.get().announcements,
                         user.get().reviews,
                     ),
                     HttpStatus.OK

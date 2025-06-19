@@ -1,6 +1,7 @@
 package ru.atom.adboard.services.response
 
 import com.fasterxml.jackson.annotation.JsonInclude
+import ru.atom.adboard.dal.entities.Announcement
 import ru.atom.adboard.dal.entities.Review
 import java.util.*
 
@@ -12,9 +13,10 @@ data class UserProfileDto
     val name: String,
     val phoneNumber: String?,
     val city: String?,
+    val announcements: List<Announcement>? = Collections.emptyList(),
     val reviews:  MutableList<Review>? = mutableListOf(),
     val userReviews: MutableList<Review>? = mutableListOf(),
 )
 {
-    constructor(name: String, createdAt: Date, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null,reviews,null)
+    constructor(name: String, createdAt: Date, announcements: List<Announcement>?, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null, announcements ,reviews,null)
 }
