@@ -10,7 +10,7 @@ data class Announcement(
     @Column(name = "id", columnDefinition = "UUID")
     val id: UUID = UUID.randomUUID(),
 
-    @Column(name = "creatorId", columnDefinition = "UUID", nullable = false)
+    @Column(name = "creator_Id", columnDefinition = "UUID", nullable = false)
     val creatorId: UUID,
 
     @Column(name = "title", nullable = false)
@@ -28,13 +28,24 @@ data class Announcement(
     @Column(name = "count")
     val count: Int,
 
-    @OneToMany(mappedBy = "announcement", cascade = [CascadeType.ALL], orphanRemoval = true)
+    @Column(name = "subcategory_id")
+    val subcategoryId: UUID,
+
+    @OneToMany(mappedBy = "announcement", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     val reviews: MutableList<Review> = mutableListOf(),
 
-    @ManyToMany(mappedBy = "favorites")
+    @ManyToMany(mappedBy = "favorites", fetch = FetchType.LAZY)
     val favoritedBy: MutableSet<User> = mutableSetOf(),
 
     @ManyToOne
-    @JoinColumn(name = "subcategory_id")
-    val subcategory: Subcategory,
+    @JoinColumn(name = "subcategory_id", insertable = false, updatable = false)
+    val subcategory: Subcategory? = null,
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creator_Id", insertable = false, updatable = false)
+    val creator: User? = null
 )
+{
+    constructor(creatorId: UUID, title: String, description: String, price: Double, city: String, count: Int, subcategoryId: UUID)
+            : this(UUID.randomUUID(), creatorId, title, description, price, city, count, subcategoryId)
+}
