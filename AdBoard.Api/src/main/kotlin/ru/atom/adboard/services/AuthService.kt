@@ -30,7 +30,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
     private val refreshRepo = _refreshRepo
     private val userRepo = _userRepo
 
-    fun logout(request: HttpServletRequest): ServiceResponse {
+    fun logout(request: HttpServletRequest): ServiceResponse<Any> {
         try {
             val token = SecureService.getTokenFromHeader(request)
             if (token.isPresent) {
@@ -44,7 +44,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         }
     }
 
-    fun refresh(refresh_token: String): ServiceResponse {
+    fun refresh(refresh_token: String): ServiceResponse<TokensDto> {
         try {
             val refreshTokenFromDb: Optional<RefreshToken> = refreshRepo.findByToken(refresh_token)
 
@@ -71,7 +71,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         }
     }
 
-    fun login(request: AuthRequest): ServiceResponse {
+    fun login(request: AuthRequest): ServiceResponse<TokensDto> {
         val authentication: Authentication
 
         try { authentication = authManager.authenticate(UsernamePasswordAuthenticationToken(request.email,request.password)) }
@@ -100,7 +100,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         return ServiceResponse(TokensDto(accessToken,refreshToken), HttpStatus.OK)
     }
 
-    fun registration(request: RegistrationRequest) : ServiceResponse
+    fun registration(request: RegistrationRequest) : ServiceResponse<TokensDto>
     {
         try{
             if(userRepo.existsUserByEmail(request.email))

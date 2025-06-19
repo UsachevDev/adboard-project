@@ -46,7 +46,7 @@ class JwtAuthFilter(private val jwtParcer: JwtUtil, private val objectMapper: Ob
         response.status = status.value()
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         val writer: PrintWriter = response.writer
-        objectMapper.writeValue(writer, ServiceResponse(HttpStatus.UNAUTHORIZED, ServiceError(message)))
+        objectMapper.writeValue(writer, ServiceResponse<Any>(HttpStatus.UNAUTHORIZED, ServiceError(message)))
         writer.flush()
     }
 }

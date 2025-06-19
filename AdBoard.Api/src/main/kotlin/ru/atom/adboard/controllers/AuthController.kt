@@ -26,7 +26,7 @@ class AuthController(_authService: AuthService)
 {
     private val authService = _authService
     @PostMapping("/login")
-    fun login(@ModelAttribute request: AuthRequest): ResponseEntity<Any>
+    fun login(@RequestBody request: AuthRequest): ResponseEntity<Any>
     {
         val serviceResponse = authService.login(request)
         return ResponseEntity(
