@@ -14,7 +14,7 @@ class CategoryService(_repo: CategoryRepository)
 {
     private val repo = _repo
     val logger = LogManager.getLogger(this.javaClass.name)
-    fun getCategories() : ServiceResponse
+    fun getCategories() : ServiceResponse<List<Category>>
     {
         try {
             val categories = repo.findAll()
@@ -27,7 +27,7 @@ class CategoryService(_repo: CategoryRepository)
 
     }
 
-    fun getCategory(id: String?): ServiceResponse
+    fun getCategory(id: String?): ServiceResponse<Category>
     {
 
         if(id.isNullOrEmpty() || !SecureService.isValidId(id))
