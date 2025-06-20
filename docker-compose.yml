@@ -1,0 +1,64 @@
+services:
+  # Сервис Базы Данных PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: adboard-db
+    restart: always
+    # Переменные для создания базы данных и пользователя
+    # Взяты из вашего application.properties
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: AdBoardDb
+    ports:
+      # Пробрасываем порт 5432 для подключения к БД с вашего компьютера
+      - "5432:5432"
+    volumes:
+      # Этот том сохраняет данные БД между перезапусками контейнера
+      - adboard-db-data:/var/lib/postgresql/data
+      # Этот том автоматически выполнит ваш SQL-скрипт при первом запуске БД
+      - ./ADBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
+
+  # Сервис Backend API
+  backend:
+    build:
+      context: ./ADBoard.Api
+      dockerfile: Dockerfile
+    container_name: adboard-backend
+    restart: on-failure
+    depends_on:
+      - db # Запустится только после успешного старта базы данных
+    ports:
+      - "8080:8080"
+    environment:
+      # Переопределяем настройки для подключения к БД внутри Docker
+      # Хост 'db' - это имя сервиса базы данных, определенного выше
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/AdBoardDb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=admin
+      # Передаем JWT ключи через переменные окружения (лучшая практика)
+      - JWT_ACCESS_TOKEN_KEY=${JWT_ACCESS_TOKEN_KEY}
+      - JWT_REFRESH_TOKEN_KEY=${JWT_REFRESH_TOKEN_KEY}
+
+  # Сервис Frontend
+  frontend:
+    build:
+      context: ./AdBoard.Web
+      dockerfile: Dockerfile
+    container_name: adboard-frontend
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    volumes:
+      # Подключаем исходный код напрямую в контейнер для hot-reloading
+      - ./AdBoard.Web:/app
+      # Анонимный том, чтобы node_modules внутри контейнера не перезатирался локальными
+      - /app/node_modules
+    environment:
+      # Переменная окружения для фронтенда, чтобы он знал, куда отправлять запросы
+      # Запрос пойдет из браузера, поэтому используем localhost
+      - NEXT_PUBLIC_API_URL=http://localhost:8080
+
+# Именованный том для персистентного хранения данных БД
+volumes:
+  adboard-db-data:

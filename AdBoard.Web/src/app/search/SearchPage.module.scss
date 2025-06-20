@@ -1,0 +1,56 @@
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: $spacing-md;
+
+    @include media-md {
+        padding: $spacing-lg;
+    }
+}
+
+.title {
+    font-size: $font-size-h2;
+    color: $color-text-primary;
+    margin-bottom: $spacing-xxl;
+    text-align: center;
+
+    @include media-sm {
+        font-size: $font-size-h2-sm;
+    }
+}
+
+.subcategoriesTitle {
+    font-size: $font-size-h3;
+    color: $color-text-primary;
+    margin-top: $spacing-xxl;
+    margin-bottom: $spacing-lg;
+    text-align: center;
+
+    @include media-sm {
+        font-size: $font-size-h4;
+    }
+}
+
+.resultsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: $spacing-lg;
+    padding: $spacing-md 0;
+}
+
+.message {
+    text-align: center;
+    font-size: $font-size-lg;
+    color: $color-text-secondary;
+    padding: $spacing-xl 0;
+    grid-column: 1 / -1;
+}
+
+.sectionDivider {
+    border: none;
+    border-top: 1px solid $color-border;
+    margin: $spacing-xxl 0;
+}

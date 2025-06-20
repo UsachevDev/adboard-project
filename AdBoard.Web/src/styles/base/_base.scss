@@ -1,0 +1,12 @@
+@use "sass:color";
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 $spacing-md;
+    @include media-sm {
+        padding: 0 $spacing-lg;
+    }
+}
