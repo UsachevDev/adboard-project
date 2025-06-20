@@ -4,6 +4,7 @@ import io.jsonwebtoken.Claims
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 import ru.atom.adboard.dal.entities.User
 import ru.atom.adboard.dal.repositories.UserRepository
 import ru.atom.adboard.services.response.ServiceResponse
@@ -17,16 +18,21 @@ import java.util.*
 class UserService(_repo: UserRepository)
 {
     private final val repo = _repo
+
     fun getUser(id: String?, authentication: Authentication): ServiceResponse<UserProfileDto>
     {
         if(id == null && !authentication.isAuthenticated)
             return ServiceResponse(HttpStatus.NOT_FOUND)
         val isValidId = SecureService.isValidId(id)
+
+        if(!isValidId && id != null)
+            return ServiceResponse(HttpStatus.BAD_REQUEST)
+
         if(authentication.isAuthenticated && authentication.principal != "anonymousUser")
         {
             try {
                 val claims = authentication.details as Claims
-                if(!isValidId || id == claims.id )
+                if(id == claims["id"].toString() || id == null)
                 {
                     val user = repo.findUserById(UUID.fromString(claims["id"].toString()))
                     if(user.isPresent)
@@ -51,7 +57,7 @@ class UserService(_repo: UserRepository)
 
 
         }
-        if(SecureService.isValidId(id))
+        if(isValidId)
         {
             try{
                 val user = repo.findUserById(UUID.fromString(id))
