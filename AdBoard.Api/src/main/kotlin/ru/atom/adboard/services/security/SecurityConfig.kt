@@ -28,8 +28,9 @@ class SecurityFilterChainConfig(_userDetails: CustomUserDetails)
             .csrf { conf -> conf.disable()}
             .authorizeHttpRequests { request ->
                 request
-                    .requestMatchers(HttpMethod.POST, "/api/auth/logout", "/api/announcements").authenticated()
-                    .requestMatchers(HttpMethod.PATCH, "/api/**").authenticated().anyRequest().permitAll()
+                    .requestMatchers(HttpMethod.POST, "/api/auth/logout", "/api/announcements", "api/favorites/", "api/reviews/").authenticated()
+                    .requestMatchers(HttpMethod.PATCH, "/api/**").authenticated()
+                    .requestMatchers(HttpMethod.DELETE, "/api/**").authenticated().anyRequest().permitAll()
             }
             .httpBasic(Customizer.withDefaults())
             .sessionManagement{ session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)}
