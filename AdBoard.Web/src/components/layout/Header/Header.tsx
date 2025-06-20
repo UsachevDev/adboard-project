@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import styles from "./Header.module.scss";
 import Modal from '@/components/ui/Modal/Modal';
 import AuthModalContent from '@/components/ui/Auth/AuthModalContent';
+import Avatar from '@/components/ui/Avatar/Avatar';
+import api from '@/lib/api';
 
 const Header: React.FC = () => {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -14,15 +16,31 @@ const Header: React.FC = () => {
     const router = useRouter();
 
     const checkAuthStatus = () => {
-        const token = localStorage.getItem('jwt_token');
-        if (token) {
+        const accessToken = localStorage.getItem('access_token');
+        const storedUserName = localStorage.getItem('user_name');
+
+        if (accessToken) {
             setIsLoggedIn(true);
-            // Для имитации: извлекаем имя пользователя
-            const match = token.match(/fake-jwt-token-for-(\w+)@example.com-/);
-            if (match && match[1]) {
-                setUsername(match[1]);
+            if (storedUserName) {
+                setUsername(storedUserName);
             } else {
-                setUsername('Пользователь');
+                try {
+                    const parts = accessToken.split('.');
+                    if (parts.length === 3) {
+                        const payload = JSON.parse(atob(parts[1]));
+                        const userEmail = payload.email || payload.sub; 
+                        if (userEmail) {
+                            setUsername(userEmail.split('@')[0]);
+                        } else {
+                            setUsername('Пользователь');
+                        }
+                    } else {
+                        setUsername('Пользователь');
+                    }
+                } catch (e) {
+                    console.error("Failed to parse access token for username:", e);
+                    setUsername('Пользователь');
+                }
             }
         } else {
             setIsLoggedIn(false);
@@ -40,11 +58,30 @@ const Header: React.FC = () => {
         };
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem('jwt_token');
-        setIsLoggedIn(false);
-        setUsername(null);
-        router.push('/');
+    const handleLogout = async () => {
+        try {
+            const refreshToken = sessionStorage.getItem('refresh_token');
+            const response = await api('/auth/logout', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ refreshToken: refreshToken || '' }), 
+            });
+
+            if (!response.ok) {
+                console.error('Ошибка при выходе на сервере:', response.status, await response.text());
+            }
+        } catch (error) {
+            console.error('Ошибка сети или другая ошибка при выходе:', error);
+        } finally {
+            localStorage.removeItem('access_token');
+            sessionStorage.removeItem('refresh_token');
+            localStorage.removeItem('user_name');
+            setIsLoggedIn(false);
+            setUsername(null);
+            router.push('/');
+        }
     };
 
     const openAuthModal = () => {
@@ -53,7 +90,7 @@ const Header: React.FC = () => {
 
     const closeAuthModal = () => {
         setIsModalOpen(false);
-        checkAuthStatus();
+        checkAuthStatus(); 
     };
 
     return (
@@ -77,6 +114,9 @@ const Header: React.FC = () => {
                                 <>
                                     <li className={styles.navItem}>
                                         <Link href="/profile" className={styles.navLink}>
+                                            <div className={styles.navLinkAvatar}>
+                                                <Avatar name={username || 'Пользователь'} size="2rem" />
+                                            </div>
                                             {username || 'Профиль'}
                                         </Link>
                                     </li>

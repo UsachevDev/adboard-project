@@ -1,4 +1,3 @@
-// src/types/index.ts
 export type UUID = string;
 
 export interface User {
@@ -6,6 +5,9 @@ export interface User {
     email: string;
     password?: string;
     createdAt: string; // ISO Date string
+    name?: string;
+    phoneNumber?: string | null;
+    city?: string | null;
 }
 
 export interface Announcement {

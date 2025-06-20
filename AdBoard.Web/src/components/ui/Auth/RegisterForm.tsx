@@ -3,8 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from './RegisterForm.module.scss';
-import { mockUsers } from '@/lib/mockData';
-import { User } from '@/types';
 
 interface RegisterFormProps {
     onRegisterSuccess: () => void;
@@ -15,6 +13,10 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [name, setName] = useState('');
+    const [phoneNumber, setPhoneNumber] = useState('');
+    const [city, setCity] = useState('');
+
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -29,27 +31,41 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
             return;
         }
 
-        // Имитация задержки сети
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/registration', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                    name,
+                    phoneNumber: phoneNumber || null,
+                    city: city || null,
+                }),
+            });
 
-        // Имитация регистрации
-        const existingUser = mockUsers.find(user => user.email === email);
-
-        if (existingUser) {
-            setMessage({ type: 'error', text: 'Пользователь с таким email уже существует.' });
-        } else {
-            const newUser: User = {
-                id: `user-${mockUsers.length + 1}-uuid`,
-                email: email,
-                createdAt: new Date().toISOString(),
-            };
-            mockUsers.push(newUser);
-
-            setMessage({ type: 'success', text: 'Регистрация успешна! Теперь вы можете войти.' });
-            onRegisterSuccess();
+            if (response.ok) {
+                setMessage({ type: 'success', text: 'Регистрация успешна! Теперь вы можете войти.' });
+                setEmail('');
+                setPassword('');
+                setConfirmPassword('');
+                setName('');
+                setPhoneNumber('');
+                setCity('');
+                onRegisterSuccess();
+            } else {
+                const errorData = await response.json();
+                const errorMessage = errorData.message || 'Произошла ошибка при регистрации.';
+                setMessage({ type: 'error', text: errorMessage });
+            }
+        } catch (error) {
+            console.error('Ошибка при отправке запроса:', error);
+            setMessage({ type: 'error', text: 'Не удалось подключиться к серверу. Попробуйте позже.' });
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (
@@ -87,6 +103,37 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
                         required
+                    />
+                </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="regName" className={styles.label}>Ваше имя</label>
+                    <input
+                        type="text"
+                        id="regName"
+                        className={styles.input}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        required
+                    />
+                </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="regPhoneNumber" className={styles.label}>Номер телефона (необязательно)</label>
+                    <input
+                        type="tel"
+                        id="regPhoneNumber"
+                        className={styles.input}
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                    />
+                </div>
+                <div className={styles.formGroup}>
+                    <label htmlFor="regCity" className={styles.label}>Город (необязательно)</label>
+                    <input
+                        type="text"
+                        id="regCity"
+                        className={styles.input}
+                        value={city}
+                        onChange={(e) => setCity(e.target.value)}
                     />
                 </div>
                 <button type="submit" className={styles.button} disabled={loading}>

@@ -3,10 +3,9 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import styles from './LoginForm.module.scss';
-import { mockUsers } from '@/lib/mockData';
 
 interface LoginFormProps {
-    onLoginSuccess: (token: string) => void;
+    onLoginSuccess: (tokens: { accessToken: string; refreshToken: string }) => void;
     onSwitchToRegister: () => void;
 }
 
@@ -21,19 +20,40 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
         setLoading(true);
         setMessage(null);
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        try {
+            const response = await fetch('http://localhost:8080/api/auth/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email,
+                    password,
+                }),
+            });
 
-        const userFound = mockUsers.find(user => user.email === email);
+            if (response.ok) {
+                const result = await response.json();
+                const accessToken = result.data.access_token;
+                const refreshToken = result.data.refresh_token;
 
-        if (userFound) {
-            const fakeToken = `fake-jwt-token-for-${email}-uuid-${Date.now()}`;
-            onLoginSuccess(fakeToken);
-            setMessage({ type: 'success', text: 'Успешный вход! Перенаправление...' });
-        } else {
-            setMessage({ type: 'error', text: 'Неверный email или пароль.' });
+                setMessage({ type: 'success', text: 'Успешный вход!' });
+                onLoginSuccess({ accessToken, refreshToken }); 
+                
+                setEmail('');
+                setPassword('');
+
+            } else {
+                const errorData = await response.json();
+                const errorMessage = errorData.message || 'Неверный email или пароль.';
+                setMessage({ type: 'error', text: errorMessage });
+            }
+        } catch (error) {
+            console.error('Ошибка при отправке запроса:', error);
+            setMessage({ type: 'error', text: 'Не удалось подключиться к серверу. Попробуйте позже.' });
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (
@@ -66,6 +86,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
                     {loading ? 'Вход...' : 'Войти'}
                 </button>
             </form>
+
             {message && (
                 <p className={`${styles.message} ${message.type === 'success' ? styles.success : styles.error}`}>
                     {message.text}
