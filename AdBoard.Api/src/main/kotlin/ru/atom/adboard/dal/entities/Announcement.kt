@@ -1,11 +1,15 @@
 package ru.atom.adboard.dal.entities
 
+import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
+import lombok.EqualsAndHashCode
 import java.util.*
+import kotlin.collections.HashSet
 
 @Entity
 @Table(name = "announcements")
+@EqualsAndHashCode
 data class Announcement(
     @Id
     @Column(name = "id", columnDefinition = "UUID")
@@ -34,16 +38,18 @@ data class Announcement(
     val subcategoryId: UUID,
 
     @OneToMany(mappedBy = "announcement", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
-    val reviews: MutableList<Review> = mutableListOf(),
+    @JsonIgnore
+    val reviews: MutableSet<Review> = mutableSetOf(),
 
-    @ManyToMany(mappedBy = "favorites", fetch = FetchType.LAZY)
-    val favoritedBy: MutableSet<User> = mutableSetOf(),
+    @ManyToMany(mappedBy = "favorites")
+    @JsonIgnore
+    val favoritedBy: MutableSet<User> = HashSet(),
 
     @ManyToOne
     @JoinColumn(name = "subcategory_id", insertable = false, updatable = false)
     val subcategory: Subcategory? = null,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne()
     @JsonIgnore
     @JoinColumn(name = "creator_Id", insertable = false, updatable = false)
     val creator: User? = null
@@ -51,4 +57,12 @@ data class Announcement(
 {
     constructor(creatorId: UUID, title: String, description: String, price: Double, city: String, count: Int, subcategoryId: UUID)
             : this(UUID.randomUUID(), creatorId, title, description, price, city, count, subcategoryId)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Announcement) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = id.hashCode()
 }

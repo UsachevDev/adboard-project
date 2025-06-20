@@ -1,10 +1,12 @@
 package ru.atom.adboard.dal.entities
 
+import com.fasterxml.jackson.annotation.JsonManagedReference
 import jakarta.persistence.*
 import org.springframework.data.annotation.CreatedDate
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import java.util.*
+import kotlin.collections.HashSet
 
 @Entity
 @Table(name = "users")
@@ -38,17 +40,17 @@ data class User
     val reviews: MutableList<Review> = mutableListOf(),
 
     @OneToMany(mappedBy = "creator", fetch = FetchType.EAGER)
-    val announcements: List<Announcement> = Collections.emptyList(),
+    val announcements: MutableSet<Announcement> = mutableSetOf(),
 
     @OneToMany(mappedBy = "buyerId", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val userReviews: MutableList<Review> = mutableListOf(),
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @JoinTable(
         name = "favorites",
         joinColumns = [JoinColumn(name = "user_id", referencedColumnName = "id")],
         inverseJoinColumns = [JoinColumn(name = "announcement_id", referencedColumnName = "id")]
     )
-    val favorites: MutableSet<Announcement> = mutableSetOf()
+    val favorites: MutableSet<Announcement> = HashSet()
 ) : UserDetails {
     constructor(email: String, password: String, name: String, phoneNumber: String?, city: String?) : this(UUID.randomUUID(), email, password, Date(), name, phoneNumber, city)
     constructor(email: String, password: String, name: String) : this(UUID.randomUUID(), email, password, Date(), name, null, null)
@@ -64,4 +66,12 @@ data class User
     override fun getUsername(): String {
         return email;
     }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is Announcement) return false
+        return id == other.id
+    }
+
+    override fun hashCode(): Int = id.hashCode()
 }

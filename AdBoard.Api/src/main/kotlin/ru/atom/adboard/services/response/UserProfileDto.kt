@@ -13,10 +13,10 @@ data class UserProfileDto
     val name: String,
     val phoneNumber: String?,
     val city: String?,
-    val announcements: List<Announcement>? = Collections.emptyList(),
+    val announcements: MutableSet<Announcement>? = mutableSetOf(),
     val reviews:  MutableList<Review>? = mutableListOf(),
     val userReviews: MutableList<Review>? = mutableListOf(),
 )
 {
-    constructor(name: String, createdAt: Date, announcements: List<Announcement>?, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null, announcements ,reviews,null)
+    constructor(name: String, createdAt: Date, announcements: MutableSet<Announcement>?, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null, announcements ,reviews,null)
 }
