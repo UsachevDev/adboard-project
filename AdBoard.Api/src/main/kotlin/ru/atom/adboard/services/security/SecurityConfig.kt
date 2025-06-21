@@ -56,7 +56,7 @@ class SecurityFilterChainConfig(_userDetails: CustomUserDetails)
         val config = CorsConfiguration()
         config.apply {
             allowedOrigins = listOf("http://localhost:3000")
-            allowedMethods = listOf("GET", "POST", "PUT", "DELETE", "OPTIONS")
+            allowedMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             allowedHeaders = listOf("Authorization", "Content-Type", "X-Requested-With")
             allowCredentials = true
             maxAge = 3600
