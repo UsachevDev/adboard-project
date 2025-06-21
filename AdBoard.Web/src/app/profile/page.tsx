@@ -1,73 +1,52 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import styles from './ProfilePage.module.scss';
-import api from '@/lib/api';
-import EditProfileForm from '@/components/ui/Profile/EditProfileForm';
-import { UserProfile, Announcement } from '@/types/index';
-import Avatar from '@/components/ui/Avatar/Avatar';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import styles from "./ProfilePage.module.scss";
+import api from "@/lib/api";
+import EditProfileForm from "@/components/ui/Profile/EditProfileForm";
+import { UserProfile, Announcement } from "@/types/index";
+import Avatar from "@/components/ui/Avatar/Avatar";
 
 const ProfilePage: React.FC = () => {
     const [userData, setUserData] = useState<UserProfile | null>(null);
-    const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>([]);
+    const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>(
+        []
+    );
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState<boolean>(false);
     const router = useRouter();
 
-    const loadUserProfile = async () => {
+    const loadUserProfile = async (): Promise<void> => {
         setLoading(true);
         setError(null);
 
-        const accessToken = localStorage.getItem('access_token');
-        const refreshToken = sessionStorage.getItem('refresh_token');
-
-        if (!accessToken && !refreshToken) {
-            setError('Для просмотра профиля необходимо войти в систему.');
-            setLoading(false);
-            return;
-        }
-
         try {
-            const userResponse = await api('/users');
-
-            if (!userResponse.ok) {
-                const errorText = await userResponse.text();
-                throw new Error('Failed to fetch user profile: ' + errorText);
+            const response = await api("/users");
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error("Не удалось получить профиль: " + text);
             }
-            const userResult = await userResponse.json();
-            if (userResult.error) {
-                throw new Error('Error from API: ' + userResult.error);
+            const result = await response.json();
+            if (result.error) {
+                throw new Error(result.error as string);
             }
-            setUserData(userResult.data as UserProfile);
-
-            try {
-                const announcementsResponse = await api('/announcements/my');
-                if (!announcementsResponse.ok) {
-                    console.warn('Could not fetch user announcements:', await announcementsResponse.text());
-                    setUserAnnouncements([]);
-                } else {
-                    const announcementsResult = await announcementsResponse.json();
-                    if (announcementsResult.error) {
-                        console.warn('API Error fetching announcements:', announcementsResult.error);
-                        setUserAnnouncements([]);
-                    } else {
-                        setUserAnnouncements(announcementsResult.data as Announcement[]);
-                    }
-                }
-            } catch (announcementsErr) {
-                console.warn('Error fetching user announcements (network/other issue):', announcementsErr);
-                setUserAnnouncements([]);
-            }
-
-        } catch (err: any) {
-            console.error('Ошибка загрузки профиля:', err);
-            setError(err.message || 'Произошла ошибка при загрузке профиля.');
-
-            if (err.message.includes('Unauthorized') || err.message.includes('Could not refresh token')) {
-                router.push('/');
+            const profile: UserProfile = result.data;
+            setUserData(profile);
+            setUserAnnouncements(profile.announcements || []);
+            localStorage.setItem("user_name", profile.name ?? "");
+            window.dispatchEvent(new Event("storage"));
+        } catch (err: unknown) {
+            console.error("Ошибка загрузки профиля:", err);
+            const msg =
+                err instanceof Error
+                    ? err.message
+                    : "Произошла ошибка при загрузке профиля.";
+            setError(msg);
+            if (msg.includes("Unauthorized")) {
+                router.push("/");
             }
         } finally {
             setLoading(false);
@@ -76,14 +55,15 @@ const ProfilePage: React.FC = () => {
 
     useEffect(() => {
         loadUserProfile();
-    }, [router]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
-    const handleProfileSave = (updatedData: UserProfile) => {
-        setUserData(updatedData);
+    const handleProfileSave = (_updatedData: UserProfile): void => {
         setIsEditing(false);
+        loadUserProfile();
     };
 
-    const handleEditCancel = () => {
+    const handleEditCancel = (): void => {
         setIsEditing(false);
     };
 
@@ -94,33 +74,39 @@ const ProfilePage: React.FC = () => {
             </div>
         );
     }
-
     if (error) {
         return (
             <div className={styles.container}>
                 <h1 className={styles.title}>Ошибка загрузки профиля</h1>
-                <p className={`${styles.welcomeMessage} ${styles.error}`}>{error}</p>
+                <p className={`${styles.welcomeMessage} ${styles.error}`}>
+                    {error}
+                </p>
                 <p className={styles.loginPrompt}>
-                    Пожалуйста, убедитесь, что вы вошли в систему.
+                    Пожалуйста, войдите в систему.
                 </p>
             </div>
         );
     }
-
     if (!userData) {
         return (
             <div className={styles.container}>
-                <h1 className={styles.title}>Вам необходимо авторизоваться</h1>
+                <h1 className={styles.title}>Требуется авторизация</h1>
                 <p className={styles.loginPrompt}>
-                    Для просмотра профиля, пожалуйста, используйте кнопку "Войти" в шапке сайта для авторизации.
+                    Для просмотра профиля нажмите «Войти».
                 </p>
             </div>
         );
     }
 
+    const displayName =
+        userData.name ??
+        (userData.email && typeof userData.email === "string"
+            ? userData.email.split("@")[0]
+            : "Пользователь");
+
     return (
         <div className={styles.container}>
-            {isEditing && userData ? (
+            {isEditing ? (
                 <EditProfileForm
                     initialData={userData}
                     onSave={handleProfileSave}
@@ -130,31 +116,46 @@ const ProfilePage: React.FC = () => {
                 <>
                     <div className={styles.profileHeader}>
                         <div className={styles.profileHeaderAvatar}>
-                            <Avatar name={userData.name || userData.email?.split('@')[0] || 'Пользователь'} size="5rem" />
+                            <Avatar name={displayName} size="5rem" />
                         </div>
-                        <h1 className={styles.profileHeaderTitle}>Привет, {userData.name || userData.email?.split('@')[0] || 'Пользователь'}!</h1>
+                        <h1 className={styles.profileHeaderTitle}>
+                            Привет, {displayName}!
+                        </h1>
                     </div>
-                    <p className={styles.welcomeMessage}>Добро пожаловать в ваш личный кабинет AdBoard.</p>
+                    <p className={styles.welcomeMessage}>
+                        Добро пожаловать в ваш кабинет AdBoard.
+                    </p>
 
-                    <h2 className={styles.sectionTitle}>Мои объявления ({userAnnouncements.length})</h2>
+                    <h2 className={styles.sectionTitle}>
+                        Мои объявления ({userAnnouncements.length})
+                    </h2>
                     <div className={styles.announcementsGrid}>
                         {userAnnouncements.length > 0 ? (
-                            userAnnouncements.map(announcement => (
-                                <div key={announcement.id} className={styles.announcementItem}>
-                                    <h3>{announcement.title}</h3>
-                                    <p>{announcement.description.substring(0, 100)}...</p>
-                                    <p>Цена: {announcement.price} руб.</p>
-                                    <p>Город: {announcement.city}</p>
-                                    <Link href={`/announcements/${announcement.id}`} className={styles.viewAnnouncementLink}>
+                            userAnnouncements.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className={styles.announcementItem}
+                                >
+                                    <h3>{item.title}</h3>
+                                    <p>{item.description.slice(0, 100)}...</p>
+                                    <p>Цена: {item.price} руб.</p>
+                                    <p>Город: {item.city}</p>
+                                    <Link
+                                        href={`/announcements/${item.id}`}
+                                        className={styles.viewAnnouncementLink}
+                                    >
                                         Подробнее
                                     </Link>
                                 </div>
                             ))
                         ) : (
                             <div className={styles.placeholder}>
-                                <p>У вас пока нет активных объявлений.</p>
-                                <Link href="/add-announcement" className={styles.addAnnouncementLink}>
-                                    Подать первое объявление
+                                <p>У вас ещё нет объявлений.</p>
+                                <Link
+                                    href="/add-announcement"
+                                    className={styles.addAnnouncementLink}
+                                >
+                                    Подать первое
                                 </Link>
                             </div>
                         )}
@@ -162,20 +163,36 @@ const ProfilePage: React.FC = () => {
 
                     <h2 className={styles.sectionTitle}>Настройки аккаунта</h2>
                     <div className={styles.infoBlock}>
-                        <p><span>Email:</span> {userData.email}</p>
-                        {userData.phoneNumber && <p><span>Телефон:</span> {userData.phoneNumber}</p>}
-                        {userData.city && <p><span>Город:</span> {userData.city}</p>}
-                        {userData.createdAt && <p><span>Дата регистрации:</span> {new Date(userData.createdAt).toLocaleDateString()}</p>}
+                        <p>
+                            <span>Email:</span> {userData.email}
+                        </p>
+                        {userData.phoneNumber && (
+                            <p>
+                                <span>Телефон:</span> {userData.phoneNumber}
+                            </p>
+                        )}
+                        {userData.city && (
+                            <p>
+                                <span>Город:</span> {userData.city}
+                            </p>
+                        )}
+                        {userData.createdAt && (
+                            <p>
+                                <span>Дата регистрации:</span>{" "}
+                                {new Date(
+                                    userData.createdAt
+                                ).toLocaleDateString()}
+                            </p>
+                        )}
                     </div>
 
                     <div className={styles.editButtonContainer}>
-                        <button className={styles.editProfileButton} onClick={() => setIsEditing(true)}>
+                        <button
+                            className={styles.editProfileButton}
+                            onClick={() => setIsEditing(true)}
+                        >
                             Редактировать профиль
                         </button>
-                    </div>
-
-                    <div className={styles.placeholder}>
-                        Здесь будут настройки вашего профиля (изменение пароля, email и т.д.).
                     </div>
                 </>
             )}
