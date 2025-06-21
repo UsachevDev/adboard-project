@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import styles from "./Header.module.scss";
-import Modal from '@/components/ui/Modal/Modal';
-import AuthModalContent from '@/components/ui/Auth/AuthModalContent';
-import Avatar from '@/components/ui/Avatar/Avatar';
-import api from '@/lib/api';
+import Modal from "@/components/ui/Modal/Modal";
+import AuthModalContent from "@/components/ui/Auth/AuthModalContent";
+import Avatar from "@/components/ui/Avatar/Avatar";
+import { logout } from "@/lib/api";
 
 const Header: React.FC = () => {
     const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
@@ -16,30 +16,20 @@ const Header: React.FC = () => {
     const router = useRouter();
 
     const checkAuthStatus = () => {
-        const accessToken = localStorage.getItem('access_token');
-        const storedUserName = localStorage.getItem('user_name');
+        const token = localStorage.getItem("access_token");
+        const storedName = localStorage.getItem("user_name");
 
-        if (accessToken) {
+        if (token) {
             setIsLoggedIn(true);
-            if (storedUserName) {
-                setUsername(storedUserName);
+            if (storedName) {
+                setUsername(storedName);
             } else {
                 try {
-                    const parts = accessToken.split('.');
-                    if (parts.length === 3) {
-                        const payload = JSON.parse(atob(parts[1]));
-                        const userEmail = payload.email || payload.sub; 
-                        if (userEmail) {
-                            setUsername(userEmail.split('@')[0]);
-                        } else {
-                            setUsername('Пользователь');
-                        }
-                    } else {
-                        setUsername('Пользователь');
-                    }
-                } catch (e) {
-                    console.error("Failed to parse access token for username:", e);
-                    setUsername('Пользователь');
+                    const payload = JSON.parse(atob(token.split(".")[1]));
+                    const email = payload.email || payload.sub;
+                    setUsername(email ? email.split("@")[0] : "Пользователь");
+                } catch {
+                    setUsername("Пользователь");
                 }
             }
         } else {
@@ -50,47 +40,30 @@ const Header: React.FC = () => {
 
     useEffect(() => {
         checkAuthStatus();
-
-        window.addEventListener('storage', checkAuthStatus);
-
+        window.addEventListener("storage", checkAuthStatus);
         return () => {
-            window.removeEventListener('storage', checkAuthStatus);
+            window.removeEventListener("storage", checkAuthStatus);
         };
     }, []);
 
     const handleLogout = async () => {
         try {
-            const refreshToken = sessionStorage.getItem('refresh_token');
-            const response = await api('/auth/logout', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ refreshToken: refreshToken || '' }), 
-            });
-
-            if (!response.ok) {
-                console.error('Ошибка при выходе на сервере:', response.status, await response.text());
-            }
-        } catch (error) {
-            console.error('Ошибка сети или другая ошибка при выходе:', error);
+            await logout();
+        } catch (err) {
+            console.error("Ошибка при выходе:", err);
         } finally {
-            localStorage.removeItem('access_token');
-            sessionStorage.removeItem('refresh_token');
-            localStorage.removeItem('user_name');
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("user_name");
             setIsLoggedIn(false);
             setUsername(null);
-            router.push('/');
+            router.push("/");
         }
     };
 
-    const openAuthModal = () => {
-        setIsModalOpen(true);
-    };
-
+    const openAuthModal = () => setIsModalOpen(true);
     const closeAuthModal = () => {
         setIsModalOpen(false);
-        checkAuthStatus(); 
+        checkAuthStatus();
     };
 
     return (
@@ -113,22 +86,39 @@ const Header: React.FC = () => {
                             {isLoggedIn ? (
                                 <>
                                     <li className={styles.navItem}>
-                                        <Link href="/profile" className={styles.navLink}>
-                                            <div className={styles.navLinkAvatar}>
-                                                <Avatar name={username || 'Пользователь'} size="2rem" />
+                                        <Link
+                                            href="/profile"
+                                            className={styles.navLink}
+                                        >
+                                            <div
+                                                className={styles.navLinkAvatar}
+                                            >
+                                                <Avatar
+                                                    name={
+                                                        username ||
+                                                        "Пользователь"
+                                                    }
+                                                    size="2rem"
+                                                />
                                             </div>
-                                            {username || 'Профиль'}
+                                            {username || "Профиль"}
                                         </Link>
                                     </li>
                                     <li className={styles.navItem}>
-                                        <button onClick={handleLogout} className={styles.navLinkButton}>
+                                        <button
+                                            onClick={handleLogout}
+                                            className={styles.navLinkButton}
+                                        >
                                             Выйти
                                         </button>
                                     </li>
                                 </>
                             ) : (
                                 <li className={styles.navItem}>
-                                    <button onClick={openAuthModal} className={styles.navLinkButton}>
+                                    <button
+                                        onClick={openAuthModal}
+                                        className={styles.navLinkButton}
+                                    >
                                         Войти
                                     </button>
                                 </li>

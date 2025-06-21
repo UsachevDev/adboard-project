@@ -42,12 +42,13 @@ export interface Category {
     id: UUID;
     name: string;
     image?: string;
+    subcategories?: Subcategory[];
 }
 
 export interface Subcategory {
     id: UUID;
     name: string;
-    categoryId: UUID; // Связь с категорией
+    categoryId: UUID;
     image?: string;
 }
 

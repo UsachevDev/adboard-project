@@ -1,226 +1,255 @@
-'use client';
+"use client";
 
-import React, { useState, FormEvent, useEffect, useRef, useCallback } from 'react';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import styles from './Search.module.scss';
-import { mockCategories, mockSubcategories } from '@/lib/mockData';
-import { Category, Subcategory } from '@/types';
+import React, {
+    useState,
+    useEffect,
+    useRef,
+    useCallback,
+    useMemo,
+    FormEvent,
+} from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import styles from "./Search.module.scss";
+import { getCategories, CategoryDto } from "@/lib/api";
+import { Category, Subcategory } from "@/types";
 
 interface SearchSuggestion {
-    type: 'category' | 'subcategory' | 'common_phrase';
+    type: "category" | "subcategory" | "common_phrase";
     value: string;
     id?: string;
 }
 
-const generateAllSuggestions = (): SearchSuggestion[] => {
-    const suggestions: SearchSuggestion[] = [];
+const commonPhrases: string[] = [
+    "Купить квартиру",
+    "Арендовать дом",
+    "Продать авто",
+    "Ремонт ноутбуков",
+    "Продать iPhone",
+    "Купить электронику",
+    "Обмен авто",
+    "Мотоциклы купить",
+    "Купить BMW",
+    "Ремонт iPhone",
+];
 
-    mockCategories.forEach(cat => {
-        suggestions.push({ type: 'category', value: cat.name, id: cat.id });
-    });
-
-    mockSubcategories.forEach(subcat => {
-        suggestions.push({ type: 'subcategory', value: subcat.name, id: subcat.id });
-    });
-
-    const commonPhrases: string[] = [
-        'Купить квартиру', 'Арендовать дом', 'Продать авто', 'Ремонт ноутбуков',
-        'Продать iPhone', 'Купить электронику', 'Обмен авто', 'Мотоциклы купить', 'Купить BMW', 'Ремонт iPhone'
-    ];
-    commonPhrases.forEach(phrase => {
-        suggestions.push({ type: 'common_phrase', value: phrase });
-    });
-
-    const uniqueSuggestionsMap = new Map<string, SearchSuggestion>();
-    suggestions.forEach(s => {
-        if (!uniqueSuggestionsMap.has(s.value.toLowerCase())) {
-            uniqueSuggestionsMap.set(s.value.toLowerCase(), s);
-        }
-    });
-
-    return Array.from(uniqueSuggestionsMap.values());
-};
-
-const ALL_SEARCH_SUGGESTIONS = generateAllSuggestions();
+const mapCategory = (dto: CategoryDto): Category => ({
+    id: dto.id,
+    name: dto.name,
+    subcategories: dto.subcategories.map((sub) => ({
+        id: sub.id,
+        name: sub.name,
+        categoryId: dto.id,
+    })),
+});
 
 const Search: React.FC = () => {
-    const [query, setQuery] = useState<string>('');
+    const [query, setQuery] = useState("");
     const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
-    const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
-    const [isCategoriesPanelOpen, setIsCategoriesPanelOpen] = useState<boolean>(false);
-    const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-    const [justNavigated, setJustNavigated] = useState<boolean>(false); // <-- НОВОЕ СОСТОЯНИЕ
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isCategoriesPanelOpen, setIsCategoriesPanelOpen] = useState(false);
+    const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
+        null
+    );
+    const [justNavigated, setJustNavigated] = useState(false);
 
-    const searchWrapperRef = useRef<HTMLDivElement>(null);
-    const searchInputRef = useRef<HTMLInputElement>(null);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
     const router = useRouter();
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
-    // Этот useEffect отвечает за инициализацию поля поиска при изменении URL.
-    // Он также гарантирует, что все модалки/панели закрыты при изменении URL.
     useEffect(() => {
-        const currentQuery = searchParams.get('q') || '';
-        const currentCategoryId = searchParams.get('categoryId');
-        const currentSubcategoryId = searchParams.get('subcategoryId');
+        getCategories()
+            .then((dtos: CategoryDto[]) => {
+                const cats = dtos.map(mapCategory);
+                setCategories(cats);
 
-        if (currentCategoryId) {
-            const category = mockCategories.find(c => c.id === currentCategoryId);
-            setQuery(category ? category.name : '');
-        } else if (currentSubcategoryId) {
-            const subcategory = mockSubcategories.find(s => s.id === currentSubcategoryId);
-            setQuery(subcategory ? subcategory.name : '');
+                setSubcategories(
+                    cats.flatMap((c) =>
+                        c.subcategories ? c.subcategories : []
+                    )
+                );
+            })
+            .catch((err) =>
+                console.error("Ошибка при загрузке категорий:", err)
+            );
+    }, []);
+
+    const ALL_SUGGESTIONS = useMemo<SearchSuggestion[]>(() => {
+        const arr: SearchSuggestion[] = [];
+        categories.forEach((c) =>
+            arr.push({ type: "category", value: c.name, id: c.id })
+        );
+        subcategories.forEach((s) =>
+            arr.push({ type: "subcategory", value: s.name, id: s.id })
+        );
+        commonPhrases.forEach((p) =>
+            arr.push({ type: "common_phrase", value: p })
+        );
+        const map = new Map<string, SearchSuggestion>();
+        arr.forEach((s) => {
+            const key = s.value.toLowerCase();
+            if (!map.has(key)) map.set(key, s);
+        });
+        return Array.from(map.values());
+    }, [categories, subcategories]);
+
+    useEffect(() => {
+        const q = searchParams.get("q") ?? "";
+        const cid = searchParams.get("categoryId");
+        const sid = searchParams.get("subcategoryId");
+
+        if (cid) {
+            const c = categories.find((c) => c.id === cid);
+            setQuery(c ? c.name : "");
+        } else if (sid) {
+            const s = subcategories.find((s) => s.id === sid);
+            setQuery(s ? s.name : "");
         } else {
-            setQuery(currentQuery);
+            setQuery(q);
         }
-        setIsCategoriesPanelOpen(false);
         setShowSuggestions(false);
+        setIsCategoriesPanelOpen(false);
         setJustNavigated(false);
-    }, [pathname, searchParams]);
+    }, [pathname, searchParams, categories, subcategories]);
 
-    // Этот useEffect управляет отображением подсказок при *вводе* пользователя.
     useEffect(() => {
         if (justNavigated) {
             setJustNavigated(false);
-            setSuggestions([]);
             setShowSuggestions(false);
             return;
         }
-
-        const handler = setTimeout(() => {
-            const trimmedQuery = query.trim();
-
-            if (searchInputRef.current !== document.activeElement && !showSuggestions) {
-                 setSuggestions([]);
-                 setShowSuggestions(false);
-                 return;
-            }
-
-            if (trimmedQuery.length > 1) {
-                const filtered = ALL_SEARCH_SUGGESTIONS.filter(suggestion =>
-                    suggestion.value.toLowerCase().includes(trimmedQuery.toLowerCase())
-                ).slice(0, 7);
-                setSuggestions(filtered);
-                setShowSuggestions(true);
-            } else if (trimmedQuery.length === 0 && document.activeElement === searchInputRef.current) {
-                setSuggestions(ALL_SEARCH_SUGGESTIONS.slice(0, 5));
-                setShowSuggestions(true);
+        const trimmed = query.trim().toLowerCase();
+        const timer = setTimeout(() => {
+            if (trimmed === "") {
+                setSuggestions(ALL_SUGGESTIONS.slice(0, 5));
             } else {
-                setSuggestions([]);
-                setShowSuggestions(false);
+                setSuggestions(
+                    ALL_SUGGESTIONS.filter((s) =>
+                        s.value.toLowerCase().includes(trimmed)
+                    ).slice(0, 7)
+                );
             }
+            setShowSuggestions(true);
             setIsCategoriesPanelOpen(false);
         }, 200);
+        return () => clearTimeout(timer);
+    }, [query, justNavigated, ALL_SUGGESTIONS]);
 
-        return () => {
-            clearTimeout(handler);
-        };
-    }, [query, showSuggestions, justNavigated]);
-
-    // Обработка кликов вне компонента
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target as Node)) {
+        const onClick = (e: MouseEvent) => {
+            if (
+                wrapperRef.current &&
+                !wrapperRef.current.contains(e.target as Node)
+            ) {
                 setShowSuggestions(false);
                 setIsCategoriesPanelOpen(false);
             }
         };
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        document.addEventListener("mousedown", onClick);
+        return () => document.removeEventListener("mousedown", onClick);
     }, []);
 
-    // Управление прокруткой body
     useEffect(() => {
-        if (isCategoriesPanelOpen) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-        }
+        document.body.style.overflow = isCategoriesPanelOpen ? "hidden" : "";
         return () => {
-            document.body.style.overflow = '';
+            document.body.style.overflow = "";
         };
     }, [isCategoriesPanelOpen]);
 
+    const handleSubmit = useCallback(
+        (e: FormEvent) => {
+            e.preventDefault();
+            const t = query.trim();
+            if (t) {
+                setJustNavigated(true);
+                router.push(`/search?q=${encodeURIComponent(t)}`);
+                setShowSuggestions(false);
+            }
+        },
+        [query, router]
+    );
 
-    const handleSubmit = useCallback((event: FormEvent) => {
-        event.preventDefault();
-        if (query.trim()) {
+    const handleSuggestionClick = useCallback(
+        (s: SearchSuggestion) => {
+            setQuery(s.value);
+            let url = `/search?q=${encodeURIComponent(s.value.trim())}`;
+            if (s.type === "category" && s.id) {
+                url = `/search?categoryId=${encodeURIComponent(s.id)}`;
+            } else if (s.type === "subcategory" && s.id) {
+                url = `/search?subcategoryId=${encodeURIComponent(s.id)}`;
+            }
             setJustNavigated(true);
-            router.push(`/search?q=${encodeURIComponent(query.trim())}`);
+            router.push(url);
             setShowSuggestions(false);
-            setIsCategoriesPanelOpen(false);
-        }
-    }, [query, router]);
-
-    const handleSuggestionClick = useCallback((suggestion: SearchSuggestion) => {
-        setQuery(suggestion.value);
-        let url = `/search?q=${encodeURIComponent(suggestion.value.trim())}`;
-        if (suggestion.type === 'category' && suggestion.id) {
-            url = `/search?categoryId=${encodeURIComponent(suggestion.id)}`;
-        } else if (suggestion.type === 'subcategory' && suggestion.id) {
-            url = `/search?subcategoryId=${encodeURIComponent(suggestion.id)}`;
-        }
-        setJustNavigated(true);
-        router.push(url);
-        setShowSuggestions(false);
-        setIsCategoriesPanelOpen(false);
-    }, [router]);
-
+        },
+        [router]
+    );
 
     const handleInputFocus = useCallback(() => {
-        setIsCategoriesPanelOpen(false);
-        const trimmedQuery = query.trim();
-        if (trimmedQuery.length === 0) {
-            setSuggestions(ALL_SEARCH_SUGGESTIONS.slice(0, 5));
+        const trimmed = query.trim().toLowerCase();
+        if (trimmed === "") {
+            setSuggestions(ALL_SUGGESTIONS.slice(0, 5));
         } else {
-            const filtered = ALL_SEARCH_SUGGESTIONS.filter(suggestion =>
-                suggestion.value.toLowerCase().includes(trimmedQuery.toLowerCase())
-            ).slice(0, 7);
-            setSuggestions(filtered);
+            setSuggestions(
+                ALL_SUGGESTIONS.filter((s) =>
+                    s.value.toLowerCase().includes(trimmed)
+                ).slice(0, 7)
+            );
         }
         setShowSuggestions(true);
-    }, [query]);
+        setIsCategoriesPanelOpen(false);
+    }, [ALL_SUGGESTIONS, query]);
 
     const handleToggleCategoriesPanel = useCallback(() => {
-        setIsCategoriesPanelOpen(prevState => {
-            const newState = !prevState;
-            if (newState && mockCategories.length > 0) {
-                setActiveCategoryId(mockCategories[0].id);
+        setIsCategoriesPanelOpen((prev) => {
+            const next = !prev;
+            if (next && categories.length) {
+                setActiveCategoryId(categories[0].id);
                 setShowSuggestions(false);
             } else {
                 setActiveCategoryId(null);
             }
-            return newState;
+            return next;
         });
+    }, [categories]);
+
+    const handleCategoryOrSubcategorySelect = useCallback(
+        (item: Category | Subcategory, type: "category" | "subcategory") => {
+            setQuery(item.name);
+            let url = `/search?q=${encodeURIComponent(item.name.trim())}`;
+            if (type === "category") {
+                url = `/search?categoryId=${encodeURIComponent(item.id)}`;
+            } else {
+                url = `/search?subcategoryId=${encodeURIComponent(item.id)}`;
+            }
+            setJustNavigated(true);
+            router.push(url);
+            setShowSuggestions(false);
+            setIsCategoriesPanelOpen(false);
+        },
+        [router]
+    );
+
+    const filteredSubcategories = useMemo<Subcategory[]>(
+        () =>
+            activeCategoryId
+                ? subcategories.filter((s) => s.categoryId === activeCategoryId)
+                : [],
+        [activeCategoryId, subcategories]
+    );
+
+    const panelTop = useMemo(() => {
+        const el = wrapperRef.current;
+        return el ? el.offsetTop + el.offsetHeight : 0;
     }, []);
 
-    const handleCategoryOrSubcategorySelect = useCallback((item: Category | Subcategory, type: 'category' | 'subcategory') => {
-        setQuery(item.name);
-        let url = `/search?q=${encodeURIComponent(item.name.trim())}`;
-        if (type === 'category') {
-            url = `/search?categoryId=${encodeURIComponent(item.id)}`;
-        } else if (type === 'subcategory') {
-            url = `/search?subcategoryId=${encodeURIComponent(item.id)}`;
-        }
-        setJustNavigated(true);
-        router.push(url);
-        setIsCategoriesPanelOpen(false);
-        setShowSuggestions(false);
-    }, [router]);
-
-    const panelTopPosition = searchWrapperRef.current
-        ? searchWrapperRef.current.offsetTop + searchWrapperRef.current.offsetHeight
-        : 0;
-
-    const filteredSubcategories = activeCategoryId
-        ? mockSubcategories.filter(sub => sub.categoryId === activeCategoryId)
-        : [];
-
     return (
-        <div className={styles.searchWrapper} ref={searchWrapperRef}>
+        <div className={styles.searchWrapper} ref={wrapperRef}>
             <div className={styles.container}>
                 <div className={styles.searchControls}>
                     <button
@@ -230,10 +259,13 @@ const Search: React.FC = () => {
                     >
                         Все категории
                     </button>
-
                     <div className={styles.inputAndSuggestions}>
-                        <form onSubmit={handleSubmit} className={styles.searchForm}>
+                        <form
+                            onSubmit={handleSubmit}
+                            className={styles.searchForm}
+                        >
                             <input
+                                ref={inputRef}
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
@@ -242,22 +274,23 @@ const Search: React.FC = () => {
                                 className={styles.searchInput}
                                 autoComplete="off"
                                 aria-label="Search announcements"
-                                ref={searchInputRef}
                             />
-                            <button type="submit" className={styles.searchButton}>
+                            <button
+                                type="submit"
+                                className={styles.searchButton}
+                            >
                                 Поиск
                             </button>
                         </form>
-
                         {showSuggestions && suggestions.length > 0 && (
                             <ul className={styles.suggestionsList}>
-                                {suggestions.map((suggestion, index) => (
+                                {suggestions.map((s, idx) => (
                                     <li
-                                        key={index}
+                                        key={idx}
                                         className={styles.suggestionItem}
-                                        onClick={() => handleSuggestionClick(suggestion)}
+                                        onClick={() => handleSuggestionClick(s)}
                                     >
-                                        {suggestion.value}
+                                        {s.value}
                                     </li>
                                 ))}
                             </ul>
@@ -271,43 +304,95 @@ const Search: React.FC = () => {
                     <div
                         className={styles.categoriesOverlay}
                         onClick={() => setIsCategoriesPanelOpen(false)}
-                        style={{ top: `${panelTopPosition}px`, height: `calc(100vh - ${panelTopPosition}px)` }}
+                        style={{
+                            top: panelTop,
+                            height: `calc(100vh - ${panelTop}px)`,
+                        }}
                     />
-
-                    <div className={styles.categoriesPanel} style={{ top: `${panelTopPosition}px` }}>
+                    <div
+                        className={styles.categoriesPanel}
+                        style={{ top: panelTop }}
+                    >
                         <div className={styles.categoriesPanelContent}>
-                            <div className={styles.mainAndSubcategoriesContainer}>
+                            <div
+                                className={styles.mainAndSubcategoriesContainer}
+                            >
                                 <ul className={styles.mainCategoriesList}>
-                                    {mockCategories.map(category => (
+                                    {categories.map((cat) => (
                                         <li
-                                            key={category.id}
-                                            className={`${styles.mainCategoryItem} ${activeCategoryId === category.id ? styles.active : ''}`}
-                                            onMouseEnter={() => setActiveCategoryId(category.id)}
-                                            onClick={() => handleCategoryOrSubcategorySelect(category, 'category')}
+                                            key={cat.id}
+                                            className={`${
+                                                styles.mainCategoryItem
+                                            } ${
+                                                activeCategoryId === cat.id
+                                                    ? styles.active
+                                                    : ""
+                                            }`}
+                                            onMouseEnter={() =>
+                                                setActiveCategoryId(cat.id)
+                                            }
+                                            onClick={() =>
+                                                handleCategoryOrSubcategorySelect(
+                                                    cat,
+                                                    "category"
+                                                )
+                                            }
                                         >
-                                            {category.name}
+                                            {cat.name}
                                         </li>
                                     ))}
                                 </ul>
-
                                 <div className={styles.subcategoriesDisplay}>
-                                    {activeCategoryId ? (
+                                    {filteredSubcategories.length > 0 ? (
                                         <>
-                                            <h3 className={styles.subcategoriesTitle}>
-                                                {mockCategories.find(cat => cat.id === activeCategoryId)?.name}
+                                            <h3
+                                                className={
+                                                    styles.subcategoriesTitle
+                                                }
+                                            >
+                                                {
+                                                    categories.find(
+                                                        (c) =>
+                                                            c.id ===
+                                                            activeCategoryId
+                                                    )?.name
+                                                }
                                             </h3>
-                                            <ul className={styles.subcategoriesListGrid}>
-                                                {filteredSubcategories.map(sub => (
-                                                    <li key={sub.id}>
-                                                        <a href="#" onClick={(e) => { e.preventDefault(); handleCategoryOrSubcategorySelect(sub, 'subcategory'); }}>
-                                                            {sub.name}
-                                                        </a>
-                                                    </li>
-                                                ))}
+                                            <ul
+                                                className={
+                                                    styles.subcategoriesListGrid
+                                                }
+                                            >
+                                                {filteredSubcategories.map(
+                                                    (sub) => (
+                                                        <li key={sub.id}>
+                                                            <a
+                                                                href="#"
+                                                                onClick={(
+                                                                    e
+                                                                ) => {
+                                                                    e.preventDefault();
+                                                                    handleCategoryOrSubcategorySelect(
+                                                                        sub,
+                                                                        "subcategory"
+                                                                    );
+                                                                }}
+                                                            >
+                                                                {sub.name}
+                                                            </a>
+                                                        </li>
+                                                    )
+                                                )}
                                             </ul>
                                         </>
                                     ) : (
-                                        <p className={styles.selectCategoryMessage}>Наведите на категорию слева</p>
+                                        <p
+                                            className={
+                                                styles.selectCategoryMessage
+                                            }
+                                        >
+                                            Наведите на категорию слева
+                                        </p>
                                     )}
                                 </div>
                             </div>

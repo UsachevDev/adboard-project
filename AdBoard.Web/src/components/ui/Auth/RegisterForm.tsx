@@ -1,24 +1,31 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import styles from './RegisterForm.module.scss';
+import React, { useState } from "react";
+import Link from "next/link";
+import { register } from "@/lib/api";
+import styles from "./RegisterForm.module.scss";
 
 interface RegisterFormProps {
     onRegisterSuccess: () => void;
     onSwitchToLogin: () => void;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitchToLogin }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [name, setName] = useState('');
-    const [phoneNumber, setPhoneNumber] = useState('');
-    const [city, setCity] = useState('');
+const RegisterForm: React.FC<RegisterFormProps> = ({
+    onRegisterSuccess,
+    onSwitchToLogin,
+}) => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [name, setName] = useState("");
+    const [phoneNumber, setPhoneNumber] = useState("");
+    const [city, setCity] = useState("");
 
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [message, setMessage] = useState<{
+        type: "success" | "error";
+        text: string;
+    } | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -26,43 +33,37 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
         setMessage(null);
 
         if (password !== confirmPassword) {
-            setMessage({ type: 'error', text: 'Пароли не совпадают.' });
+            setMessage({ type: "error", text: "Пароли не совпадают." });
             setLoading(false);
             return;
         }
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/registration', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email,
-                    password,
-                    name,
-                    phoneNumber: phoneNumber || null,
-                    city: city || null,
-                }),
+            await register(
+                email,
+                password,
+                name,
+                phoneNumber || undefined,
+                city || undefined
+            );
+            setMessage({
+                type: "success",
+                text: "Регистрация успешна! Теперь вы можете войти.",
             });
-
-            if (response.ok) {
-                setMessage({ type: 'success', text: 'Регистрация успешна! Теперь вы можете войти.' });
-                setEmail('');
-                setPassword('');
-                setConfirmPassword('');
-                setName('');
-                setPhoneNumber('');
-                setCity('');
-                onRegisterSuccess();
-            } else {
-                const errorData = await response.json();
-                const errorMessage = errorData.message || 'Произошла ошибка при регистрации.';
-                setMessage({ type: 'error', text: errorMessage });
-            }
-        } catch (error) {
-            console.error('Ошибка при отправке запроса:', error);
-            setMessage({ type: 'error', text: 'Не удалось подключиться к серверу. Попробуйте позже.' });
+            setEmail("");
+            setPassword("");
+            setConfirmPassword("");
+            setName("");
+            setPhoneNumber("");
+            setCity("");
+            onRegisterSuccess();
+        } catch (err: unknown) {
+            console.error("Ошибка при регистрации:", err);
+            const text =
+                err instanceof Error
+                    ? err.message
+                    : "Ошибка сети при попытке регистрации.";
+            setMessage({ type: "error", text });
         } finally {
             setLoading(false);
         }
@@ -73,7 +74,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
             <h2 className={styles.title}>Регистрация</h2>
             <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="regEmail" className={styles.label}>Email</label>
+                    <label htmlFor="regEmail" className={styles.label}>
+                        Email
+                    </label>
                     <input
                         type="email"
                         id="regEmail"
@@ -84,7 +87,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="regPassword" className={styles.label}>Пароль</label>
+                    <label htmlFor="regPassword" className={styles.label}>
+                        Пароль
+                    </label>
                     <input
                         type="password"
                         id="regPassword"
@@ -95,7 +100,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="regConfirmPassword" className={styles.label}>Подтвердите пароль</label>
+                    <label
+                        htmlFor="regConfirmPassword"
+                        className={styles.label}
+                    >
+                        Подтвердите пароль
+                    </label>
                     <input
                         type="password"
                         id="regConfirmPassword"
@@ -106,7 +116,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="regName" className={styles.label}>Ваше имя</label>
+                    <label htmlFor="regName" className={styles.label}>
+                        Ваше имя
+                    </label>
                     <input
                         type="text"
                         id="regName"
@@ -117,7 +129,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="regPhoneNumber" className={styles.label}>Номер телефона (необязательно)</label>
+                    <label htmlFor="regPhoneNumber" className={styles.label}>
+                        Номер телефона (необязательно)
+                    </label>
                     <input
                         type="tel"
                         id="regPhoneNumber"
@@ -127,7 +141,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="regCity" className={styles.label}>Город (необязательно)</label>
+                    <label htmlFor="regCity" className={styles.label}>
+                        Город (необязательно)
+                    </label>
                     <input
                         type="text"
                         id="regCity"
@@ -136,17 +152,27 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onRegisterSuccess, onSwitch
                         onChange={(e) => setCity(e.target.value)}
                     />
                 </div>
-                <button type="submit" className={styles.button} disabled={loading}>
-                    {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+                <button
+                    type="submit"
+                    className={styles.button}
+                    disabled={loading}
+                >
+                    {loading ? "Регистрация..." : "Зарегистрироваться"}
                 </button>
             </form>
             {message && (
-                <p className={`${styles.message} ${message.type === 'success' ? styles.success : styles.error}`}>
+                <p
+                    className={`${styles.message} ${
+                        message.type === "success"
+                            ? styles.success
+                            : styles.error
+                    }`}
+                >
                     {message.text}
                 </p>
             )}
             <div className={styles.formFooter}>
-                Уже есть аккаунт?{' '}
+                Уже есть аккаунт?{" "}
                 <Link href="#" onClick={onSwitchToLogin}>
                     Войти
                 </Link>

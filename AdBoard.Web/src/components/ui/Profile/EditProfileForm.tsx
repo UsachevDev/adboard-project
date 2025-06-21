@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import styles from "./EditProfileForm.module.scss";
-import api from "@/lib/api";
+import { updateCurrentUser } from "@/lib/api";
 import { UserProfile } from "@/types/index";
 
 interface EditProfileFormProps {
@@ -41,25 +41,11 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
         setMessage(null);
 
         try {
-            const patch = {
+            const updatedProfile: UserProfile = await updateCurrentUser({
                 name,
                 phoneNumber: phoneNumber || null,
                 city: city || null,
-            };
-            const response = await api("/users", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(patch),
             });
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error("Не удалось обновить профиль: " + text);
-            }
-            const result = await response.json();
-            if (result.error) {
-                throw new Error(result.error as string);
-            }
-            const updatedProfile: UserProfile = result.data;
             setMessage({ type: "success", text: "Профиль успешно обновлен!" });
             onSave(updatedProfile);
         } catch (err: unknown) {
