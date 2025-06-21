@@ -1,6 +1,8 @@
 package ru.atom.adboard.services
 
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
+import org.apache.logging.log4j.LogManager
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.authentication.AuthenticationManager
@@ -29,7 +31,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
     private val jwtUtil = _jwtUtil
     private val refreshRepo = _refreshRepo
     private val userRepo = _userRepo
-
+    val logger = LogManager.getLogger(this.javaClass.name)
     fun logout(request: HttpServletRequest): ServiceResponse<Any> {
         try {
             val token = SecureService.getTokenFromHeader(request)
@@ -44,7 +46,9 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         }
     }
 
-    fun refresh(refresh_token: String): ServiceResponse<TokensDto> {
+    fun refresh(refresh_token: String?): ServiceResponse<TokensDto> {
+        if (refresh_token.isNullOrEmpty())
+            return ServiceResponse(HttpStatus.UNAUTHORIZED)
         try {
             val refreshTokenFromDb: Optional<RefreshToken> = refreshRepo.findByToken(refresh_token)
 
@@ -102,6 +106,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
 
     fun registration(request: RegistrationRequest) : ServiceResponse<TokensDto>
     {
+        logger.info("Запрос на регистрацию ${request.email}")
         try{
             if(userRepo.existsUserByEmail(request.email))
                 return ServiceResponse(HttpStatus.OK, ServiceError("The user already exists"))

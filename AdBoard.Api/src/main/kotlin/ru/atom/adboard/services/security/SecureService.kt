@@ -1,8 +1,11 @@
 package ru.atom.adboard.services.security
 
+import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletRequest
+import org.apache.coyote.Response
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.ResponseCookie
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import java.util.*
 
@@ -41,6 +44,31 @@ object SecureService
         return Optional.empty()
 
 
+    }
+
+    @JvmStatic
+    fun setRefreshToken(refreshToken: String) : ResponseCookie
+    {
+        val cookie = ResponseCookie.from("refreshToken", refreshToken)
+            .path("/")
+            .maxAge(7 * 24 * 60 * 60)
+            .httpOnly(true)
+            .sameSite("Strict")
+            .secure(false)
+            .build()
+        return cookie
+    }
+    @JvmStatic
+    fun removeRefreshToken(): ResponseCookie
+    {
+        val cookie = ResponseCookie.from("refreshToken", "")
+            .path("/")
+            .maxAge(0)
+            .httpOnly(true)
+            .sameSite("Strict")
+            .secure(false)
+            .build()
+        return cookie
     }
 
     @JvmStatic
