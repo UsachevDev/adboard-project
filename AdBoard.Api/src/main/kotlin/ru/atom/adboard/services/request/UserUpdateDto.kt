@@ -1,4 +1,4 @@
-package ru.atom.adboard.services.response
+package ru.atom.adboard.services.request
 
 data class UserUpdateDto(
     val password: String?,
