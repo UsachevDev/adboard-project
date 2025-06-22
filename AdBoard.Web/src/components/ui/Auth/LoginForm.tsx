@@ -1,19 +1,26 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import styles from './LoginForm.module.scss';
+import React, { useState } from "react";
+import Link from "next/link";
+import { login } from "@/lib/api";
+import styles from "./LoginForm.module.scss";
 
 interface LoginFormProps {
-    onLoginSuccess: (tokens: { accessToken: string; refreshToken: string }) => void;
+    onLoginSuccess: (accessToken: string) => void;
     onSwitchToRegister: () => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegister }) => {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+const LoginForm: React.FC<LoginFormProps> = ({
+    onLoginSuccess,
+    onSwitchToRegister,
+}) => {
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [message, setMessage] = useState<{
+        type: "success" | "error";
+        text: string;
+    } | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -21,36 +28,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
         setMessage(null);
 
         try {
-            const response = await fetch('http://localhost:8080/api/auth/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    email,
-                    password,
-                }),
-            });
-
-            if (response.ok) {
-                const result = await response.json();
-                const accessToken = result.data.access_token;
-                const refreshToken = result.data.refresh_token;
-
-                setMessage({ type: 'success', text: 'Успешный вход!' });
-                onLoginSuccess({ accessToken, refreshToken }); 
-                
-                setEmail('');
-                setPassword('');
-
+            await login(email, password);
+            const token = localStorage.getItem("access_token");
+            if (token) {
+                setMessage({ type: "success", text: "Успешный вход!" });
+                onLoginSuccess(token);
+                setEmail("");
+                setPassword("");
             } else {
-                const errorData = await response.json();
-                const errorMessage = errorData.message || 'Неверный email или пароль.';
-                setMessage({ type: 'error', text: errorMessage });
+                throw new Error("Не удалось получить токен после входа.");
             }
-        } catch (error) {
-            console.error('Ошибка при отправке запроса:', error);
-            setMessage({ type: 'error', text: 'Не удалось подключиться к серверу. Попробуйте позже.' });
+        } catch (err: unknown) {
+            console.error("Ошибка при логине:", err);
+            const text =
+                err instanceof Error
+                    ? err.message
+                    : "Ошибка сети при попытке входа.";
+            setMessage({ type: "error", text });
         } finally {
             setLoading(false);
         }
@@ -61,7 +55,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
             <h2 className={styles.title}>Вход</h2>
             <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="email" className={styles.label}>Email</label>
+                    <label htmlFor="email" className={styles.label}>
+                        Email
+                    </label>
                     <input
                         type="email"
                         id="email"
@@ -72,7 +68,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label htmlFor="password" className={styles.label}>Пароль</label>
+                    <label htmlFor="password" className={styles.label}>
+                        Пароль
+                    </label>
                     <input
                         type="password"
                         id="password"
@@ -82,18 +80,28 @@ const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess, onSwitchToRegiste
                         required
                     />
                 </div>
-                <button type="submit" className={styles.button} disabled={loading}>
-                    {loading ? 'Вход...' : 'Войти'}
+                <button
+                    type="submit"
+                    className={styles.button}
+                    disabled={loading}
+                >
+                    {loading ? "Вход..." : "Войти"}
                 </button>
             </form>
 
             {message && (
-                <p className={`${styles.message} ${message.type === 'success' ? styles.success : styles.error}`}>
+                <p
+                    className={`${styles.message} ${
+                        message.type === "success"
+                            ? styles.success
+                            : styles.error
+                    }`}
+                >
                     {message.text}
                 </p>
             )}
             <div className={styles.formFooter}>
-                Нет аккаунта?{' '}
+                Нет аккаунта?{" "}
                 <Link href="#" onClick={onSwitchToRegister}>
                     Зарегистрироваться
                 </Link>

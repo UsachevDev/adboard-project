@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./ProfilePage.module.scss";
-import api from "@/lib/api";
+import { getCurrentUser } from "@/lib/api";
 import EditProfileForm from "@/components/ui/Profile/EditProfileForm";
-import { UserProfile, Announcement } from "@/types/index";
+import { UserProfile, Announcement } from "@/types";
 import Avatar from "@/components/ui/Avatar/Avatar";
 
 const ProfilePage: React.FC = () => {
@@ -14,28 +14,18 @@ const ProfilePage: React.FC = () => {
     const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>(
         []
     );
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [isEditing, setIsEditing] = useState<boolean>(false);
+    const [isEditing, setIsEditing] = useState(false);
     const router = useRouter();
 
-    const loadUserProfile = async (): Promise<void> => {
+    const loadUserProfile = useCallback(async () => {
         setLoading(true);
         setError(null);
-
         try {
-            const response = await api("/users");
-            if (!response.ok) {
-                const text = await response.text();
-                throw new Error("Не удалось получить профиль: " + text);
-            }
-            const result = await response.json();
-            if (result.error) {
-                throw new Error(result.error as string);
-            }
-            const profile: UserProfile = result.data;
+            const profile = await getCurrentUser();
             setUserData(profile);
-            setUserAnnouncements(profile.announcements || []);
+            setUserAnnouncements(profile.announcements ?? []);
             localStorage.setItem("user_name", profile.name ?? "");
             window.dispatchEvent(new Event("storage"));
         } catch (err: unknown) {
@@ -43,22 +33,19 @@ const ProfilePage: React.FC = () => {
             const msg =
                 err instanceof Error
                     ? err.message
-                    : "Произошла ошибка при загрузке профиля.";
+                    : "Ошибка при загрузке профиля.";
             setError(msg);
-            if (msg.includes("Unauthorized")) {
-                router.push("/");
-            }
+            if (msg.includes("Unauthorized")) router.push("/");
         } finally {
             setLoading(false);
         }
-    };
+    }, [router]);
 
     useEffect(() => {
         loadUserProfile();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [loadUserProfile]);
 
-    const handleProfileSave = (_updatedData: UserProfile): void => {
+    const handleProfileSave = (): void => {
         setIsEditing(false);
         loadUserProfile();
     };
@@ -100,7 +87,7 @@ const ProfilePage: React.FC = () => {
 
     const displayName =
         userData.name ??
-        (userData.email && typeof userData.email === "string"
+        (typeof userData.email === "string"
             ? userData.email.split("@")[0]
             : "Пользователь");
 
@@ -131,17 +118,17 @@ const ProfilePage: React.FC = () => {
                     </h2>
                     <div className={styles.announcementsGrid}>
                         {userAnnouncements.length > 0 ? (
-                            userAnnouncements.map((item) => (
+                            userAnnouncements.map((ann) => (
                                 <div
-                                    key={item.id}
+                                    key={ann.id}
                                     className={styles.announcementItem}
                                 >
-                                    <h3>{item.title}</h3>
-                                    <p>{item.description.slice(0, 100)}...</p>
-                                    <p>Цена: {item.price} руб.</p>
-                                    <p>Город: {item.city}</p>
+                                    <h3>{ann.title}</h3>
+                                    <p>{ann.description.slice(0, 100)}...</p>
+                                    <p>Цена: {ann.price} руб.</p>
+                                    <p>Город: {ann.city}</p>
                                     <Link
-                                        href={`/announcements/${item.id}`}
+                                        href={`/announcements/${ann.id}`}
                                         className={styles.viewAnnouncementLink}
                                     >
                                         Подробнее

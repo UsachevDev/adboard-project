@@ -1,89 +1,124 @@
-const API_BASE_URL = "http://localhost:8080/api";
+import { UserProfile } from "@/types/index";
+
+const API_BASE_URL = "/api";
 
 export interface ControllerResponse<T> {
     data: T | null;
     error: unknown | null;
 }
 
-type ApiFetchOptions = RequestInit;
+type FetchOptions = Omit<RequestInit, "body"> & { body?: unknown };
 
-const getAccessToken = (): string | null =>
-    localStorage.getItem("access_token");
-const getRefreshToken = (): string | null =>
-    sessionStorage.getItem("refresh_token");
+async function apiFetch<T>(
+    endpoint: string,
+    options: FetchOptions = {}
+): Promise<T> {
+    const token = localStorage.getItem("access_token");
 
-const setTokens = (accessToken: string, refreshToken: string): void => {
-    localStorage.setItem("access_token", accessToken);
-    sessionStorage.setItem("refresh_token", refreshToken);
-};
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
 
-const clearTokens = (): void => {
-    localStorage.removeItem("access_token");
-    sessionStorage.removeItem("refresh_token");
-};
+    const init: RequestInit = {
+        credentials: "include",
+        method: options.method || "GET",
+        headers,
+        body: options.body != null ? JSON.stringify(options.body) : undefined,
+    };
 
-const refreshAccessToken = async (): Promise<string | null> => {
-    const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-        console.error("Refresh token не найден. Пользователь не авторизован.");
-        clearTokens();
-        return null;
+    let response = await fetch(`${API_BASE_URL}${endpoint}`, init);
+
+    if (response.status === 401 && !endpoint.startsWith("/auth/")) {
+        await refreshToken();
+        const newToken = localStorage.getItem("access_token");
+        if (!newToken) throw new Error("Unauthorized");
+        init.headers = { ...headers, Authorization: `Bearer ${newToken}` };
+        response = await fetch(`${API_BASE_URL}${endpoint}`, init);
     }
+
+    let json: ControllerResponse<T>;
     try {
-        const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ refresh_token: refreshToken }),
-        });
-        const result = (await response.json()) as ControllerResponse<{
-            access_token: string;
-            refresh_token: string;
-        }>;
-        if (response.ok && result.data) {
-            console.log("🔄 Access token обновлён");
-            setTokens(result.data.access_token, result.data.refresh_token);
-            return result.data.access_token;
-        }
-        console.error("Не удалось обновить access token:", result.error);
-        clearTokens();
-        return null;
-    } catch (err: unknown) {
-        console.error("Ошибка при запросе обновления токена:", err);
-        clearTokens();
-        return null;
+        json = (await response.json()) as ControllerResponse<T>;
+    } catch {
+        throw new Error("Invalid JSON response");
     }
-};
 
-const api = async (
-    url: string,
-    options: ApiFetchOptions = {}
-): Promise<Response> => {
-    const accessToken = getAccessToken();
-    if (accessToken) {
-        options.headers = {
-            ...(options.headers as Record<string, string>),
-            Authorization: `Bearer ${accessToken}`,
-        };
+    if (!response.ok || json.error) {
+        const msg =
+            json.error != null ? String(json.error) : `HTTP ${response.status}`;
+        throw new Error(msg);
     }
-    let response = await fetch(`${API_BASE_URL}${url}`, options);
-    if (
-        response.status === 401 &&
-        !url.includes("/auth/login") &&
-        !url.includes("/auth/registration") &&
-        !url.includes("/auth/refresh")
-    ) {
-        const newToken = await refreshAccessToken();
-        if (newToken) {
-            options.headers = {
-                ...(options.headers as Record<string, string>),
-                Authorization: `Bearer ${newToken}`,
-            };
-            response = await fetch(`${API_BASE_URL}${url}`, options);
-        } else {
-            throw new Error("Unauthorized: Could not refresh token.");
-        }
-    }
-    return response;
-};
 
-export default api;
+    return json.data!;
+}
+
+async function refreshToken(): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: "POST",
+        credentials: "include",
+    });
+    const json = (await response.json()) as ControllerResponse<string>;
+    if (response.ok && json.data) {
+        localStorage.setItem("access_token", json.data);
+    } else {
+        localStorage.removeItem("access_token");
+    }
+}
+
+// === Auth ===
+export async function login(email: string, password: string): Promise<void> {
+    const token = await apiFetch<string>("/auth/login", {
+        method: "POST",
+        body: { email, password },
+    });
+    localStorage.setItem("access_token", token);
+}
+export async function register(
+    email: string,
+    password: string,
+    name: string,
+    phoneNumber?: string,
+    city?: string
+): Promise<void> {
+    const token = await apiFetch<string>("/auth/registration", {
+        method: "POST",
+        body: { email, password, name, phoneNumber, city },
+    });
+    localStorage.setItem("access_token", token);
+}
+
+export async function logout(): Promise<void> {
+    try {
+        await apiFetch<unknown>("/auth/logout", { method: "POST" });
+    } finally {
+        localStorage.removeItem("access_token");
+    }
+}
+
+// === Categories ===
+export interface CategoryDto {
+    id: string;
+    name: string;
+    subcategories: { id: string; name: string }[];
+}
+export async function getCategories(): Promise<CategoryDto[]> {
+    return apiFetch<CategoryDto[]>("/categories", { method: "GET" });
+}
+export async function getCategoryById(id: string): Promise<CategoryDto> {
+    return apiFetch<CategoryDto>(`/categories/${id}`, { method: "GET" });
+}
+
+// === User ===
+export async function getCurrentUser(): Promise<UserProfile> {
+    return apiFetch<UserProfile>("/users", { method: "GET" });
+}
+
+export async function updateCurrentUser(
+    patch: Partial<UserProfile>
+): Promise<UserProfile> {
+    return apiFetch<UserProfile>("/users", {
+        method: "PATCH",
+        body: patch,
+    });
+}

@@ -1,16 +1,23 @@
 "use client";
 
+import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState, useMemo } from "react";
-import styles from "./SearchPage.module.scss";
-import { Announcement, Subcategory, Category } from "@/types";
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
 import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
-import {
-    getMockAnnouncements,
-    mockCategories,
-    mockSubcategories,
-} from "@/lib/mockData";
+import { getMockAnnouncements } from "@/lib/mockData";
+import { getCategories, CategoryDto } from "@/lib/api";
+import { Announcement, Category, Subcategory } from "@/types";
+import styles from "./SearchPage.module.scss";
+
+const mapCategory = (dto: CategoryDto): Category => ({
+    id: dto.id,
+    name: dto.name,
+    subcategories: dto.subcategories.map((sub) => ({
+        id: sub.id,
+        name: sub.name,
+        categoryId: dto.id,
+    })),
+});
 
 const SearchPage: React.FC = () => {
     const searchParams = useSearchParams();
@@ -19,147 +26,79 @@ const SearchPage: React.FC = () => {
     const subcategoryId = searchParams.get("subcategoryId");
 
     const [results, setResults] = useState<Announcement[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState(true);
     const [pageTitle, setPageTitle] = useState("Результаты поиска");
-    const [currentSubcategories, setCurrentSubcategories] = useState<
-        Subcategory[]
-    >([]);
+    const [categories, setCategories] = useState<Category[]>([]);
 
-    const currentCategory = useMemo(() => {
-        return categoryId
-            ? mockCategories.find((cat) => cat.id === categoryId)
-            : undefined;
-    }, [categoryId]);
+    useEffect(() => {
+        getCategories()
+            .then((dtos: CategoryDto[]) => dtos.map(mapCategory))
+            .then(setCategories)
+            .catch((err) =>
+                console.error("Не удалось загрузить категории:", err)
+            );
+    }, []);
 
+    const currentCategory = useMemo(
+        () => categories.find((c) => c.id === categoryId),
+        [categories, categoryId]
+    );
+    const currentSubcategories: Subcategory[] = useMemo(
+        () => currentCategory?.subcategories ?? [],
+        [currentCategory]
+    );
+
+    // фильтрация объявлений
     useEffect(() => {
         setLoading(true);
 
-        if (currentCategory) {
-            const relatedSubs = mockSubcategories.filter(
-                (sub) => sub.categoryId === currentCategory.id
-            );
-            setCurrentSubcategories(relatedSubs);
-        } else {
-            setCurrentSubcategories([]);
-        }
-
         const fetchAndFilterAnnouncements = () => {
-            const allAnnouncements = getMockAnnouncements();
-            let filtered: Announcement[] = allAnnouncements;
+            let filtered = getMockAnnouncements();
             let title = "Все объявления";
 
+            // Поиск по тексту
             if (searchQuery) {
-                const lowerCaseQuery = searchQuery.toLowerCase();
-                filtered = filtered.filter((announcement) => {
-                    const matchesTitle = announcement.title
-                        .toLowerCase()
-                        .includes(lowerCaseQuery);
-                    const matchesDescription = announcement.description
-                        .toLowerCase()
-                        .includes(lowerCaseQuery);
-                    const matchesCity = announcement.city
-                        .toLowerCase()
-                        .includes(lowerCaseQuery);
-
-                    const matchesCategoryPartially =
-                        announcement.categories &&
-                        announcement.categories.some((category) =>
-                            category.name.toLowerCase().includes(lowerCaseQuery)
-                        );
-                    const matchesSubcategoryPartially =
-                        announcement.subcategories &&
-                        announcement.subcategories.some((subcategory) =>
-                            subcategory.name
-                                .toLowerCase()
-                                .includes(lowerCaseQuery)
-                        );
-
-                    let isBuySellQuery = false;
-                    let keywordFromPhrase = "";
-                    if (
-                        lowerCaseQuery.startsWith("купить ") ||
-                        lowerCaseQuery.startsWith("продать ")
-                    ) {
-                        isBuySellQuery = true;
-                        keywordFromPhrase = lowerCaseQuery
-                            .split(" ")
-                            .slice(1)
-                            .join(" ");
-                    }
-
-                    const matchesKeywordInBuySellPhrase = keywordFromPhrase
-                        ? announcement.title
-                              .toLowerCase()
-                              .includes(keywordFromPhrase) ||
-                          announcement.description
-                              .toLowerCase()
-                              .includes(keywordFromPhrase) ||
-                          (announcement.categories &&
-                              announcement.categories.some((c) =>
-                                  c.name
-                                      .toLowerCase()
-                                      .includes(keywordFromPhrase)
-                              )) ||
-                          (announcement.subcategories &&
-                              announcement.subcategories.some((s) =>
-                                  s.name
-                                      .toLowerCase()
-                                      .includes(keywordFromPhrase)
-                              ))
-                        : false;
-
-                    return (
-                        matchesTitle ||
-                        matchesDescription ||
-                        matchesCity ||
-                        matchesCategoryPartially ||
-                        matchesSubcategoryPartially ||
-                        (isBuySellQuery && matchesKeywordInBuySellPhrase)
-                    );
-                });
+                const lower = searchQuery.toLowerCase();
+                filtered = filtered.filter(
+                    (ann) =>
+                        [
+                            ann.title.toLowerCase(),
+                            ann.description.toLowerCase(),
+                            ann.city.toLowerCase(),
+                        ].some((str) => str.includes(lower)) ||
+                        ann.categories?.some((c) =>
+                            c.name.toLowerCase().includes(lower)
+                        ) ||
+                        ann.subcategories?.some((s) =>
+                            s.name.toLowerCase().includes(lower)
+                        )
+                );
                 title = `Результаты поиска для: "${searchQuery}"`;
             }
 
+            // Фильтр по категории
             if (categoryId) {
-                filtered = filtered.filter(
-                    (announcement) =>
-                        announcement.categories &&
-                        announcement.categories.some(
-                            (cat) => cat.id === categoryId
-                        )
+                filtered = filtered.filter((ann) =>
+                    ann.categories?.some((c) => c.id === categoryId)
                 );
-                const categoryName = mockCategories.find(
-                    (cat) => cat.id === categoryId
-                )?.name;
-                if (!subcategoryId && !searchQuery) {
-                    title = `Объявления в категории: "${
-                        categoryName || categoryId
-                    }"`;
-                } else if (searchQuery) {
-                    title = `Результаты по запросу "${searchQuery}" в категории "${
-                        categoryName || categoryId
-                    }"`;
+                const name = currentCategory?.name ?? categoryId;
+                title = `Объявления в категории: "${name}"`;
+                if (searchQuery) {
+                    title = `Результаты "${searchQuery}" в категории "${name}"`;
                 }
             }
 
+            // Фильтр по подкатегории
             if (subcategoryId) {
-                filtered = filtered.filter(
-                    (announcement) =>
-                        announcement.subcategories &&
-                        announcement.subcategories.some(
-                            (sub) => sub.id === subcategoryId
-                        )
+                filtered = filtered.filter((ann) =>
+                    ann.subcategories?.some((s) => s.id === subcategoryId)
                 );
-                const subcategoryName = mockSubcategories.find(
-                    (sub) => sub.id === subcategoryId
-                )?.name;
-                title = `Объявления в подкатегории: "${
-                    subcategoryName || subcategoryId
-                }"`;
+                const subName =
+                    currentSubcategories.find((s) => s.id === subcategoryId)
+                        ?.name ?? subcategoryId;
+                title = `Объявления в подкатегории: "${subName}"`;
                 if (searchQuery) {
-                    title = `Результаты по запросу "${searchQuery}" в подкатегории "${
-                        subcategoryName || subcategoryId
-                    }"`;
+                    title = `Результаты "${searchQuery}" в подкатегории "${subName}"`;
                 }
             }
 
@@ -169,14 +108,19 @@ const SearchPage: React.FC = () => {
         };
 
         const timer = setTimeout(fetchAndFilterAnnouncements, 300);
-
         window.addEventListener("storage", fetchAndFilterAnnouncements);
-
         return () => {
             clearTimeout(timer);
             window.removeEventListener("storage", fetchAndFilterAnnouncements);
         };
-    }, [searchQuery, categoryId, subcategoryId, currentCategory]);
+    }, [
+        searchQuery,
+        categoryId,
+        subcategoryId,
+        categories,
+        currentCategory,
+        currentSubcategories,
+    ]);
 
     return (
         <div className={styles.container}>
@@ -196,11 +140,8 @@ const SearchPage: React.FC = () => {
                 <p className={styles.message}>Загрузка...</p>
             ) : results.length > 0 ? (
                 <div className={styles.resultsGrid}>
-                    {results.map((announcement) => (
-                        <AnnouncementCard
-                            key={announcement.id}
-                            announcement={announcement}
-                        />
+                    {results.map((ann) => (
+                        <AnnouncementCard key={ann.id} announcement={ann} />
                     ))}
                 </div>
             ) : (

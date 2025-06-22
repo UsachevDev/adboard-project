@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: AdBoardDb
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - adboard-db-data:/var/lib/postgresql/data
       - ./ADBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
@@ -42,7 +42,7 @@ services:
       - ./AdBoard.Web:/app
       - /app/node_modules
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:8080
+      - NEXT_PUBLIC_API_URL=http://adboard-backend:8080
 
 volumes:
   adboard-db-data:
