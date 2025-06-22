@@ -16,7 +16,7 @@ class FavoritesController(_service: FavoriteService) {
     private final val service = _service
 
     @PostMapping("/{announcementId}")
-    fun addReview(@PathVariable announcementId: String) : ResponseEntity<Any>
+    fun addToFavorites(@PathVariable announcementId: String) : ResponseEntity<Any>
     {
         val claims = SecurityContextHolder.getContext().authentication.details as Claims
         val serviceResponse = service.addToFavorite(claims.get("id").toString(), announcementId)
