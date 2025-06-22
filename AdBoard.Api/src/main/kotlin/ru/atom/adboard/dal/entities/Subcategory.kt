@@ -1,6 +1,7 @@
 package ru.atom.adboard.dal.entities
 
 import com.fasterxml.jackson.annotation.JsonIgnore
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.persistence.*
 import java.util.*
 
@@ -16,7 +17,7 @@ data class Subcategory(
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "category_id")
-    @JsonIgnore
+    @JsonIgnoreProperties("subcategories")
     val category: Category,
 
     @OneToMany(mappedBy = "subcategory", fetch = FetchType.LAZY)

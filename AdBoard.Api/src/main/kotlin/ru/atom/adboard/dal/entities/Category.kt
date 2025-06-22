@@ -1,4 +1,5 @@
 package ru.atom.adboard.dal.entities
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import jakarta.persistence.*
 import java.util.*
 
@@ -12,6 +13,6 @@ data class Category(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @OneToMany(fetch = FetchType.EAGER, mappedBy = "category")
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "category")
     val subcategories:  List<Subcategory> = Collections.emptyList()
 )

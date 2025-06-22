@@ -18,7 +18,7 @@ class AnnouncementService(_repo: AnnouncementRepository)
     fun getAll() : ServiceResponse<List<Announcement>>
     {
         try{
-            val announcements = repo.findAll()
+            val announcements = repo.findAllByIsHiddenFalseWithSubcategoryAndCategory()
             return ServiceResponse(announcements, HttpStatus.OK)
         }
         catch (ex: Exception)
