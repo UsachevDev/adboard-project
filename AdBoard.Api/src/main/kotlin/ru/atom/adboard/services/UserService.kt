@@ -4,12 +4,11 @@ import io.jsonwebtoken.Claims
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.Authentication
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
 import ru.atom.adboard.dal.entities.User
 import ru.atom.adboard.dal.repositories.UserRepository
 import ru.atom.adboard.services.response.ServiceResponse
 import ru.atom.adboard.services.response.UserProfileDto
-import ru.atom.adboard.services.response.UserUpdateDto
+import ru.atom.adboard.services.request.UserUpdateDto
 import ru.atom.adboard.services.security.SecureService
 import java.util.*
 

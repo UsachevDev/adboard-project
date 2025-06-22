@@ -19,23 +19,26 @@ data class Announcement(
     val creatorId: UUID,
 
     @Column(name = "title", nullable = false)
-    val title: String,
+    var title: String,
 
     @Column(name = "description")
-    val description: String,
+    var description: String,
 
     @Column(name = "price", nullable = false)
-    val price: Double,
+    var price: Double,
 
     @Column(name = "city")
-    val city: String,
+    var city: String,
 
     @Column(name = "count")
-    val count: Int,
+    var count: Int,
 
     @Column(name = "subcategory_id")
     @JsonIgnore
     val subcategoryId: UUID,
+
+    @Column(name = "is_hidden", nullable = false)
+    var isHidden: Boolean = false,
 
     @OneToMany(mappedBy = "announcement", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnore

@@ -2,12 +2,18 @@ package ru.atom.adboard.services
 
 import org.apache.logging.log4j.LogManager
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.jpa.domain.AbstractPersistable_.id
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import ru.atom.adboard.dal.entities.Announcement
+import ru.atom.adboard.dal.entities.User
 import ru.atom.adboard.dal.repositories.AnnouncementRepository
 import ru.atom.adboard.services.request.AddAnnouncementDto
+import ru.atom.adboard.services.request.UpdateAnnouncementDto
+import ru.atom.adboard.services.request.UserUpdateDto
+import ru.atom.adboard.services.response.ServiceError
 import ru.atom.adboard.services.response.ServiceResponse
+import ru.atom.adboard.services.security.SecureService
 import java.util.*
 
 @Service
@@ -47,6 +53,33 @@ class AnnouncementService(_repo: AnnouncementRepository)
         catch (ex: Exception)
         {
             logger.error("Creating announcements error: ${ex.message}")
+            return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+    }
+
+    fun updateAnnouncement(userId: String, announcementId : String, patch: UpdateAnnouncementDto): ServiceResponse<Announcement> {
+        try{
+            if(!SecureService.isValidId(announcementId))
+                return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Invalid announcement id format"))
+
+            val announcement = repo.findById(UUID.fromString(announcementId))
+            announcement.get().title = "f"
+            if(announcement.isEmpty)
+                return ServiceResponse(HttpStatus.NOT_FOUND)
+            if(announcement.get().creatorId != UUID.fromString(userId))
+                return ServiceResponse(HttpStatus.FORBIDDEN, ServiceError("You are not the creator of the announcement"))
+
+            patch.title?.let {announcement.get().title = patch.title}
+            patch.description?.let {announcement.get().description = patch.description}
+            patch.price?.let {announcement.get().price = patch.price}
+            patch.count?.let {announcement.get().count = patch.count}
+            patch.isHidden?.let {announcement.get().isHidden = patch.isHidden}
+
+            repo.save(announcement.get())
+            return ServiceResponse(HttpStatus.OK)
+        }
+        catch (ex: Exception)
+        {
             return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }

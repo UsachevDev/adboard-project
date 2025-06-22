@@ -7,15 +7,13 @@ import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
-import jakarta.servlet.http.HttpServletRequest
 import org.springframework.http.*
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import ru.atom.adboard.dal.entities.User
 
 import ru.atom.adboard.services.UserService
-import ru.atom.adboard.services.response.UserUpdateDto
-import java.util.*
+import ru.atom.adboard.services.request.UserUpdateDto
 
 @RestController()
 @RequestMapping("/api/users")

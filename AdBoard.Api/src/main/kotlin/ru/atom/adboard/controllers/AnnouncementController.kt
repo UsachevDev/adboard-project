@@ -9,14 +9,18 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import io.swagger.v3.oas.annotations.tags.Tag
+import org.hibernate.sql.Update
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import ru.atom.adboard.dal.entities.Announcement
+import ru.atom.adboard.dal.entities.User
 import ru.atom.adboard.services.AnnouncementService
 import ru.atom.adboard.services.request.AddAnnouncementDto
+import ru.atom.adboard.services.request.UpdateAnnouncementDto
+import ru.atom.adboard.services.request.UserUpdateDto
 import java.net.URI
 
 @Tag(name = "Announcements")
@@ -98,6 +102,16 @@ class AnnouncementController(_service: AnnouncementService)
             ControllerResponse(serviceResponse.data, serviceResponse.error),
             serviceResponse.code
         )
+    }
 
+    @PatchMapping(value = ["/{announcementId}"])
+    fun partialUpdateUser(@PathVariable announcementId: String, @RequestBody patch: UpdateAnnouncementDto): ResponseEntity<ControllerResponse<Announcement>> {
+        val claims = SecurityContextHolder.getContext().authentication.details as Claims
+        val serviceResponse = service.updateAnnouncement(claims.get("id").toString(),announcementId ,patch)
+        val response = ControllerResponse(
+            data = serviceResponse.data,
+            error = serviceResponse.error
+        )
+        return ResponseEntity(response, serviceResponse.code)
     }
 }
