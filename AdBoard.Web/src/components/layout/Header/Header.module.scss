@@ -7,7 +7,6 @@
     color: $color-white;
     padding: $spacing-md $spacing-xl;
     box-shadow: $box-shadow-sm;
-    width: 100%;
 }
 
 .container {
@@ -30,7 +29,6 @@
     }
 }
 
-
 .navList {
     list-style: none;
     margin: 0;
@@ -40,14 +38,14 @@
     gap: $spacing-lg;
 }
 
-.navLink {
+.navLink,
+.navLinkButton {
     display: flex;
     align-items: center;
     background: none;
     border: none;
     color: $color-white;
     text-decoration: none;
-
     padding: $spacing-sm $spacing-md;
     font-family: $font-family-primary;
     font-weight: 600;
@@ -59,23 +57,70 @@
     }
 }
 
-.navLinkAvatar {
-  margin-right: $spacing-xs;
+.navItem {
+    position: relative;
 }
 
-.navLinkButton {
+.favButton {
     background: none;
     border: none;
-    color: $color-white;
-    text-decoration: none;
+    padding: $spacing-sm;
+    cursor: pointer;
+    transition: color 0.2s ease;
 
-    padding: $spacing-sm $spacing-md;
-    font-family: $font-family-primary;
-    font-weight: 600;
+    svg {
+        width: 1.4rem;
+        height: 1.4rem;
+    }
+
+    svg path {
+        stroke: $color-white;
+        stroke-width: 2;
+        fill: none;
+        transition: fill 0.2s ease;
+    }
+
+    &:hover svg path,
+    &[aria-expanded="true"] svg path {
+        fill: $color-white;
+    }
+}
+
+.favDropdown {
+    position: absolute;
+    top: 100%;
+    margin-top: $spacing-sm;
+    right: 0;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: $color-white;
+    border: 1px solid $color-border;
     border-radius: $border-radius-sm;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    box-shadow: $box-shadow-md;
+    padding: $spacing-md;
+    z-index: 100;
+}
+
+.emptyMessage {
+    text-align: center;
+    color: $color-text-tertiary;
+    padding: $spacing-md 0;
+}
+
+.showAllButton {
+    display: block;
+    width: 100%;
+    margin-top: $spacing-md;
+    padding: $spacing-sm;
+    background-color: $color-primary;
+    color: $color-white;
+    border: none;
+    border-radius: $border-radius-sm;
+    cursor: pointer;
+    font-weight: 500;
 
     &:hover {
-        background-color: color.adjust($color-primary, $lightness: 10%);
+        background-color: color.adjust($color-primary, $alpha: -0.1);
     }
 }

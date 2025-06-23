@@ -1,0 +1,27 @@
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
+@use "sass:color";
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: $spacing-lg;
+}
+
+.title {
+    font-size: $font-size-h2;
+    margin-bottom: $spacing-lg;
+    color: $color-text-primary;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: $spacing-md;
+}
+
+.emptyMessage {
+    text-align: center;
+    color: $color-text-tertiary;
+    padding: $spacing-xl 0;
+}
