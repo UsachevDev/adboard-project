@@ -84,4 +84,23 @@ class AnnouncementService(_repo: AnnouncementRepository)
         }
     }
 
+    fun getById(announcementId: String) : ServiceResponse<Announcement>
+    {
+        if(announcementId.isEmpty() || !SecureService.isValidId(announcementId))
+            return ServiceResponse(HttpStatus.BAD_REQUEST)
+
+        try{
+            val announcement = repo.findById(UUID.fromString(announcementId))
+            if(announcement.isEmpty)
+                return ServiceResponse(HttpStatus.NOT_FOUND)
+            return ServiceResponse(announcement.get(), HttpStatus.OK)
+        }
+        catch (ex : Exception)
+        {
+            logger.error("Getting announcement by id error: ${ex.message}")
+            return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR)
+        }
+
+    }
+
 }

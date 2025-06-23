@@ -15,7 +15,7 @@ data class Subcategory(
     @Column(name = "name", nullable = false)
     val name: String,
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "category_id")
     @JsonIgnoreProperties("subcategories")
     val category: Category,

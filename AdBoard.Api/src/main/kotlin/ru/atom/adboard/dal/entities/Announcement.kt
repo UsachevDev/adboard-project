@@ -9,7 +9,6 @@ import kotlin.collections.HashSet
 
 @Entity
 @Table(name = "announcements")
-@EqualsAndHashCode
 data class Announcement(
     @Id
     @Column(name = "id", columnDefinition = "UUID")
@@ -41,7 +40,6 @@ data class Announcement(
     var isHidden: Boolean = false,
 
     @OneToMany(mappedBy = "announcement", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
     val reviews: MutableSet<Review> = mutableSetOf(),
 
     @ManyToMany(mappedBy = "favorites")

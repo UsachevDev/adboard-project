@@ -114,4 +114,14 @@ class AnnouncementController(_service: AnnouncementService)
         )
         return ResponseEntity(response, serviceResponse.code)
     }
+
+    @GetMapping("/{announcementId}")
+    fun getAnnouncementById(@PathVariable announcementId: String) : ResponseEntity<Any>
+    {
+        val serviceResponse = service.getById(announcementId)
+        return ResponseEntity(
+            ControllerResponse(serviceResponse.data, serviceResponse.error),
+            serviceResponse.code
+        )
+    }
 }
