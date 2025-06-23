@@ -1,3 +1,4 @@
+// AdBoard.Web/src/context/UserContext.tsx
 "use client";
 
 import React, {
@@ -7,8 +8,13 @@ import React, {
     useEffect,
     ReactNode,
 } from "react";
-import { UserProfile } from "@/types";
-import { getCurrentUser, addToFavorites, removeFromFavorites } from "@/lib/api";
+import { UserProfile, Announcement } from "@/types";
+import {
+    getCurrentUser,
+    addToFavorites,
+    removeFromFavorites,
+    getAnnouncementById,
+} from "@/lib/api";
 
 interface UserContextData {
     user: UserProfile | null;
@@ -53,22 +59,31 @@ export const UserProvider: React.FC<{ children: ReactNode }> = ({
                     next.delete(announcementId);
                     return next;
                 });
+                setUser((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              favourites: prev.favourites.filter(
+                                  (a) => a.id !== announcementId
+                              ),
+                          }
+                        : prev
+                );
             } else {
                 await addToFavorites(announcementId);
-                setFavSet((prev) => {
-                    const next = new Set(prev);
-                    next.add(announcementId);
-                    return next;
-                });
+                const newAnn = await getAnnouncementById(announcementId);
+                setFavSet((prev) => new Set(prev).add(announcementId));
+                setUser((prev) =>
+                    prev
+                        ? {
+                              ...prev,
+                              favourites: [...(prev.favourites ?? []), newAnn],
+                          }
+                        : prev
+                );
             }
-        } catch (err: unknown) {
+        } catch (err) {
             console.error("Ошибка переключения избранного:", err);
-            setFavSet((prev) => {
-                const next = new Set(prev);
-                if (isFav) next.add(announcementId);
-                else next.delete(announcementId);
-                return next;
-            });
         }
     };
 

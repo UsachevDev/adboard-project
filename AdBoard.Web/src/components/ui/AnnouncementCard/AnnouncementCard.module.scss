@@ -6,26 +6,59 @@
     background-color: $color-white;
     border-radius: $border-radius-md;
     box-shadow: $box-shadow-sm;
-    padding: $spacing-md;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-    cursor: pointer;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    overflow: hidden;
 
     &:hover {
-        transform: translateY(-5px);
         box-shadow: $box-shadow-md;
     }
+}
+
+/* Кнопка избранного */
+.favorite {
+    position: absolute;
+    top: $spacing-sm;
+    right: $spacing-sm;
+    z-index: 2;
+}
+
+.favoriteButton {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+
+    svg {
+        display: block;
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+
+    svg path {
+        stroke: $color-text-tertiary;
+        stroke-width: 2;
+        fill: none;
+        transition: fill 0.2s ease, stroke 0.2s ease;
+    }
+
+    &[aria-pressed="true"] svg path {
+        fill: $color-secondary;
+        stroke: $color-secondary;
+    }
+}
+
+/* Обёртка для клика по карточке */
+.body {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
 }
 
 .imageWrapper {
     position: relative;
     width: 100%;
     padding-top: 66.66%;
-    margin-bottom: $spacing-md;
-    border-radius: $border-radius-sm;
-    overflow: hidden;
+    background-color: $color-light-gray;
 
     img {
         position: absolute;
@@ -39,14 +72,13 @@
 
 .noImage {
     @include flex-center;
-    background-color: $color-light-gray;
-    color: $color-text-tertiary;
     height: 100%;
+    color: $color-text-tertiary;
     font-size: $font-size-lg;
 }
 
 .content {
-    flex-grow: 1;
+    padding: $spacing-md;
     display: flex;
     flex-direction: column;
 }
@@ -78,17 +110,4 @@
     font-size: $font-size-sm;
     color: $color-text-tertiary;
     margin-top: $spacing-xs;
-}
-
-.favorite {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-}
-
-.favoriteButton {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
 }
