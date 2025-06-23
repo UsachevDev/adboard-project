@@ -1,4 +1,4 @@
-import { UserProfile } from "@/types/index";
+import { UserProfile, Announcement, AddAnnouncementRequest } from "@/types";
 
 const API_BASE_URL = "/api";
 
@@ -14,12 +14,10 @@ async function apiFetch<T>(
     options: FetchOptions = {}
 ): Promise<T> {
     const token = localStorage.getItem("access_token");
-
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
     };
-
     const init: RequestInit = {
         credentials: "include",
         method: options.method || "GET",
@@ -29,6 +27,7 @@ async function apiFetch<T>(
 
     let response = await fetch(`${API_BASE_URL}${endpoint}`, init);
 
+    // при 401 обновляем токен
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         await refreshToken();
         const newToken = localStorage.getItem("access_token");
@@ -37,43 +36,63 @@ async function apiFetch<T>(
         response = await fetch(`${API_BASE_URL}${endpoint}`, init);
     }
 
-    let json: ControllerResponse<T>;
+    // пробуем распарсить JSON
+    let payload: ControllerResponse<T> | null = null;
     try {
-        json = (await response.json()) as ControllerResponse<T>;
+        payload = (await response.json()) as ControllerResponse<T>;
     } catch {
-        throw new Error("Invalid JSON response");
+        if (response.ok) {
+            // 2xx без тела
+            // @ts-ignore
+            return undefined;
+        }
+        throw new Error(`HTTP ${response.status}`);
     }
 
-    if (!response.ok || json.error) {
-        const msg =
-            json.error != null ? String(json.error) : `HTTP ${response.status}`;
+    if (!response.ok || payload.error) {
+        const err = payload.error;
+        let msg: string;
+        if (err && typeof err === "object" && "message" in err) {
+            // @ts-ignore
+            msg = err.message;
+        } else {
+            msg = String(err) || `HTTP ${response.status}`;
+        }
         throw new Error(msg);
     }
 
-    return json.data!;
+    return payload.data!;
 }
 
 async function refreshToken(): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
         method: "POST",
         credentials: "include",
     });
-    const json = (await response.json()) as ControllerResponse<string>;
-    if (response.ok && json.data) {
-        localStorage.setItem("access_token", json.data);
-    } else {
+    try {
+        const json = (await resp.json()) as ControllerResponse<string>;
+        if (resp.ok && json.data) {
+            localStorage.setItem("access_token", json.data);
+        } else {
+            localStorage.removeItem("access_token");
+        }
+    } catch {
         localStorage.removeItem("access_token");
     }
 }
 
 // === Auth ===
-export async function login(email: string, password: string): Promise<void> {
+export async function login(
+    email: string,
+    password: string
+): Promise<void> {
     const token = await apiFetch<string>("/auth/login", {
         method: "POST",
         body: { email, password },
     });
     localStorage.setItem("access_token", token);
 }
+
 export async function register(
     email: string,
     password: string,
@@ -105,7 +124,9 @@ export interface CategoryDto {
 export async function getCategories(): Promise<CategoryDto[]> {
     return apiFetch<CategoryDto[]>("/categories", { method: "GET" });
 }
-export async function getCategoryById(id: string): Promise<CategoryDto> {
+export async function getCategoryById(
+    id: string
+): Promise<CategoryDto> {
     return apiFetch<CategoryDto>(`/categories/${id}`, { method: "GET" });
 }
 
@@ -121,4 +142,75 @@ export async function updateCurrentUser(
         method: "PATCH",
         body: patch,
     });
+}
+
+// === Announcements ===
+export async function getAnnouncements(): Promise<Announcement[]> {
+    return apiFetch<Announcement[]>("/announcements");
+}
+
+export async function getAnnouncementById(
+    id: string
+): Promise<Announcement> {
+    return apiFetch<Announcement>(`/announcements/${id}`);
+}
+
+export async function addAnnouncement(
+    payload: AddAnnouncementRequest
+): Promise<Announcement> {
+    // создаём объявление и получаем Location
+    const token = localStorage.getItem("access_token");
+    const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    };
+
+    const response = await fetch(`${API_BASE_URL}/announcements`, {
+        method: "POST",
+        credentials: "include",
+        headers,
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        let errorText = `HTTP ${response.status}`;
+        try {
+            const errJson = await response.json();
+            errorText =
+                errJson.error && typeof errJson.error === "string"
+                    ? errJson.error
+                    : JSON.stringify(errJson);
+        } catch {
+            // ignore
+        }
+        throw new Error(errorText);
+    }
+
+    const location = response.headers.get("Location");
+    if (!location) {
+        throw new Error("Missing Location header in response");
+    }
+    const parts = location.split("/");
+    const id = parts.pop() || "";
+    if (!id) {
+        throw new Error(
+            "Cannot parse announcement ID from Location header"
+        );
+    }
+
+    // подгружаем полное объявление
+    return getAnnouncementById(id);
+}
+
+// === Favorites ===
+export async function addToFavorites(
+    id: string
+): Promise<void> {
+    await apiFetch<void>(`/favorites/${id}`, { method: "POST" });
+}
+
+export async function removeFromFavorites(
+    id: string
+): Promise<void> {
+    await apiFetch<void>(`/favorites/${id}`, { method: "DELETE" });
 }

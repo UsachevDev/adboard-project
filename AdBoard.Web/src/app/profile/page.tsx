@@ -1,15 +1,16 @@
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import styles from "./ProfilePage.module.scss";
 import { getCurrentUser } from "@/lib/api";
 import EditProfileForm from "@/components/ui/Profile/EditProfileForm";
-import { UserProfile, Announcement } from "@/types";
+import { useUserContext } from "@/context/UserContext";
 import Avatar from "@/components/ui/Avatar/Avatar";
+import { UserProfile, Announcement } from "@/types";
 
 const ProfilePage: React.FC = () => {
+    const { refreshUser } = useUserContext();
     const [userData, setUserData] = useState<UserProfile | null>(null);
     const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>(
         []
@@ -17,41 +18,31 @@ const ProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
-    const router = useRouter();
 
-    const loadUserProfile = useCallback(async () => {
+    const loadProfile = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const profile = await getCurrentUser();
             setUserData(profile);
             setUserAnnouncements(profile.announcements ?? []);
-            localStorage.setItem("user_name", profile.name ?? "");
-            window.dispatchEvent(new Event("storage"));
-        } catch (err: unknown) {
-            console.error("Ошибка загрузки профиля:", err);
+        } catch (e: unknown) {
             const msg =
-                err instanceof Error
-                    ? err.message
-                    : "Ошибка при загрузке профиля.";
+                e instanceof Error ? e.message : "Ошибка при загрузке профиля.";
             setError(msg);
-            if (msg.includes("Unauthorized")) router.push("/");
         } finally {
             setLoading(false);
         }
-    }, [router]);
+    }, []);
 
     useEffect(() => {
-        loadUserProfile();
-    }, [loadUserProfile]);
+        loadProfile();
+    }, [loadProfile]);
 
-    const handleProfileSave = (): void => {
+    const handleProfileSave = async () => {
         setIsEditing(false);
-        loadUserProfile();
-    };
-
-    const handleEditCancel = (): void => {
-        setIsEditing(false);
+        await refreshUser();
+        await loadProfile();
     };
 
     if (loading) {
@@ -64,32 +55,20 @@ const ProfilePage: React.FC = () => {
     if (error) {
         return (
             <div className={styles.container}>
-                <h1 className={styles.title}>Ошибка загрузки профиля</h1>
-                <p className={`${styles.welcomeMessage} ${styles.error}`}>
-                    {error}
-                </p>
-                <p className={styles.loginPrompt}>
-                    Пожалуйста, войдите в систему.
-                </p>
+                <p className={styles.error}>{error}</p>
             </div>
         );
     }
     if (!userData) {
         return (
             <div className={styles.container}>
-                <h1 className={styles.title}>Требуется авторизация</h1>
-                <p className={styles.loginPrompt}>
-                    Для просмотра профиля нажмите «Войти».
-                </p>
+                <p>Требуется авторизация.</p>
             </div>
         );
     }
 
     const displayName =
-        userData.name ??
-        (typeof userData.email === "string"
-            ? userData.email.split("@")[0]
-            : "Пользователь");
+        userData.name ?? (userData.email.split("@")[0] || "Пользователь");
 
     return (
         <div className={styles.container}>
@@ -97,7 +76,7 @@ const ProfilePage: React.FC = () => {
                 <EditProfileForm
                     initialData={userData}
                     onSave={handleProfileSave}
-                    onCancel={handleEditCancel}
+                    onCancel={() => setIsEditing(false)}
                 />
             ) : (
                 <>
@@ -109,24 +88,29 @@ const ProfilePage: React.FC = () => {
                             Привет, {displayName}!
                         </h1>
                     </div>
-                    <p className={styles.welcomeMessage}>
-                        Добро пожаловать в ваш кабинет AdBoard.
-                    </p>
 
                     <h2 className={styles.sectionTitle}>
                         Мои объявления ({userAnnouncements.length})
                     </h2>
-                    <div className={styles.announcementsGrid}>
-                        {userAnnouncements.length > 0 ? (
-                            userAnnouncements.map((ann) => (
+                    {userAnnouncements.length > 0 ? (
+                        <div className={styles.announcementsGrid}>
+                            {userAnnouncements.map((ann) => (
                                 <div
                                     key={ann.id}
                                     className={styles.announcementItem}
                                 >
-                                    <h3>{ann.title}</h3>
-                                    <p>{ann.description.slice(0, 100)}...</p>
-                                    <p>Цена: {ann.price} руб.</p>
-                                    <p>Город: {ann.city}</p>
+                                    <h3 className={styles.announcementTitle}>
+                                        {ann.title}
+                                    </h3>
+                                    <p className={styles.announcementDesc}>
+                                        {ann.description.slice(0, 100)}...
+                                    </p>
+                                    <p className={styles.announcementInfo}>
+                                        Цена: {ann.price}
+                                    </p>
+                                    <p className={styles.announcementInfo}>
+                                        Город: {ann.city}
+                                    </p>
                                     <Link
                                         href={`/announcements/${ann.id}`}
                                         className={styles.viewAnnouncementLink}
@@ -134,19 +118,19 @@ const ProfilePage: React.FC = () => {
                                         Подробнее
                                     </Link>
                                 </div>
-                            ))
-                        ) : (
-                            <div className={styles.placeholder}>
-                                <p>У вас ещё нет объявлений.</p>
-                                <Link
-                                    href="/add-announcement"
-                                    className={styles.addAnnouncementLink}
-                                >
-                                    Подать первое
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className={styles.placeholder}>
+                            <p>У вас ещё нет объявлений.</p>
+                            <Link
+                                href="/add-announcement"
+                                className={styles.addAnnouncementLink}
+                            >
+                                Подать первое
+                            </Link>
+                        </div>
+                    )}
 
                     <h2 className={styles.sectionTitle}>Настройки аккаунта</h2>
                     <div className={styles.infoBlock}>
@@ -161,14 +145,6 @@ const ProfilePage: React.FC = () => {
                         {userData.city && (
                             <p>
                                 <span>Город:</span> {userData.city}
-                            </p>
-                        )}
-                        {userData.createdAt && (
-                            <p>
-                                <span>Дата регистрации:</span>{" "}
-                                {new Date(
-                                    userData.createdAt
-                                ).toLocaleDateString()}
                             </p>
                         )}
                     </div>

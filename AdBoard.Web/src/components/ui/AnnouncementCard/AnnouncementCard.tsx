@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Announcement } from "@/types";
 import styles from "./AnnouncementCard.module.scss";
 import { useRouter } from "next/navigation";
+import { useUserContext } from "@/context/UserContext";
 
 interface AnnouncementCardProps {
     announcement: Announcement;
@@ -14,10 +15,16 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
     announcement,
 }) => {
     const router = useRouter();
+    const { favSet, toggleFavorite } = useUserContext();
+    const isFav = favSet.has(announcement.id);
 
     const handleCardClick = () => {
         router.push(`/announcements/${announcement.id}`);
-        // console.log(`Navigating to /announcements/${announcement.id}`); // для отладки
+    };
+
+    const handleFavClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        toggleFavorite(announcement.id);
     };
 
     return (
@@ -27,6 +34,17 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({
             role="button"
             tabIndex={0}
         >
+            <div className={styles.favorite}>
+                <button
+                    className={styles.favoriteButton}
+                    onClick={handleFavClick}
+                    aria-label={
+                        isFav ? "Удалить из избранного" : "Добавить в избранное"
+                    }
+                >
+                    {isFav ? "❤️" : "🤍"}
+                </button>
+            </div>
             <div className={styles.imageWrapper}>
                 {announcement.images && announcement.images.length > 0 ? (
                     <Image

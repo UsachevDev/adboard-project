@@ -5,8 +5,7 @@ import LoginForm from "./LoginForm";
 import RegisterForm from "./RegisterForm";
 import styles from "./AuthModalContent.module.scss";
 import { useRouter } from "next/navigation";
-import { getCurrentUser } from "@/lib/api";
-import { UserProfile } from "@/types/index";
+import { useUserContext } from "@/context/UserContext";
 
 interface AuthModalContentProps {
     onClose: () => void;
@@ -19,27 +18,11 @@ const AuthModalContent: React.FC<AuthModalContentProps> = ({ onClose }) => {
         text: string;
     } | null>(null);
     const router = useRouter();
+    const { refreshUser } = useUserContext();
 
     const handleLoginSuccess = async (accessToken: string) => {
         localStorage.setItem("access_token", accessToken);
-        console.log("Токен Access сохранен.");
-
-        try {
-            const userProfile: UserProfile = await getCurrentUser();
-            const nameToStore =
-                userProfile.name ??
-                userProfile.email?.split("@")[0] ??
-                "Пользователь";
-            localStorage.setItem("user_name", nameToStore);
-            console.log("Имя пользователя сохранено:", nameToStore);
-        } catch (error) {
-            console.error(
-                "Ошибка при получении профиля пользователя после входа:",
-                error
-            );
-            localStorage.setItem("user_name", "Пользователь");
-        }
-
+        await refreshUser();
         onClose();
         router.push("/profile");
     };
@@ -47,19 +30,9 @@ const AuthModalContent: React.FC<AuthModalContentProps> = ({ onClose }) => {
     const handleRegisterSuccess = () => {
         setAuthMessage({
             type: "success",
-            text: "Регистрация успешна! Теперь войдите с вашими данными.",
+            text: "Регистрация успешна! Теперь войдите.",
         });
         setShowRegisterForm(false);
-    };
-
-    const handleSwitchToLogin = () => {
-        setShowRegisterForm(false);
-        setAuthMessage(null);
-    };
-
-    const handleSwitchToRegister = () => {
-        setShowRegisterForm(true);
-        setAuthMessage(null);
     };
 
     return (
@@ -79,12 +52,18 @@ const AuthModalContent: React.FC<AuthModalContentProps> = ({ onClose }) => {
             {showRegisterForm ? (
                 <RegisterForm
                     onRegisterSuccess={handleRegisterSuccess}
-                    onSwitchToLogin={handleSwitchToLogin}
+                    onSwitchToLogin={() => {
+                        setShowRegisterForm(false);
+                        setAuthMessage(null);
+                    }}
                 />
             ) : (
                 <LoginForm
                     onLoginSuccess={handleLoginSuccess}
-                    onSwitchToRegister={handleSwitchToRegister}
+                    onSwitchToRegister={() => {
+                        setShowRegisterForm(true);
+                        setAuthMessage(null);
+                    }}
                 />
             )}
         </div>

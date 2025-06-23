@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import styles from "./EditProfileForm.module.scss";
 import { updateCurrentUser } from "@/lib/api";
-import { UserProfile } from "@/types/index";
+import { UserProfile } from "@/types";
 
 interface EditProfileFormProps {
     initialData: UserProfile;
-    onSave: (updatedData: UserProfile) => void;
+    onSave: () => void;
     onCancel: () => void;
 }
 
@@ -39,17 +39,15 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
         e.preventDefault();
         setLoading(true);
         setMessage(null);
-
         try {
-            const updatedProfile: UserProfile = await updateCurrentUser({
+            await updateCurrentUser({
                 name,
                 phoneNumber: phoneNumber || null,
                 city: city || null,
             });
             setMessage({ type: "success", text: "Профиль успешно обновлен!" });
-            onSave(updatedProfile);
+            onSave();
         } catch (err: unknown) {
-            console.error("Ошибка при обновлении профиля:", err);
             const text =
                 err instanceof Error
                     ? err.message
@@ -65,24 +63,12 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
             <h2 className={styles.title}>Редактирование профиля</h2>
             <form onSubmit={handleSubmit}>
                 <div className={styles.formGroup}>
-                    <label htmlFor="email" className={styles.label}>
-                        Email (не редактируется)
-                    </label>
-                    <input
-                        type="email"
-                        id="email"
-                        className={styles.input}
-                        value={initialData.email}
-                        disabled
-                    />
-                </div>
-                <div className={styles.formGroup}>
                     <label htmlFor="name" className={styles.label}>
                         Имя
                     </label>
                     <input
-                        type="text"
                         id="name"
+                        type="text"
                         className={styles.input}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
@@ -94,8 +80,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
                         Номер телефона
                     </label>
                     <input
-                        type="text"
                         id="phoneNumber"
+                        type="text"
                         className={styles.input}
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value)}
@@ -106,8 +92,8 @@ const EditProfileForm: React.FC<EditProfileFormProps> = ({
                         Город
                     </label>
                     <input
-                        type="text"
                         id="city"
+                        type="text"
                         className={styles.input}
                         value={city}
                         onChange={(e) => setCity(e.target.value)}

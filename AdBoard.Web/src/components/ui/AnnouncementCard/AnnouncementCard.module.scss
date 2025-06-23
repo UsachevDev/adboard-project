@@ -2,6 +2,7 @@
 @use "@/styles/abstracts/mixins" as *;
 
 .card {
+    position: relative;
     background-color: $color-white;
     border-radius: $border-radius-md;
     box-shadow: $box-shadow-sm;
@@ -77,4 +78,17 @@
     font-size: $font-size-sm;
     color: $color-text-tertiary;
     margin-top: $spacing-xs;
+}
+
+.favorite {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+}
+
+.favoriteButton {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
 }

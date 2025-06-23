@@ -10,18 +10,29 @@ export interface User {
     city?: string | null;
 }
 
+export interface AddAnnouncementRequest {
+    title: string;
+    description: string;
+    price: number;
+    city: string;
+    count: number;
+    subcategoryId: string;
+    images?: string[];
+}
+
 export interface Announcement {
     id: UUID;
     creatorId: UUID;
     title: string;
     description: string;
-    price: number; // DECIMAL
+    price: number;
     city: string;
-    count: number; // INTEGER (количество просмотров)
-    images?: string[]; // Array of image URLs
-    categories?: Category[]; // Array of Category objects
-    subcategories?: Subcategory[]; // Array of Subcategory objects
+    count: number;
+    images?: string[];
+    categories?: Category[];
+    subcategories?: Subcategory[];
     createdAt: string;
+    isFavorite?: boolean;
 }
 
 export interface Favourite {

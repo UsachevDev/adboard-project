@@ -1,46 +1,48 @@
-'use client';
+"use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
+import { getAnnouncementById } from "@/lib/api";
+import { Announcement } from "@/types";
+import styles from "./AnnouncementDetails.module.scss";
+import { useUserContext } from "@/context/UserContext";
 
-import { getMockAnnouncements } from '@/lib/mockData';
-import { Announcement } from '@/types';
-import styles from './AnnouncementDetails.module.scss';
-
-interface AnnouncementPageProps {
-    params: {
-        id: string;
-    };
-}
-
-export default function AnnouncementPage({
-    params: { id },
-}: AnnouncementPageProps) {
-    const [announcement, setAnnouncement] = useState<Announcement | undefined>(undefined);
-    const router = useRouter();
+export default function AnnouncementPage() {
+    const params = useParams<{ id: string }>();
+    const id = params?.id;
+    const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const { favSet, toggleFavorite } = useUserContext();
 
     useEffect(() => {
-        const fetchAnnouncement = () => {
-            const allAnnouncements = getMockAnnouncements();
-            const foundAnn = allAnnouncements.find((ann) => ann.id === id);
-
-            if (foundAnn) {
-                setAnnouncement(foundAnn);
-            } else {
-                router.replace('/404');
+        if (!id) {
+            setError("Некорректный идентификатор");
+            return;
+        }
+        (async () => {
+            try {
+                const ann = await getAnnouncementById(id);
+                setAnnouncement(ann);
+            } catch {
+                setError("Объявление не найдено");
             }
-        };
+        })();
+    }, [id]);
 
-        fetchAnnouncement();
-        window.addEventListener('storage', fetchAnnouncement);
+    if (error) {
+        return (
+            <div className={styles.notFoundContainer}>
+                <p className={styles.notFoundMessage}>{error}</p>
+                <Link href="/" className={styles.backLink}>
+                    ← На главную
+                </Link>
+            </div>
+        );
+    }
 
-        return () => {
-            window.removeEventListener('storage', fetchAnnouncement);
-        };
-    }, [id, router]);
-
-    if (announcement === undefined) {
+    if (!announcement) {
         return (
             <div className={styles.loadingContainer}>
                 <p>Загрузка объявления...</p>
@@ -48,18 +50,26 @@ export default function AnnouncementPage({
         );
     }
 
-    if (!announcement) {
-        return (
-            <div className={styles.notFoundContainer}>
-                <p>Объявление не найдено.</p>
-            </div>
-        );
-    }
+    const isFav = favSet.has(announcement.id);
 
     return (
         <div className={styles.container}>
             <main className={styles.main}>
-                <h1 className={styles.title}>{announcement.title}</h1>
+                <div className={styles.headerWithFavorite}>
+                    <h1 className={styles.title}>{announcement.title}</h1>
+                    <button
+                        className={styles.detailFavoriteButton}
+                        onClick={() => toggleFavorite(announcement.id)}
+                        aria-label={
+                            isFav
+                                ? "Удалить из избранного"
+                                : "Добавить в избранное"
+                        }
+                    >
+                        {isFav ? "❤️" : "🤍"}
+                    </button>
+                </div>
+
                 <p className={styles.price}>
                     {announcement.price.toLocaleString("ru-RU")} ₽
                 </p>
@@ -68,13 +78,11 @@ export default function AnnouncementPage({
 
                 {announcement.images && announcement.images.length > 0 && (
                     <div className={styles.imageGallery}>
-                        {announcement.images.map((imgSrc, index) => (
-                            <div key={index} className={styles.imageWrapper}>
+                        {announcement.images.map((src, idx) => (
+                            <div key={idx} className={styles.imageWrapper}>
                                 <Image
-                                    src={imgSrc}
-                                    alt={`${announcement.title} image ${
-                                        index + 1
-                                    }`}
+                                    src={src}
+                                    alt={`${announcement.title} #${idx + 1}`}
                                     width={600}
                                     height={400}
                                     style={{ objectFit: "contain" }}
@@ -99,10 +107,11 @@ export default function AnnouncementPage({
                         <p className={styles.subcategories}>
                             Подкатегории:{" "}
                             {announcement.subcategories
-                                .map((subcat) => subcat.name)
+                                .map((sub) => sub.name)
                                 .join(", ")}
                         </p>
                     )}
+
                 <p className={styles.createdAt}>
                     Опубликовано:{" "}
                     {new Date(announcement.createdAt).toLocaleDateString()}
