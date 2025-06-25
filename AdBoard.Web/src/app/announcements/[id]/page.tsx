@@ -6,6 +6,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { getAnnouncementById } from "@/lib/api";
 import { Announcement } from "@/types";
+import { getUserById } from "@/lib/api";
+import { UserProfile } from "@/types";
 import styles from "./AnnouncementDetails.module.scss";
 import { useUserContext } from "@/context/UserContext";
 
@@ -14,6 +16,7 @@ export default function AnnouncementPage() {
     const id = params?.id;
     const [announcement, setAnnouncement] = useState<Announcement | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [seller, setSeller] = useState<UserProfile | null>(null);
     const { favSet, toggleFavorite } = useUserContext();
 
     useEffect(() => {
@@ -25,8 +28,16 @@ export default function AnnouncementPage() {
             try {
                 const ann = await getAnnouncementById(id);
                 setAnnouncement(ann);
+
+                if (!ann.creatorId) {
+                    setError("У объявления нет автора");
+                    return;
+                }
+
+                const user = await getUserById(ann.creatorId);
+                setSeller(user);
             } catch {
-                setError("Объявление не найдено");
+                setError("Объявление или продавец не найден");
             }
         })();
     }, [id]);
@@ -116,6 +127,40 @@ export default function AnnouncementPage() {
                     Опубликовано:{" "}
                     {new Date(announcement.createdAt).toLocaleDateString()}
                 </p>
+
+                {seller && (
+                    <section className={styles.sellerInfo}>
+                        <h3>Продавец</h3>
+                        <div>
+                            <b>Имя:</b>{" "}
+                            {seller.name ?? seller.email.split("@")[0]}
+                        </div>
+                        {seller.phoneNumber && (
+                            <div>
+                                <b>Телефон:</b> {seller.phoneNumber}
+                            </div>
+                        )}
+                        <div>
+                            <b>Рейтинг:</b>{" "}
+                            {seller.reviews?.length
+                                ? (
+                                      seller.reviews.reduce(
+                                          (sum, r) => sum + r.score,
+                                          0
+                                      ) / seller.reviews.length
+                                  ).toFixed(1)
+                                : "—"}
+                            {seller.reviews?.length
+                                ? ` (${seller.reviews.length})`
+                                : ""}
+                        </div>
+                        {seller && announcement.creatorId && (
+                            <Link href={`/profile/${announcement.creatorId}`}>
+                                Все отзывы и профиль
+                            </Link>
+                        )}
+                    </section>
+                )}
             </main>
         </div>
     );

@@ -70,8 +70,9 @@ export interface AnnouncementWithDetails extends Announcement {
 }
 
 export interface UserProfile extends User {
-    announcements?: Announcement[]; // Объявления пользователя
-    favourites?: Announcement[]; // Избранные объявления пользователя
-    reviewsGiven?: Review[]; // Отзывы, оставленные пользователем
-    reviewsReceived?: Review[]; // Отзывы, полученные пользователем
+    announcements?: Announcement[];
+    favourites?: Announcement[];
+    reviewsGiven?: Review[];      // Оставленные отзывы
+    reviewsReceived?: Review[];   // Полученные отзывы  // Отзывы, полученные пользователем
+    reviews?: Review[]; 
 }

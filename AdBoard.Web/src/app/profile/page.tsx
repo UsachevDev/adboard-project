@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/api";
 import EditProfileForm from "@/components/ui/Profile/EditProfileForm";
 import { useUserContext } from "@/context/UserContext";
 import Avatar from "@/components/ui/Avatar/Avatar";
+import UserReviews from "@/components/ui/Profile/UserReviews";
 import { UserProfile, Announcement } from "@/types";
 
 const ProfilePage: React.FC = () => {
@@ -88,6 +89,8 @@ const ProfilePage: React.FC = () => {
                             Привет, {displayName}!
                         </h1>
                     </div>
+
+                    <UserReviews user={userData} />
 
                     <h2 className={styles.sectionTitle}>
                         Мои объявления ({userAnnouncements.length})

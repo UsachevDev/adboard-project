@@ -1,0 +1,52 @@
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
+@use "sass:color";
+
+.container {
+    background: $color-white;
+    max-width: 1200px;
+    margin: 2rem auto;
+    border-radius: $border-radius-md;
+    box-shadow: $box-shadow-md;
+    padding: $spacing-xl $spacing-lg;
+    font-family: $font-family-primary;
+}
+
+.title {
+    font-size: $font-size-h2;
+    margin-bottom: $spacing-md;
+    color: $color-primary;
+    font-weight: 700;
+}
+
+.addBtn {
+    @include button-primary;
+    margin-bottom: $spacing-md;
+    font-size: $font-size-base;
+}
+
+.reviewsList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.reviewItem {
+    border-bottom: 1px solid $color-border;
+    padding: $spacing-md 0;
+
+    &:last-child {
+        border-bottom: none;
+    }
+}
+
+.reviewScore {
+    color: $color-success;
+    font-weight: bold;
+}
+
+.reviewDesc {
+    color: $color-text-secondary;
+    margin-top: $spacing-xs;
+    font-size: $font-size-base;
+}

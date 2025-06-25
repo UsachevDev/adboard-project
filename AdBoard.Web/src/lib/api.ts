@@ -27,7 +27,6 @@ async function apiFetch<T>(
 
     let response = await fetch(`${API_BASE_URL}${endpoint}`, init);
 
-    // при 401 обновляем токен
     if (response.status === 401 && !endpoint.startsWith("/auth/")) {
         await refreshToken();
         const newToken = localStorage.getItem("access_token");
@@ -36,13 +35,11 @@ async function apiFetch<T>(
         response = await fetch(`${API_BASE_URL}${endpoint}`, init);
     }
 
-    // пробуем распарсить JSON
     let payload: ControllerResponse<T> | null = null;
     try {
         payload = (await response.json()) as ControllerResponse<T>;
     } catch {
         if (response.ok) {
-            // 2xx без тела
             // @ts-ignore
             return undefined;
         }
@@ -158,7 +155,6 @@ export async function getAnnouncementById(
 export async function addAnnouncement(
     payload: AddAnnouncementRequest
 ): Promise<Announcement> {
-    // создаём объявление и получаем Location
     const token = localStorage.getItem("access_token");
     const headers: Record<string, string> = {
         "Content-Type": "application/json",
@@ -197,8 +193,6 @@ export async function addAnnouncement(
             "Cannot parse announcement ID from Location header"
         );
     }
-
-    // подгружаем полное объявление
     return getAnnouncementById(id);
 }
 
@@ -213,4 +207,15 @@ export async function removeFromFavorites(
     id: string
 ): Promise<void> {
     await apiFetch<void>(`/favorites/${id}`, { method: "DELETE" });
+}
+
+export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
+    await apiFetch<void>(`/reviews/${announcementId}`, {
+        method: "POST",
+        body: { score, description },
+    });
+}
+
+export async function getUserById(id: string): Promise<UserProfile> {
+    return apiFetch<UserProfile>(`/users/${id}`, { method: "GET" });
 }
