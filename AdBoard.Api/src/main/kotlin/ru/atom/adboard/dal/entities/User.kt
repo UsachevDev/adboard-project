@@ -44,7 +44,7 @@ data class User
 
     @OneToMany(mappedBy = "buyerId", cascade = [CascadeType.ALL], orphanRemoval = true, fetch = FetchType.EAGER)
     val userReviews: MutableList<Review> = mutableListOf(),
-    @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
+    @ManyToMany(fetch = FetchType.EAGER, cascade = [CascadeType.PERSIST, CascadeType.MERGE])
     @JoinTable(
         name = "favorites",
         joinColumns = [JoinColumn(name = "user_id", referencedColumnName = "id")],

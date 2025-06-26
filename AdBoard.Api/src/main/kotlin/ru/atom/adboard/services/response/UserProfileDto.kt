@@ -14,9 +14,10 @@ data class UserProfileDto
     val phoneNumber: String?,
     val city: String?,
     val announcements: MutableSet<Announcement>? = mutableSetOf(),
+    val favorites: MutableSet<Announcement>? = mutableSetOf(),
     val reviews:  MutableList<Review>? = mutableListOf(),
     val userReviews: MutableList<Review>? = mutableListOf(),
 )
 {
-    constructor(name: String, createdAt: Date, announcements: MutableSet<Announcement>?, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null, announcements ,reviews,null)
+    constructor(name: String, createdAt: Date, announcements: MutableSet<Announcement>?, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null, announcements ,null, reviews,null)
 }

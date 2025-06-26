@@ -43,6 +43,7 @@ class UserService(_repo: UserRepository)
                                 user.get().phoneNumber,
                                 user.get().city,
                                 user.get().announcements,
+                                user.get().favorites,
                                 user.get().reviews,
                                 user.get().userReviews
                             ),
