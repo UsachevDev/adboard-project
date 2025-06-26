@@ -110,9 +110,9 @@ export default function HomePage() {
 
                 <div ref={loaderRef} className={styles.loader}>
                     {displayedAnns.length < allAnns.length ? (
-                        <p>Загрузка ещё объявлений…</p>
+                        <p>Загрузка объявлений…</p>
                     ) : (
-                        <p>Больше объявлений нет.</p>
+                        <p></p>
                     )}
                 </div>
             </main>
