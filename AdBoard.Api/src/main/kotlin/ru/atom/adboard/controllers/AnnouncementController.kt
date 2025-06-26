@@ -14,21 +14,25 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder
 import ru.atom.adboard.dal.entities.Announcement
 import ru.atom.adboard.dal.entities.User
 import ru.atom.adboard.services.AnnouncementService
+import ru.atom.adboard.services.ImageService
 import ru.atom.adboard.services.request.AddAnnouncementDto
 import ru.atom.adboard.services.request.UpdateAnnouncementDto
 import ru.atom.adboard.services.request.UserUpdateDto
 import java.net.URI
+import java.util.*
 
 @Tag(name = "Announcements")
 @RestController
 @RequestMapping("api/announcements")
-class AnnouncementController(_service: AnnouncementService)
+class AnnouncementController(_service: AnnouncementService, _imageService: ImageService)
 {
     private final val service = _service
+    private final val imageService = _imageService
     @GetMapping("")
     @Operation(summary = "Get all announcements")
     @ApiResponses(value = [
@@ -123,5 +127,17 @@ class AnnouncementController(_service: AnnouncementService)
             ControllerResponse(serviceResponse.data, serviceResponse.error),
             serviceResponse.code
         )
+    }
+
+    @PostMapping("/{announcementId}/images")
+    fun uploadAnnouncementImages(@PathVariable announcementId: String, @RequestParam("file") files: MultipartFile) : ResponseEntity<Any>
+    {
+        val claims = SecurityContextHolder.getContext().authentication.details as Claims
+        val serviceResponse = imageService.uploadAnnouncementImages(claims.get("id").toString(),announcementId ,files)
+        val response = ControllerResponse(
+            data = serviceResponse.data,
+            error = serviceResponse.error
+        )
+        return ResponseEntity(response, serviceResponse.code)
     }
 }
