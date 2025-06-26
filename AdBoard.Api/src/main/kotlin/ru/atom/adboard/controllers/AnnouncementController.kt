@@ -68,9 +68,9 @@ class AnnouncementController(_service: AnnouncementService)
         ),
         ApiResponse(responseCode = "500", description = "Server error", content = [Content(mediaType = "application/json", examples = [ExampleObject(value = "{}")])])
     ])
-    fun getAll() : ResponseEntity<ControllerResponse<List<Announcement>>>
+    fun getAll(@RequestParam("categoryId", required = false,) categoryId: String?, @RequestParam("subcategoryId", required = false) subcategoryId: String?) : ResponseEntity<ControllerResponse<List<Announcement>>>
     {
-        val serviceResponse = service.getAll()
+        val serviceResponse = service.getAll(categoryId,subcategoryId)
         return ResponseEntity(
             ControllerResponse(serviceResponse.data, serviceResponse.error),
             serviceResponse.code

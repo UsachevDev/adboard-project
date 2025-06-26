@@ -21,10 +21,18 @@ class AnnouncementService(_repo: AnnouncementRepository)
 {
     private final val repo = _repo
     private final val logger = LogManager.getLogger(this.javaClass.name)
-    fun getAll() : ServiceResponse<List<Announcement>>
+    fun getAll(categoryId: String?, subcategoryId: String?) : ServiceResponse<List<Announcement>>
     {
+        if(!categoryId.isNullOrEmpty() && !SecureService.isValidId(categoryId) || !subcategoryId.isNullOrEmpty() && !SecureService.isValidId(subcategoryId))
+            return ServiceResponse(HttpStatus.BAD_REQUEST)
         try{
-            val announcements = repo.findAllByIsHiddenFalseWithSubcategoryAndCategory()
+            val announcements: List<Announcement>
+            if(!subcategoryId.isNullOrEmpty())
+                announcements = repo.findBySubcategoryId(UUID.fromString(subcategoryId))
+            else if(!categoryId.isNullOrEmpty())
+                announcements = repo.findByCategoryId(UUID.fromString(categoryId))
+            else
+                announcements = repo.findAllByIsHiddenFalseWithSubcategoryAndCategory()
             return ServiceResponse(announcements, HttpStatus.OK)
         }
         catch (ex: Exception)
