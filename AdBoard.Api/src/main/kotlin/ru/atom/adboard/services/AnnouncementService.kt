@@ -63,7 +63,6 @@ class AnnouncementService(_repo: AnnouncementRepository)
                 return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Invalid announcement id format"))
 
             val announcement = repo.findById(UUID.fromString(announcementId))
-            announcement.get().title = "f"
             if(announcement.isEmpty)
                 return ServiceResponse(HttpStatus.NOT_FOUND)
             if(announcement.get().creatorId != UUID.fromString(userId))
