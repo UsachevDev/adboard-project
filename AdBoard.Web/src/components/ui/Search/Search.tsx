@@ -1,3 +1,4 @@
+// AdBoard.Web/src/components/ui/Search/Search.tsx
 "use client";
 
 import React, {
@@ -33,13 +34,18 @@ const commonPhrases: string[] = [
     "Ремонт iPhone",
 ];
 
+// Мапим CategoryDto → Category с нужным полем `subcategory`
 const mapCategory = (dto: CategoryDto): Category => ({
     id: dto.id,
     name: dto.name,
-    subcategories: dto.subcategories.map((sub) => ({
+    // image у вас может подтягиваться из API, здесь оставляем undefined
+    image: undefined,
+    subcategory: dto.subcategories.map((sub) => ({
         id: sub.id,
         name: sub.name,
-        categoryId: dto.id,
+        image: undefined,
+        // в Subcategory.category кладём массив из родительской Category
+        category: [{ id: dto.id, name: dto.name, image: undefined }],
     })),
 });
 
@@ -61,23 +67,19 @@ const Search: React.FC = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
 
+    // загружаем категории
     useEffect(() => {
         getCategories()
             .then((dtos: CategoryDto[]) => {
                 const cats = dtos.map(mapCategory);
                 setCategories(cats);
-
-                setSubcategories(
-                    cats.flatMap((c) =>
-                        c.subcategories ? c.subcategories : []
-                    )
-                );
+                // собираем все subcategory из категорий
+                setSubcategories(cats.flatMap((c) => c.subcategory ?? []));
             })
-            .catch((err) =>
-                console.error("Ошибка при загрузке категорий:", err)
-            );
+            .catch((err) => console.error("Ошибка при загрузке категорий:", err));
     }, []);
 
+    // все подсказки
     const ALL_SUGGESTIONS = useMemo<SearchSuggestion[]>(() => {
         const arr: SearchSuggestion[] = [];
         categories.forEach((c) =>
@@ -89,6 +91,7 @@ const Search: React.FC = () => {
         commonPhrases.forEach((p) =>
             arr.push({ type: "common_phrase", value: p })
         );
+        // убираем дубликаты по value
         const map = new Map<string, SearchSuggestion>();
         arr.forEach((s) => {
             const key = s.value.toLowerCase();
@@ -97,6 +100,7 @@ const Search: React.FC = () => {
         return Array.from(map.values());
     }, [categories, subcategories]);
 
+    // синхронизация с URL
     useEffect(() => {
         const q = searchParams.get("q") ?? "";
         const cid = searchParams.get("categoryId");
@@ -116,12 +120,10 @@ const Search: React.FC = () => {
         setJustNavigated(false);
     }, [pathname, searchParams, categories, subcategories]);
 
+    // подсказки только при фокусе
     useEffect(() => {
-        if (justNavigated) {
-            setJustNavigated(false);
-            setShowSuggestions(false);
-            return;
-        }
+        if (document.activeElement !== inputRef.current) return;
+
         const trimmed = query.trim().toLowerCase();
         const timer = setTimeout(() => {
             if (trimmed === "") {
@@ -137,8 +139,9 @@ const Search: React.FC = () => {
             setIsCategoriesPanelOpen(false);
         }, 200);
         return () => clearTimeout(timer);
-    }, [query, justNavigated, ALL_SUGGESTIONS]);
+    }, [query, ALL_SUGGESTIONS]);
 
+    // закрываем подсказки по клику вне
     useEffect(() => {
         const onClick = (e: MouseEvent) => {
             if (
@@ -153,6 +156,7 @@ const Search: React.FC = () => {
         return () => document.removeEventListener("mousedown", onClick);
     }, []);
 
+    // блокируем скролл при открытом списке категорий
     useEffect(() => {
         document.body.style.overflow = isCategoriesPanelOpen ? "hidden" : "";
         return () => {
@@ -190,18 +194,20 @@ const Search: React.FC = () => {
     );
 
     const handleInputFocus = useCallback(() => {
-        const trimmed = query.trim().toLowerCase();
-        if (trimmed === "") {
-            setSuggestions(ALL_SUGGESTIONS.slice(0, 5));
-        } else {
-            setSuggestions(
-                ALL_SUGGESTIONS.filter((s) =>
-                    s.value.toLowerCase().includes(trimmed)
-                ).slice(0, 7)
-            );
+        if (document.activeElement === inputRef.current) {
+            const trimmed = query.trim().toLowerCase();
+            if (trimmed === "") {
+                setSuggestions(ALL_SUGGESTIONS.slice(0, 5));
+            } else {
+                setSuggestions(
+                    ALL_SUGGESTIONS.filter((s) =>
+                        s.value.toLowerCase().includes(trimmed)
+                    ).slice(0, 7)
+                );
+            }
+            setShowSuggestions(true);
+            setIsCategoriesPanelOpen(false);
         }
-        setShowSuggestions(true);
-        setIsCategoriesPanelOpen(false);
     }, [ALL_SUGGESTIONS, query]);
 
     const handleToggleCategoriesPanel = useCallback(() => {
@@ -218,7 +224,10 @@ const Search: React.FC = () => {
     }, [categories]);
 
     const handleCategoryOrSubcategorySelect = useCallback(
-        (item: Category | Subcategory, type: "category" | "subcategory") => {
+        (
+            item: Category | Subcategory,
+            type: "category" | "subcategory"
+        ) => {
             setQuery(item.name);
             let url = `/search?q=${encodeURIComponent(item.name.trim())}`;
             if (type === "category") {
@@ -234,10 +243,13 @@ const Search: React.FC = () => {
         [router]
     );
 
-    const filteredSubcategories = useMemo<Subcategory[]>(() =>
-        activeCategoryId
-            ? subcategories.filter((s) => s.categoryId === activeCategoryId)
-            : [],
+    const filteredSubcategories = useMemo<Subcategory[]>(
+        () =>
+            activeCategoryId
+                ? subcategories.filter((s) =>
+                    s.category.some((c) => c.id === activeCategoryId)
+                )
+                : [],
         [activeCategoryId, subcategories]
     );
 
@@ -254,7 +266,10 @@ const Search: React.FC = () => {
                         <span>Все категории</span>
                     </button>
                     <div className={styles.inputAndSuggestions}>
-                        <form onSubmit={handleSubmit} className={styles.searchForm}>
+                        <form
+                            onSubmit={handleSubmit}
+                            className={styles.searchForm}
+                        >
                             <span className={styles.searchIcon}>
                                 <FiSearch />
                             </span>
@@ -278,7 +293,10 @@ const Search: React.FC = () => {
                                     <FiX />
                                 </button>
                             )}
-                            <button type="submit" className={styles.searchButton}>
+                            <button
+                                type="submit"
+                                className={styles.searchButton}
+                            >
                                 Поиск
                             </button>
                         </form>
@@ -288,7 +306,9 @@ const Search: React.FC = () => {
                                     <li
                                         key={idx}
                                         className={styles.suggestionItem}
-                                        onClick={() => handleSuggestionClick(s)}
+                                        onClick={() =>
+                                            handleSuggestionClick(s)
+                                        }
                                     >
                                         {s.value}
                                     </li>
@@ -303,18 +323,27 @@ const Search: React.FC = () => {
                 <>
                     <div
                         className={styles.categoriesOverlay}
-                        onClick={() => setIsCategoriesPanelOpen(false)}
+                        onClick={() =>
+                            setIsCategoriesPanelOpen(false)
+                        }
                     />
                     <div className={styles.categoriesPanel}>
-                        <div className={styles.categoriesPanelContent}>
+                        <div
+                            className={styles.categoriesPanelContent}
+                        >
                             <div
-                                className={styles.mainAndSubcategoriesContainer}
+                                className={
+                                    styles.mainAndSubcategoriesContainer
+                                }
                             >
                                 <ul className={styles.mainCategoriesList}>
                                     {categories.map((cat) => (
                                         <li
                                             key={cat.id}
-                                            className={`${styles.mainCategoryItem} ${activeCategoryId === cat.id ? styles.active : ""}`}
+                                            className={`${styles.mainCategoryItem} ${activeCategoryId === cat.id
+                                                    ? styles.active
+                                                    : ""
+                                                }`}
                                             onMouseEnter={() =>
                                                 setActiveCategoryId(cat.id)
                                             }
@@ -329,7 +358,11 @@ const Search: React.FC = () => {
                                         </li>
                                     ))}
                                 </ul>
-                                <div className={styles.subcategoriesDisplay}>
+                                <div
+                                    className={
+                                        styles.subcategoriesDisplay
+                                    }
+                                >
                                     {filteredSubcategories.length > 0 ? (
                                         <>
                                             <h3
@@ -352,7 +385,9 @@ const Search: React.FC = () => {
                                             >
                                                 {filteredSubcategories.map(
                                                     (sub) => (
-                                                        <li key={sub.id}>
+                                                        <li
+                                                            key={sub.id}
+                                                        >
                                                             <a
                                                                 href="#"
                                                                 onClick={(

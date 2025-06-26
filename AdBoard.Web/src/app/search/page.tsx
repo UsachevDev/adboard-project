@@ -4,8 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
 import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
-import { getMockAnnouncements } from "@/lib/mockData";
-import { getCategories, CategoryDto } from "@/lib/api";
+import { getAnnouncements, getCategories, CategoryDto } from "@/lib/api";
 import { Announcement, Category, Subcategory } from "@/types";
 import styles from "./SearchPage.module.scss";
 
@@ -22,8 +21,8 @@ const mapCategory = (dto: CategoryDto): Category => ({
 const SearchPage: React.FC = () => {
     const searchParams = useSearchParams();
     const searchQuery = searchParams.get("q") || "";
-    const categoryId = searchParams.get("categoryId");
-    const subcategoryId = searchParams.get("subcategoryId");
+    const categoryId = searchParams.get("categoryId") || undefined;
+    const subcategoryId = searchParams.get("subcategoryId") || undefined;
 
     const [results, setResults] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,76 +47,72 @@ const SearchPage: React.FC = () => {
         [currentCategory]
     );
 
-    // фильтрация объявлений
     useEffect(() => {
         setLoading(true);
+        (async () => {
+            try {
+                // Получаем объявления с бэка, отфильтрованные по категории/подкатегории
+                const anns = await getAnnouncements(categoryId, subcategoryId);
 
-        const fetchAndFilterAnnouncements = () => {
-            let filtered = getMockAnnouncements();
-            let title = "Все объявления";
+                let filtered = anns;
+                let title = "Все объявления";
 
-            // Поиск по тексту
-            if (searchQuery) {
-                const lower = searchQuery.toLowerCase();
-                filtered = filtered.filter(
-                    (ann) =>
-                        [
-                            ann.title.toLowerCase(),
-                            ann.description.toLowerCase(),
-                            ann.city.toLowerCase(),
-                        ].some((str) => str.includes(lower)) ||
-                        ann.categories?.some((c) =>
-                            c.name.toLowerCase().includes(lower)
-                        ) ||
-                        ann.subcategories?.some((s) =>
-                            s.name.toLowerCase().includes(lower)
-                        )
-                );
-                title = `Результаты поиска для: "${searchQuery}"`;
-            }
-
-            // Фильтр по категории
-            if (categoryId) {
-                filtered = filtered.filter((ann) =>
-                    ann.categories?.some((c) => c.id === categoryId)
-                );
-                const name = currentCategory?.name ?? categoryId;
-                title = `Объявления в категории: "${name}"`;
+                // Поиск по тексту
                 if (searchQuery) {
-                    title = `Результаты "${searchQuery}" в категории "${name}"`;
+                    const lower = searchQuery.toLowerCase();
+                    filtered = anns.filter((ann) =>
+                        [ann.title, ann.description, ann.city]
+                            .some((str) =>
+                                str.toLowerCase().includes(lower)
+                            )
+                    );
+                    title = `Результаты поиска для: "${searchQuery}"`;
                 }
-            }
 
-            // Фильтр по подкатегории
-            if (subcategoryId) {
-                filtered = filtered.filter((ann) =>
-                    ann.subcategories?.some((s) => s.id === subcategoryId)
-                );
-                const subName =
-                    currentSubcategories.find((s) => s.id === subcategoryId)
-                        ?.name ?? subcategoryId;
-                title = `Объявления в подкатегории: "${subName}"`;
-                if (searchQuery) {
-                    title = `Результаты "${searchQuery}" в подкатегории "${subName}"`;
+                // уточняем заголовок для подкатегории
+                if (subcategoryId) {
+                    // пробуем взять имя подкатегории из API
+                    const apiSub = anns[0]?.subcategory;
+                    const apiSubName = Array.isArray(apiSub)
+                        ? apiSub[0]?.name
+                        : apiSub?.name;
+                    // если в API нет — из локального списка, иначе — сам id
+                    const subName = apiSubName
+                        ?? currentSubcategories.find(s => s.id === subcategoryId)?.name
+                        ?? subcategoryId;
+                    title = searchQuery
+                        ? `Результаты "${searchQuery}" в подкатегории "${subName}"`
+                        : `Объявления в подкатегории: "${subName}"`;
                 }
+                // или для категории
+                else if (categoryId) {
+                    // пробуем взять имя категории из вложенного объекта API
+                    const apiSub = anns[0]?.subcategory;
+                    const apiCatName = Array.isArray(apiSub)
+                        ? apiSub[0]?.category?.[0]?.name
+                        : apiSub?.category?.name;
+                    const catName = apiCatName
+                        ?? currentCategory?.name
+                        ?? categoryId;
+                    title = searchQuery
+                        ? `Результаты "${searchQuery}" в категории "${catName}"`
+                        : `Объявления в категории: "${catName}"`;
+                }
+
+                setResults(filtered);
+                setPageTitle(title);
+            } catch (err) {
+                console.error("Ошибка загрузки объявлений:", err);
+                setResults([]);
+                setPageTitle("Ошибка при загрузке");
+            } finally {
+                setLoading(false);
             }
-
-            setResults(filtered);
-            setPageTitle(title);
-            setLoading(false);
-        };
-
-        const timer = setTimeout(fetchAndFilterAnnouncements, 300);
-        window.addEventListener("storage", fetchAndFilterAnnouncements);
-        return () => {
-            clearTimeout(timer);
-            window.removeEventListener("storage", fetchAndFilterAnnouncements);
-        };
+        })();
     }, [
         searchQuery,
         categoryId,
         subcategoryId,
-        categories,
         currentCategory,
         currentSubcategories,
     ]);

@@ -142,8 +142,18 @@ export async function updateCurrentUser(
 }
 
 // === Announcements ===
-export async function getAnnouncements(): Promise<Announcement[]> {
-    return apiFetch<Announcement[]>("/announcements");
+/**
+ * Получить объявления (с опциональной фильтрацией по категории/подкатегории)
+ */
+export async function getAnnouncements(
+    categoryId?: string,
+    subcategoryId?: string
+): Promise<Announcement[]> {
+    const params = new URLSearchParams();
+    if (categoryId) params.append("categoryId", categoryId);
+    if (subcategoryId) params.append("subcategoryId", subcategoryId);
+    const query = params.toString() ? `?${params.toString()}` : "";
+    return apiFetch<Announcement[]>(`/announcements${query}`);
 }
 
 export async function getAnnouncementById(
@@ -197,13 +207,13 @@ export async function addAnnouncement(
 }
 
 export async function updateAnnouncement(
-  id: string,
-  patch: UpdateAnnouncementRequest
+    id: string,
+    patch: UpdateAnnouncementRequest
 ): Promise<Announcement> {
-  return apiFetch<Announcement>(`/announcements/${id}`, {
-    method: "PATCH",
-    body: patch,
-  });
+    return apiFetch<Announcement>(`/announcements/${id}`, {
+        method: "PATCH",
+        body: patch,
+    });
 }
 
 // === Favorites ===
