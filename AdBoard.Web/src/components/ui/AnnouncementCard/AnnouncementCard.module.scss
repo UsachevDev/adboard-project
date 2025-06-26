@@ -13,7 +13,6 @@
     }
 }
 
-/* Кнопка избранного */
 .favorite {
     position: absolute;
     top: $spacing-sm;
@@ -47,7 +46,6 @@
     }
 }
 
-/* Обёртка для клика по карточке */
 .body {
     display: flex;
     flex-direction: column;
@@ -110,4 +108,13 @@
     font-size: $font-size-sm;
     color: $color-text-tertiary;
     margin-top: $spacing-xs;
+}
+
+.categoryBadge,
+.subcategoryBadge {
+  font-size: $font-size-sm;
+  padding: 2px 6px;
+  border-radius: $border-radius-sm;
+  background: $color-light-gray;
+  color: $color-primary-dark;
 }

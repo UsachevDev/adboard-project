@@ -54,14 +54,13 @@
     display: flex;
     align-items: center;
     gap: $spacing-md;
-    margin-left: auto; // выталкивает к правому краю
+    margin-left: auto;
 
     @media (max-width: 900px) {
         gap: $spacing-sm;
     }
 }
 
-// --- Кнопка "+"
 .addButton {
     display: flex;
     align-items: center;
@@ -96,7 +95,6 @@
     }
 }
 
-// --- Фавориты (универсально)
 .favWrapper {
     position: relative;
 }
@@ -150,7 +148,6 @@
     }
 }
 
-// --- Бургер
 .burger {
     display: none;
     background: none;
@@ -188,7 +185,6 @@
     }
 }
 
-// --- МЕНЮ
 .nav {
     display: flex;
     align-items: center;
@@ -208,7 +204,7 @@
         opacity: 0;
         pointer-events: none;
         transition: max-height 0.25s, opacity 0.2s;
-        padding: 0; // <--- нет паддинга когда закрыто!
+        padding: 0;
     }
 }
 .navOpen {

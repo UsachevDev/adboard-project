@@ -20,6 +20,15 @@ export interface AddAnnouncementRequest {
     images?: string[];
 }
 
+export interface UpdateAnnouncementRequest {
+  title?: string;
+  description?: string;
+  price?: number;
+  city?: string;
+  count?: number;
+  isHidden?: boolean;
+}
+
 export interface Announcement {
     id: UUID;
     creatorId: UUID;
@@ -29,10 +38,11 @@ export interface Announcement {
     city: string;
     count: number;
     images?: string[];
-    categories?: Category[];
-    subcategories?: Subcategory[];
+    category?: Category[];
+    subcategory?: Subcategory[];
     createdAt: string;
     isFavorite?: boolean;
+    isHidden: boolean;
 }
 
 export interface Favourite {
@@ -53,17 +63,16 @@ export interface Category {
     id: UUID;
     name: string;
     image?: string;
-    subcategories?: Subcategory[];
+    subcategory?: Subcategory[];
 }
 
 export interface Subcategory {
     id: UUID;
     name: string;
-    categoryId: UUID;
+    category: Category[];
     image?: string;
 }
 
-// Интерфейсы для заглушек
 export interface AnnouncementWithDetails extends Announcement {
     creator?: User; // Для отображения информации о создателе
     reviews?: Review[]; // Отзывы к объявлению
@@ -71,7 +80,7 @@ export interface AnnouncementWithDetails extends Announcement {
 
 export interface UserProfile extends User {
     announcements?: Announcement[];
-    favourites?: Announcement[];
+    favorites?: Announcement[];
     reviewsGiven?: Review[];      // Оставленные отзывы
     reviewsReceived?: Review[];   // Полученные отзывы  // Отзывы, полученные пользователем
     reviews?: Review[]; 

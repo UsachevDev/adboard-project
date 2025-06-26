@@ -21,9 +21,6 @@ const AddReviewModal: React.FC<AddReviewModalProps> = ({
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // Для отладки — выведи список объявлений
-    console.log("AddReviewModal: announcements =", announcements);
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);

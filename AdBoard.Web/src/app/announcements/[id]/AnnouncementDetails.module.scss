@@ -38,6 +38,7 @@
     top: $spacing-xl;
     min-width: 260px;
     max-width: 340px;
+
     @media (max-width: 991px) {
         position: static;
         margin: 0 auto;
@@ -62,6 +63,7 @@
     margin: 0;
     flex: 1 1 0;
     word-break: break-word;
+
     @media (max-width: 500px) {
         font-size: $font-size-h2;
     }
@@ -74,6 +76,7 @@
     cursor: pointer;
     transition: transform 0.15s;
     margin-left: $spacing-sm;
+
     &:active {
         transform: scale(1.1);
     }
@@ -86,6 +89,7 @@
     margin-bottom: $spacing-sm;
     margin-top: $spacing-md;
     text-align: left;
+
     @media (max-width: 500px) {
         font-size: $font-size-h3;
     }
@@ -129,6 +133,7 @@
     gap: $spacing-md;
     margin-bottom: $spacing-xl;
     scroll-snap-type: x mandatory;
+
     @media (min-width: 769px) {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -160,6 +165,7 @@
         background: $color-light-gray;
         border-radius: inherit;
         transition: transform 0.2s;
+
         &:hover {
             transform: scale(1.03);
         }
@@ -173,13 +179,16 @@
     color: $color-primary;
     margin-bottom: $spacing-sm;
 }
+
 .sellerInfoItem {
     margin-bottom: $spacing-sm;
     font-size: $font-size-base;
+
     b {
         color: $color-primary-dark;
     }
 }
+
 .sellerProfileLink {
     margin-top: $spacing-md;
     display: inline-block;
@@ -193,9 +202,11 @@
     .container {
         padding: $spacing-xs;
     }
+
     .main {
         padding: $spacing-lg $spacing-xs;
     }
+
     .sellerCard {
         padding: $spacing-md;
     }
@@ -224,5 +235,40 @@
     &[aria-pressed="true"] svg path {
         fill: $color-secondary;
         stroke: $color-secondary;
+    }
+}
+
+.categoryBlock {
+    margin-bottom: $spacing-md;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+
+    .label {
+        font-size: $font-size-sm;
+        color: $color-text-secondary;
+        margin-right: $spacing-sm;
+        white-space: nowrap;
+    }
+}
+
+.chipList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+}
+
+.chip {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: $font-size-sm;
+    color: $color-primary-dark;
+    background: $color-light-gray;
+    border-radius: $border-radius-sm;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+
+    &:hover {
+        background: color.adjust($color-light-gray, $lightness: -5%);
     }
 }

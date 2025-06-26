@@ -41,7 +41,7 @@ export default function Header() {
         }
     };
 
-    const favPreview = user?.favourites?.slice(0, 5) ?? [];
+    const favPreview = user?.favorites?.slice(0, 5) ?? [];
 
     return (
         <>
@@ -53,7 +53,6 @@ export default function Header() {
                     </Link>
 
                     <div className={styles.headerRight}>
-                        {/* Кнопка "Подать объявление" */}
                         {user && (
                             <Link
                                 href="/add-announcement"
@@ -89,7 +88,6 @@ export default function Header() {
                             </Link>
                         )}
 
-                        {/* Кнопка избранного */}
                         {user && (
                             <div ref={favRef} className={styles.favWrapper}>
                                 <button
@@ -140,11 +138,9 @@ export default function Header() {
                             </div>
                         )}
 
-                        {/* Бургер только на мобилке */}
                         <button
-                            className={`${styles.burger} ${
-                                menuOpen ? styles.burgerOpen : ""
-                            }`}
+                            className={`${styles.burger} ${menuOpen ? styles.burgerOpen : ""
+                                }`}
                             aria-label={
                                 menuOpen ? "Закрыть меню" : "Открыть меню"
                             }
@@ -157,11 +153,9 @@ export default function Header() {
                         </button>
                     </div>
 
-                    {/* Меню для профиля и выхода (в бургер-меню на мобилке, всегда скрыто на десктопе) */}
                     <nav
-                        className={`${styles.nav} ${
-                            menuOpen ? styles.navOpen : ""
-                        }`}
+                        className={`${styles.nav} ${menuOpen ? styles.navOpen : ""
+                            }`}
                     >
                         <ul className={styles.navList}>
                             {user && (

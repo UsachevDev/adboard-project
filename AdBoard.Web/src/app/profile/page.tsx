@@ -3,8 +3,9 @@
 import React, { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import styles from "./ProfilePage.module.scss";
-import { getCurrentUser } from "@/lib/api";
+import { getCurrentUser, updateAnnouncement } from "@/lib/api";
 import EditProfileForm from "@/components/ui/Profile/EditProfileForm";
+import EditAnnouncementModal from "@/components/ui/Profile/EditAnnouncementModal";
 import { useUserContext } from "@/context/UserContext";
 import Avatar from "@/components/ui/Avatar/Avatar";
 import UserReviews from "@/components/ui/Profile/UserReviews";
@@ -13,12 +14,13 @@ import { UserProfile, Announcement } from "@/types";
 const ProfilePage: React.FC = () => {
     const { refreshUser } = useUserContext();
     const [userData, setUserData] = useState<UserProfile | null>(null);
-    const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>(
-        []
-    );
+    const [userAnnouncements, setUserAnnouncements] = useState<Announcement[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
+
+    const [editingAnn, setEditingAnn] = useState<Announcement | null>(null);
+    const [showModal, setShowModal] = useState(false);
 
     const loadProfile = useCallback(async () => {
         setLoading(true);
@@ -28,8 +30,7 @@ const ProfilePage: React.FC = () => {
             setUserData(profile);
             setUserAnnouncements(profile.announcements ?? []);
         } catch (e: unknown) {
-            const msg =
-                e instanceof Error ? e.message : "Ошибка при загрузке профиля.";
+            const msg = e instanceof Error ? e.message : "Ошибка при загрузке профиля.";
             setError(msg);
         } finally {
             setLoading(false);
@@ -46,6 +47,15 @@ const ProfilePage: React.FC = () => {
         await loadProfile();
     };
 
+    const toggleHidden = async (ann: Announcement) => {
+        try {
+            await updateAnnouncement(ann.id, { isHidden: !ann.isHidden });
+            await loadProfile();
+        } catch (e) {
+            console.error("Ошибка при изменении статуса скрытия объявления:", e);
+        }
+    };
+
     if (loading) {
         return (
             <div className={styles.container}>
@@ -53,6 +63,7 @@ const ProfilePage: React.FC = () => {
             </div>
         );
     }
+
     if (error) {
         return (
             <div className={styles.container}>
@@ -60,6 +71,7 @@ const ProfilePage: React.FC = () => {
             </div>
         );
     }
+
     if (!userData) {
         return (
             <div className={styles.container}>
@@ -68,8 +80,7 @@ const ProfilePage: React.FC = () => {
         );
     }
 
-    const displayName =
-        userData.name ?? (userData.email.split("@")[0] || "Пользователь");
+    const displayName = userData.name ?? (userData.email.split("@")[0] || "Пользователь");
 
     return (
         <div className={styles.container}>
@@ -85,9 +96,7 @@ const ProfilePage: React.FC = () => {
                         <div className={styles.profileHeaderAvatar}>
                             <Avatar name={displayName} size="5rem" />
                         </div>
-                        <h1 className={styles.profileHeaderTitle}>
-                            Привет, {displayName}!
-                        </h1>
+                        <h1 className={styles.profileHeaderTitle}>Привет, {displayName}!</h1>
                     </div>
 
                     <UserReviews user={userData} />
@@ -120,6 +129,24 @@ const ProfilePage: React.FC = () => {
                                     >
                                         Подробнее
                                     </Link>
+
+                                    <div className={styles.announcementActions}>
+                                        <button
+                                            className={styles.editButton}
+                                            onClick={() => {
+                                                setEditingAnn(ann);
+                                                setShowModal(true);
+                                            }}
+                                        >
+                                            Редактировать
+                                        </button>
+                                        <button
+                                            className={styles.toggleHiddenButton}
+                                            onClick={() => toggleHidden(ann)}
+                                        >
+                                            {ann.isHidden ? "Показать" : "Скрыть"}
+                                        </button>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -160,6 +187,17 @@ const ProfilePage: React.FC = () => {
                             Редактировать профиль
                         </button>
                     </div>
+
+                    {showModal && editingAnn && (
+                        <EditAnnouncementModal
+                            announcement={editingAnn}
+                            onClose={() => setShowModal(false)}
+                            onUpdated={async () => {
+                                setShowModal(false);
+                                await loadProfile();
+                            }}
+                        />
+                    )}
                 </>
             )}
         </div>

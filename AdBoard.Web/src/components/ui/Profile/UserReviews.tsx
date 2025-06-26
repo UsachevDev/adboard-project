@@ -21,23 +21,6 @@ const UserReviews: React.FC<UserReviewsProps> = ({ user }) => {
                 <b>Средний рейтинг:</b> {avg ?? "—"}{" "}
                 {reviews.length > 0 && <span>({reviews.length})</span>}
             </div>
-            <ul style={{ padding: 0, listStyle: "none" }}>
-                {reviews.length === 0 && <li>Пока нет отзывов</li>}
-                {reviews.map((review) => (
-                    <li
-                        key={review.id}
-                        style={{
-                            marginBottom: 12,
-                            borderBottom: "1px solid #eee",
-                        }}
-                    >
-                        <div>
-                            Оценка: <b>{review.score}/10</b>
-                        </div>
-                        <div>{review.description}</div>
-                    </li>
-                ))}
-            </ul>
         </section>
     );
 };

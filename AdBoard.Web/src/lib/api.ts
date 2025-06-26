@@ -1,4 +1,4 @@
-import { UserProfile, Announcement, AddAnnouncementRequest } from "@/types";
+import { UserProfile, Announcement, AddAnnouncementRequest, UpdateAnnouncementRequest } from "@/types";
 
 const API_BASE_URL = "/api";
 
@@ -194,6 +194,16 @@ export async function addAnnouncement(
         );
     }
     return getAnnouncementById(id);
+}
+
+export async function updateAnnouncement(
+  id: string,
+  patch: UpdateAnnouncementRequest
+): Promise<Announcement> {
+  return apiFetch<Announcement>(`/announcements/${id}`, {
+    method: "PATCH",
+    body: patch,
+  });
 }
 
 // === Favorites ===

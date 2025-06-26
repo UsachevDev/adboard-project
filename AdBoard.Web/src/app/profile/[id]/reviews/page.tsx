@@ -21,7 +21,6 @@ const UserReviewsPage: React.FC = () => {
             .then((profile) => {
                 console.log("Получен профиль пользователя:", profile);
                 setUser(profile);
-                // Дебажим наличие поля announcements:
                 if (profile.announcements) {
                     console.log(
                         "Найдены объявления в профиле:",
@@ -38,7 +37,6 @@ const UserReviewsPage: React.FC = () => {
     }, [id]);
 
     useEffect(() => {
-        // Лог после обновления состояния
         console.log("Текущее состояние: user =", user);
         console.log("Текущее состояние: announcements =", announcements);
     }, [user, announcements]);
@@ -91,7 +89,6 @@ const UserReviewsPage: React.FC = () => {
                     onClose={() => setShowAdd(false)}
                     onAdded={() => {
                         setShowAdd(false);
-                        // Проверяем обновление после добавления
                         getUserById(id).then((profile) => {
                             console.log(
                                 "Обновили профиль после добавления:",

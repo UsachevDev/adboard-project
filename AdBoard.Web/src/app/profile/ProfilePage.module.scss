@@ -171,3 +171,22 @@
   margin-top: 0;
   margin-bottom: 0;
 }
+
+.announcementActions {
+  margin-top: $spacing-md;
+  display: flex;
+  gap: $spacing-sm;
+
+  .editButton, .toggleHiddenButton {
+    @include button-secondary;
+    font-size: $font-size-sm;
+    padding: $spacing-xs $spacing-sm;
+  }
+
+  .editButton {
+    @include button-secondary;
+  }
+  .toggleHiddenButton {
+    @include button-secondary;
+  }
+}

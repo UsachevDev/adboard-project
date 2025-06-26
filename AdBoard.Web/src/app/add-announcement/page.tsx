@@ -17,21 +17,14 @@ export default function AddAnnouncementPage() {
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedSubcategory, setSelectedSubcategory] = useState("");
     const [categories, setCategories] = useState<CategoryDto[]>([]);
-    const [subcategories, setSubcategories] = useState<
-        CategoryDto["subcategories"]
-    >([]);
+    const [subcategories, setSubcategories] = useState<CategoryDto["subcategories"]>([]);
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{
-        type: "success" | "error";
-        text: string;
-    } | null>(null);
+    const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
     useEffect(() => {
         getCategories()
             .then((dtos) => setCategories(dtos))
-            .catch((err: unknown) =>
-                console.error("Не удалось загрузить категории:", err)
-            );
+            .catch((err: unknown) => console.error("Не удалось загрузить категории:", err));
     }, []);
 
     useEffect(() => {
@@ -45,11 +38,15 @@ export default function AddAnnouncementPage() {
         setMessage(null);
         setLoading(true);
 
+        // Проверка: город не должен содержать цифр
+        if (!/^[^\d]+$/.test(city)) {
+            setMessage({ type: "error", text: "Поле «Город» не должно содержать цифр." });
+            setLoading(false);
+            return;
+        }
+
         if (!title || !description || !price || !city || !selectedCategory) {
-            setMessage({
-                type: "error",
-                text: "Заполните все обязательные поля.",
-            });
+            setMessage({ type: "error", text: "Заполните все обязательные поля." });
             setLoading(false);
             return;
         }
@@ -78,10 +75,7 @@ export default function AddAnnouncementPage() {
                 console.error("Ошибка создания объявления (не Error):", err);
             }
 
-            setMessage({
-                type: "error",
-                text: "Не удалось создать объявление.",
-            });
+            setMessage({ type: "error", text: "Не удалось создать объявление." });
             setLoading(false);
         }
     };
@@ -91,22 +85,15 @@ export default function AddAnnouncementPage() {
             <h1 className={styles.title}>Подать новое объявление</h1>
 
             {message && (
-                <p
-                    className={`${styles.message} ${
-                        message.type === "success"
-                            ? styles.success
-                            : styles.error
-                    }`}
-                >
+                <p className={`${styles.message} ${message.type === "success" ? styles.success : styles.error}`}>
                     {message.text}
                 </p>
             )}
 
             <form onSubmit={handleSubmit} className={styles.form}>
+                {/* Заголовок */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="title" className={styles.label}>
-                        Заголовок *
-                    </label>
+                    <label htmlFor="title" className={styles.label}>Заголовок *</label>
                     <input
                         id="title"
                         className={styles.input}
@@ -118,10 +105,9 @@ export default function AddAnnouncementPage() {
                     />
                 </div>
 
+                {/* Описание */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="description" className={styles.label}>
-                        Описание *
-                    </label>
+                    <label htmlFor="description" className={styles.label}>Описание *</label>
                     <textarea
                         id="description"
                         className={styles.textarea}
@@ -133,10 +119,9 @@ export default function AddAnnouncementPage() {
                     />
                 </div>
 
+                {/* Категория */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="category" className={styles.label}>
-                        Категория *
-                    </label>
+                    <label htmlFor="category" className={styles.label}>Категория *</label>
                     <select
                         id="category"
                         className={styles.select}
@@ -146,40 +131,32 @@ export default function AddAnnouncementPage() {
                     >
                         <option value="">Выберите категорию</option>
                         {categories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                                {c.name}
-                            </option>
+                            <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                     </select>
                 </div>
 
+                {/* Подкатегория */}
                 {subcategories.length > 0 && (
                     <div className={styles.formGroup}>
-                        <label htmlFor="subcategory" className={styles.label}>
-                            Подкатегория
-                        </label>
+                        <label htmlFor="subcategory" className={styles.label}>Подкатегория</label>
                         <select
                             id="subcategory"
                             className={styles.select}
                             value={selectedSubcategory}
-                            onChange={(e) =>
-                                setSelectedSubcategory(e.target.value)
-                            }
+                            onChange={(e) => setSelectedSubcategory(e.target.value)}
                         >
                             <option value="">Не выбрано</option>
                             {subcategories.map((sub) => (
-                                <option key={sub.id} value={sub.id}>
-                                    {sub.name}
-                                </option>
+                                <option key={sub.id} value={sub.id}>{sub.name}</option>
                             ))}
                         </select>
                     </div>
                 )}
 
+                {/* Цена */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="price" className={styles.label}>
-                        Цена (₽) *
-                    </label>
+                    <label htmlFor="price" className={styles.label}>Цена (₽) *</label>
                     <input
                         id="price"
                         className={styles.input}
@@ -192,10 +169,9 @@ export default function AddAnnouncementPage() {
                     />
                 </div>
 
+                {/* Город */}
                 <div className={styles.formGroup}>
-                    <label htmlFor="city" className={styles.label}>
-                        Город *
-                    </label>
+                    <label htmlFor="city" className={styles.label}>Город *</label>
                     <input
                         id="city"
                         className={styles.input}
@@ -204,14 +180,12 @@ export default function AddAnnouncementPage() {
                         onChange={(e) => setCity(e.target.value)}
                         required
                         maxLength={50}
+                        pattern="[^\d]+"
+                        title="Город не должен содержать цифр"
                     />
                 </div>
 
-                <button
-                    type="submit"
-                    className={styles.submitButton}
-                    disabled={loading}
-                >
+                <button type="submit" className={styles.submitButton} disabled={loading}>
                     {loading ? "Публикация..." : "Опубликовать объявление"}
                 </button>
             </form>
