@@ -272,3 +272,27 @@
         background: color.adjust($color-light-gray, $lightness: -5%);
     }
 }
+
+.ownActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  align-items: center;
+}
+
+.ownActions > button {
+  flex: 1 1 0;
+}
+
+.editButton {
+  @include button-primary;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+}
+
+.toggleHiddenButton {
+  @include button-secondary;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+}

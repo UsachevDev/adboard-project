@@ -1,23 +1,28 @@
-// AdBoard.Web/src/app/announcements/[id]/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getAnnouncementById, getUserById } from "@/lib/api";
+import { getAnnouncementById, getUserById, updateAnnouncement } from "@/lib/api";
 import { Announcement, UserProfile } from "@/types";
 import styles from "./AnnouncementDetails.module.scss";
 import { useUserContext } from "@/context/UserContext";
+import EditAnnouncementModal from "@/components/ui/Profile/EditAnnouncementModal";
 
 export default function AnnouncementPage() {
     const { id } = useParams<{ id: string }>();
     const router = useRouter();
     const { user, toggleFavorite } = useUserContext();
 
-    const [announcement, setAnnouncement] = useState<Announcement | null>(null);
+    const [announcement, setAnnouncement] = useState<Announcement | null>(
+        null
+    );
     const [seller, setSeller] = useState<UserProfile | null>(null);
     const [error, setError] = useState<string | null>(null);
+
+    // для открытия модалки редактирования
+    const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
         if (!id) {
@@ -34,18 +39,16 @@ export default function AnnouncementPage() {
                     return;
                 }
 
-                if (user?.id === ann.creatorId) {
-                    router.push("/profile");
-                    return;
+                // если чужое — подгружаем профиль
+                if (user?.id !== ann.creatorId) {
+                    const userProfile = await getUserById(ann.creatorId);
+                    setSeller(userProfile);
                 }
-
-                const userProfile = await getUserById(ann.creatorId);
-                setSeller(userProfile);
             } catch {
-                setError("Объявление или продавец не найден");
+                setError("Объявление или продавец не найдено");
             }
         })();
-    }, [id, user, router]);
+    }, [id, user]);
 
     if (error) {
         return (
@@ -68,10 +71,20 @@ export default function AnnouncementPage() {
 
     const isFav =
         user?.favorites?.some((a) => a.id === announcement.id) ?? false;
-    const isOwnProfile = user?.id === announcement.creatorId;
-    const profileLink = isOwnProfile
-        ? "/profile"
-        : `/profile/${announcement.creatorId}`;
+    const isOwn = user?.id === announcement.creatorId;
+
+    // переключить скрытость — только для своего
+    const toggleHidden = async () => {
+        if (!announcement) return;
+        await updateAnnouncement(announcement.id, {
+            isHidden: !announcement.isHidden,
+        });
+        // обновим локально
+        setAnnouncement({
+            ...announcement,
+            isHidden: !announcement.isHidden,
+        });
+    };
 
     return (
         <div className={styles.container}>
@@ -118,36 +131,65 @@ export default function AnnouncementPage() {
                     Опубликовано:{" "}
                     {new Date(announcement.createdAt).toLocaleDateString()}
                 </div>
-                <div className={styles.description}>
-                    {announcement.description}
-                </div>
+                <div className={styles.description}>{announcement.description}</div>
             </main>
 
-            {seller && (
-                <aside className={styles.sellerCard}>
-                    <div className={styles.sellerTitle}>Продавец</div>
-                    <div className={styles.sellerInfoItem}>
-                        {seller.name ?? seller.email.split("@")[0]}
-                    </div>
-                    {seller.phoneNumber && (
-                        <div className={styles.sellerInfoItem}>
-                            <b>Телефон:</b> {seller.phoneNumber}
-                        </div>
+            {isOwn ? (
+                <div className={styles.ownActions}>
+                    <button
+                        className={styles.editButton}
+                        onClick={() => setShowEditModal(true)}
+                    >
+                        Редактировать
+                    </button>
+                    <button
+                        className={styles.toggleHiddenButton}
+                        onClick={toggleHidden}
+                    >
+                        {announcement.isHidden ? "Показать" : "Скрыть"}
+                    </button>
+
+                    {showEditModal && (
+                        <EditAnnouncementModal
+                            announcement={announcement}
+                            onClose={() => setShowEditModal(false)}
+                            onUpdated={(updated) => {
+                                setAnnouncement(updated);
+                                setShowEditModal(false);
+                            }}
+                        />
                     )}
-                    <div className={styles.sellerInfoItem}>
-                        <b>Рейтинг:</b>{" "}
-                        {seller.reviews?.length
-                            ? (
-                                seller.reviews.reduce((sum, r) => sum + r.score, 0) /
-                                seller.reviews.length
-                            ).toFixed(1)
-                            : "—"}
-                        {seller.reviews?.length ? ` (${seller.reviews.length})` : ""}
-                    </div>
-                    <Link href={profileLink} className={styles.sellerProfileLink}>
-                        {isOwnProfile ? "Мой профиль и отзывы" : "Все отзывы и профиль"}
-                    </Link>
-                </aside>
+                </div>
+            ) : (
+                seller && (
+                    <aside className={styles.sellerCard}>
+                        <div className={styles.sellerTitle}>Продавец</div>
+                        <div className={styles.sellerInfoItem}>
+                            {seller.name ?? seller.email.split("@")[0]}
+                        </div>
+                        {seller.phoneNumber && (
+                            <div className={styles.sellerInfoItem}>
+                                <b>Телефон:</b> {seller.phoneNumber}
+                            </div>
+                        )}
+                        <div className={styles.sellerInfoItem}>
+                            <b>Рейтинг:</b>{" "}
+                            {seller.reviews?.length
+                                ? (
+                                    seller.reviews.reduce((sum, r) => sum + r.score, 0) /
+                                    seller.reviews.length
+                                ).toFixed(1)
+                                : "—"}
+                            {seller.reviews?.length ? ` (${seller.reviews.length})` : ""}
+                        </div>
+                        <Link
+                            href={`/profile/${announcement.creatorId}`}
+                            className={styles.sellerProfileLink}
+                        >
+                            Все отзывы и профиль
+                        </Link>
+                    </aside>
+                )
             )}
         </div>
     );
