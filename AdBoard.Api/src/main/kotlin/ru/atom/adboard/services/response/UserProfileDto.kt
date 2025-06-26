@@ -19,5 +19,5 @@ data class UserProfileDto
     val userReviews: MutableList<Review>? = mutableListOf(),
 )
 {
-    constructor(name: String, createdAt: Date, announcements: MutableSet<Announcement>?, reviews: MutableList<Review>?) : this(null, createdAt, name, null,null, announcements ,null, reviews,null)
+    constructor(name: String, createdAt: Date, announcements: MutableSet<Announcement>?, reviews: MutableList<Review>?, phoneNumber: String?) : this(null, createdAt, name, phoneNumber,null, announcements ,null, reviews,null)
 }

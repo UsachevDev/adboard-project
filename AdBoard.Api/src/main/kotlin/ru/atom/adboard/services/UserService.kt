@@ -70,6 +70,7 @@ class UserService(_repo: UserRepository)
                         user.get().createdAt,
                         user.get().announcements,
                         user.get().reviews,
+                        user.get().phoneNumber,
                     ),
                     HttpStatus.OK
                 )
