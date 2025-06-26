@@ -39,8 +39,10 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./AdBoard.Web:/app
-      - /app/node_modules
+      - ./AdBoard.Web/src:/app/src
+      - ./AdBoard.Web/public:/app/public
+      - ./AdBoard.Web/package.json:/app/package.json
+      - ./AdBoard.Web/package-lock.json:/app/package-lock.json
     environment:
       - NEXT_PUBLIC_API_URL=http://adboard-backend:8080
 

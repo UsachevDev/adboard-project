@@ -12,6 +12,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import styles from "./Search.module.scss";
 import { getCategories, CategoryDto } from "@/lib/api";
 import { Category, Subcategory } from "@/types";
+import { FiSearch, FiGrid, FiX } from "react-icons/fi";
 
 interface SearchSuggestion {
     type: "category" | "subcategory" | "common_phrase";
@@ -47,9 +48,7 @@ const Search: React.FC = () => {
     const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isCategoriesPanelOpen, setIsCategoriesPanelOpen] = useState(false);
-    const [activeCategoryId, setActiveCategoryId] = useState<string | null>(
-        null
-    );
+    const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
     const [justNavigated, setJustNavigated] = useState(false);
 
     const [categories, setCategories] = useState<Category[]>([]);
@@ -235,18 +234,12 @@ const Search: React.FC = () => {
         [router]
     );
 
-    const filteredSubcategories = useMemo<Subcategory[]>(
-        () =>
-            activeCategoryId
-                ? subcategories.filter((s) => s.categoryId === activeCategoryId)
-                : [],
+    const filteredSubcategories = useMemo<Subcategory[]>(() =>
+        activeCategoryId
+            ? subcategories.filter((s) => s.categoryId === activeCategoryId)
+            : [],
         [activeCategoryId, subcategories]
     );
-
-    const panelTop = useMemo(() => {
-        const el = wrapperRef.current;
-        return el ? el.offsetTop + el.offsetHeight : 0;
-    }, []);
 
     return (
         <div className={styles.searchWrapper} ref={wrapperRef}>
@@ -257,28 +250,35 @@ const Search: React.FC = () => {
                         className={styles.browseCategoriesButton}
                         onClick={handleToggleCategoriesPanel}
                     >
-                        Все категории
+                        <FiGrid className={styles.browseCategoriesIcon} />
+                        <span>Все категории</span>
                     </button>
                     <div className={styles.inputAndSuggestions}>
-                        <form
-                            onSubmit={handleSubmit}
-                            className={styles.searchForm}
-                        >
+                        <form onSubmit={handleSubmit} className={styles.searchForm}>
+                            <span className={styles.searchIcon}>
+                                <FiSearch />
+                            </span>
                             <input
                                 ref={inputRef}
                                 type="text"
                                 value={query}
                                 onChange={(e) => setQuery(e.target.value)}
                                 onFocus={handleInputFocus}
-                                placeholder="Искать объявления..."
+                                placeholder="Поиск объявлений или категорий..."
                                 className={styles.searchInput}
                                 autoComplete="off"
                                 aria-label="Search announcements"
                             />
-                            <button
-                                type="submit"
-                                className={styles.searchButton}
-                            >
+                            {!!query && (
+                                <button
+                                    type="button"
+                                    className={styles.clearInputButton}
+                                    onClick={() => setQuery("")}
+                                >
+                                    <FiX />
+                                </button>
+                            )}
+                            <button type="submit" className={styles.searchButton}>
                                 Поиск
                             </button>
                         </form>
@@ -304,15 +304,8 @@ const Search: React.FC = () => {
                     <div
                         className={styles.categoriesOverlay}
                         onClick={() => setIsCategoriesPanelOpen(false)}
-                        style={{
-                            top: panelTop,
-                            height: `calc(100vh - ${panelTop}px)`,
-                        }}
                     />
-                    <div
-                        className={styles.categoriesPanel}
-                        style={{ top: panelTop }}
-                    >
+                    <div className={styles.categoriesPanel}>
                         <div className={styles.categoriesPanelContent}>
                             <div
                                 className={styles.mainAndSubcategoriesContainer}
@@ -321,13 +314,7 @@ const Search: React.FC = () => {
                                     {categories.map((cat) => (
                                         <li
                                             key={cat.id}
-                                            className={`${
-                                                styles.mainCategoryItem
-                                            } ${
-                                                activeCategoryId === cat.id
-                                                    ? styles.active
-                                                    : ""
-                                            }`}
+                                            className={`${styles.mainCategoryItem} ${activeCategoryId === cat.id ? styles.active : ""}`}
                                             onMouseEnter={() =>
                                                 setActiveCategoryId(cat.id)
                                             }
