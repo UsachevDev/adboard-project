@@ -57,11 +57,6 @@ data class Announcement(
     @JsonIgnore
     @JoinColumn(name = "creator_Id", insertable = false, updatable = false)
     val creator: User? = null,
-
-    @OneToMany(mappedBy = "announcement", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
-    val images: MutableSet<AdImage> = mutableSetOf()
-
-
 )
 {
     constructor(creatorId: UUID, title: String, description: String, price: Double, city: String, count: Int, subcategoryId: UUID)
