@@ -1,9 +1,8 @@
 package ru.atom.adboard.dal.entities
 
-import com.fasterxml.jackson.annotation.JsonBackReference
 import com.fasterxml.jackson.annotation.JsonIgnore
 import jakarta.persistence.*
-import lombok.EqualsAndHashCode
+import org.springframework.data.annotation.CreatedDate
 import java.util.*
 import kotlin.collections.HashSet
 
@@ -16,6 +15,10 @@ data class Announcement(
 
     @Column(name = "creator_Id", columnDefinition = "UUID", nullable = false)
     val creatorId: UUID,
+
+    @Column(name = "createdAt")
+    @CreatedDate
+    val createdAt: Date,
 
     @Column(name = "title", nullable = false)
     var title: String,
@@ -53,11 +56,16 @@ data class Announcement(
     @ManyToOne()
     @JsonIgnore
     @JoinColumn(name = "creator_Id", insertable = false, updatable = false)
-    val creator: User? = null
+    val creator: User? = null,
+
+    @OneToMany(mappedBy = "announcement", fetch = FetchType.EAGER, cascade = [CascadeType.ALL], orphanRemoval = true)
+    val images: MutableSet<AdImage> = mutableSetOf()
+
+
 )
 {
     constructor(creatorId: UUID, title: String, description: String, price: Double, city: String, count: Int, subcategoryId: UUID)
-            : this(UUID.randomUUID(), creatorId, title, description, price, city, count, subcategoryId)
+            : this(UUID.randomUUID(), creatorId, Date(), title, description, price, city, count, subcategoryId)
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
