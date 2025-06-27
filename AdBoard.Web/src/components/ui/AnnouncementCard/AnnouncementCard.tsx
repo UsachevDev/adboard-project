@@ -3,6 +3,7 @@
 
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Announcement } from "@/types";
 import styles from "./AnnouncementCard.module.scss";
 import { useRouter } from "next/navigation";
@@ -16,7 +17,11 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
     const router = useRouter();
     const { user, toggleFavorite } = useUserContext();
     const isFav = user?.favorites?.some((a) => a.id === announcement.id) ?? false;
-    const categoryName = announcement.subcategory?.category?.name;
+
+    const category = announcement.subcategory?.category;
+    const categoryId = Array.isArray(category) ? category[0]?.id : category?.id;
+    const categoryName = Array.isArray(category) ? category[0]?.name : category?.name;
+    const subcategoryId = announcement.subcategory?.id;
     const subcategoryName = announcement.subcategory?.name;
 
     const handleCardClick = () => {
@@ -37,20 +42,17 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
         >
             <div className={styles.favorite}>
                 <button
-                    className={`${styles.favoriteButton} ${isFav ? styles.favorited : ""
-                        }`}
+                    className={`${styles.favoriteButton} ${isFav ? styles.favorited : ""}`}
                     onClick={handleFavClick}
-                    aria-label={
-                        isFav ? "Удалить из избранного" : "Добавить в избранное"
-                    }
+                    aria-label={isFav ? "Удалить из избранного" : "Добавить в избранное"}
                     aria-pressed={isFav}
                 >
                     <svg viewBox="0 0 24 24">
                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
-                     2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
-                     C13.09 3.81 14.76 3 16.5 3
-                     19.58 3 22 5.42 22 8.5
-                     c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                         2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
+                         C13.09 3.81 14.76 3 16.5 3
+                         19.58 3 22 5.42 22 8.5
+                         c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                     </svg>
                 </button>
             </div>
@@ -77,17 +79,27 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
                         {announcement.price.toLocaleString("ru-RU")} ₽
                     </p>
                     <p className={styles.city}>{announcement.city}</p>
-                    {(categoryName || subcategoryName) && (
+                    {(categoryId || subcategoryId) && (
                         <p className={styles.categories}>
-                            {categoryName && (
-                                <span className={styles.categoryBadge}>{categoryName}</span>
+                            {categoryId && categoryName && (
+                                <Link
+                                    href={`/search?categoryId=${categoryId}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={styles.categoryBadge}
+                                >
+                                    {categoryName}
+                                </Link>
                             )}
-                            {subcategoryName && (
+                            {subcategoryId && subcategoryName && (
                                 <>
                                     {" / "}
-                                    <span className={styles.subcategoryBadge}>
+                                    <Link
+                                        href={`/search?subcategoryId=${subcategoryId}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className={styles.subcategoryBadge}
+                                    >
                                         {subcategoryName}
-                                    </span>
+                                    </Link>
                                 </>
                             )}
                         </p>

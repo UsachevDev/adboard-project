@@ -1,10 +1,15 @@
+// AdBoard.Web/src/app/announcements/[id]/page.tsx
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { getAnnouncementById, getUserById, updateAnnouncement } from "@/lib/api";
+import {
+    getAnnouncementById,
+    getUserById,
+    updateAnnouncement,
+} from "@/lib/api";
 import { Announcement, UserProfile } from "@/types";
 import styles from "./AnnouncementDetails.module.scss";
 import { useUserContext } from "@/context/UserContext";
@@ -15,13 +20,10 @@ export default function AnnouncementPage() {
     const router = useRouter();
     const { user, toggleFavorite } = useUserContext();
 
-    const [announcement, setAnnouncement] = useState<Announcement | null>(
-        null
-    );
+    const [announcement, setAnnouncement] =
+        useState<Announcement | null>(null);
     const [seller, setSeller] = useState<UserProfile | null>(null);
     const [error, setError] = useState<string | null>(null);
-
-    // для открытия модалки редактирования
     const [showEditModal, setShowEditModal] = useState(false);
 
     useEffect(() => {
@@ -38,8 +40,6 @@ export default function AnnouncementPage() {
                     setError("У объявления нет автора");
                     return;
                 }
-
-                // если чужое — подгружаем профиль
                 if (user?.id !== ann.creatorId) {
                     const userProfile = await getUserById(ann.creatorId);
                     setSeller(userProfile);
@@ -73,13 +73,11 @@ export default function AnnouncementPage() {
         user?.favorites?.some((a) => a.id === announcement.id) ?? false;
     const isOwn = user?.id === announcement.creatorId;
 
-    // переключить скрытость — только для своего
     const toggleHidden = async () => {
         if (!announcement) return;
         await updateAnnouncement(announcement.id, {
             isHidden: !announcement.isHidden,
         });
-        // обновим локально
         setAnnouncement({
             ...announcement,
             isHidden: !announcement.isHidden,
@@ -102,10 +100,10 @@ export default function AnnouncementPage() {
                     >
                         <svg viewBox="0 0 24 24">
                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
-                       2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
-                       C13.09 3.81 14.76 3 16.5 3
-                       19.58 3 22 5.42 22 8.5
-                       c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                   2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09
+                   C13.09 3.81 14.76 3 16.5 3
+                   19.58 3 22 5.42 22 8.5
+                   c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                         </svg>
                     </button>
                 </div>
@@ -114,24 +112,36 @@ export default function AnnouncementPage() {
                     {announcement.price.toLocaleString("ru-RU")} ₽
                 </div>
                 <div className={styles.city}>{announcement.city}</div>
+
                 {announcement.subcategory && (
                     <div className={styles.categoryBlock}>
                         <span className={styles.label}>Категория:</span>
                         <div className={styles.chipList}>
-                            <span className={styles.chip}>
+                            {/* Ссылка на все объявления в категории */}
+                            <Link
+                                href={`/search?categoryId=${announcement.subcategory.category.id}`}
+                                className={styles.chip}
+                            >
                                 {announcement.subcategory.category.name}
-                            </span>
-                            <span className={styles.chip}>
+                            </Link>
+                            {/* Ссылка на все объявления в подкатегории */}
+                            <Link
+                                href={`/search?subcategoryId=${announcement.subcategory.id}`}
+                                className={styles.chip}
+                            >
                                 {announcement.subcategory.name}
-                            </span>
+                            </Link>
                         </div>
                     </div>
                 )}
+
                 <div className={styles.createdAt}>
                     Опубликовано:{" "}
                     {new Date(announcement.createdAt).toLocaleDateString()}
                 </div>
-                <div className={styles.description}>{announcement.description}</div>
+                <div className={styles.description}>
+                    {announcement.description}
+                </div>
             </main>
 
             {isOwn ? (
