@@ -25,7 +25,7 @@ class FavoriteService(_userRepo: UserRepository, _announcementRepo: Announcement
         try {
             val user = userRepo.findUserById(UUID.fromString(userId))
             if (user.isEmpty)
-                return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR, ServiceError("Authorize error"))
+                return ServiceResponse(HttpStatus.INTERNAL_SERVER_ERROR, ServiceError("Ошибка авторизации"))
 
             val announcement = announcementRepo.findById(UUID.fromString(announcementId))
             if (announcement.isEmpty)

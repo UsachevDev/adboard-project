@@ -55,7 +55,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
             if (refreshTokenFromDb.isEmpty || refreshTokenFromDb.get().expiryDate
                     .before(Date())
             ) {
-                return ServiceResponse(HttpStatus.UNAUTHORIZED, ServiceError("Login required"))
+                return ServiceResponse(HttpStatus.UNAUTHORIZED, ServiceError("Аутентификация обязательна"))
             }
 
             val validRefreshToken = refreshTokenFromDb.get()
@@ -79,7 +79,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         val authentication: Authentication
 
         try { authentication = authManager.authenticate(UsernamePasswordAuthenticationToken(request.email,request.password)) }
-        catch (ex: AuthenticationException) { return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Incorrect email or password")) }
+        catch (ex: AuthenticationException) { return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Неверный Email или пароль")) }
 
         val userDetails: User = authentication.principal as User
         val accessToken = jwtUtil.generateAccessToken(userDetails.email, userDetails.id)
@@ -109,7 +109,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         logger.info("Запрос на регистрацию ${request.email}")
         try{
             if(userRepo.existsUserByEmail(request.email))
-                return ServiceResponse(HttpStatus.OK, ServiceError("The user already exists"))
+                return ServiceResponse(HttpStatus.OK, ServiceError("Пользователь с таким Email уже существует"))
 
             val user = User(
                 request.email,

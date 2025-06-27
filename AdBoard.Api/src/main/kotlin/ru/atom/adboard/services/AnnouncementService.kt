@@ -68,13 +68,13 @@ class AnnouncementService(_repo: AnnouncementRepository)
     fun updateAnnouncement(userId: String, announcementId : String, patch: UpdateAnnouncementDto): ServiceResponse<Announcement> {
         try{
             if(!SecureService.isValidId(announcementId))
-                return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Invalid announcement id format"))
+                return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Неверный формат announcementID"))
 
             val announcement = repo.findById(UUID.fromString(announcementId))
             if(announcement.isEmpty)
                 return ServiceResponse(HttpStatus.NOT_FOUND)
             if(announcement.get().creatorId != UUID.fromString(userId))
-                return ServiceResponse(HttpStatus.FORBIDDEN, ServiceError("You are not the creator of the announcement"))
+                return ServiceResponse(HttpStatus.FORBIDDEN, ServiceError("Вы не создатель этого объявления"))
 
             patch.title?.let {announcement.get().title = patch.title}
             patch.description?.let {announcement.get().description = patch.description}

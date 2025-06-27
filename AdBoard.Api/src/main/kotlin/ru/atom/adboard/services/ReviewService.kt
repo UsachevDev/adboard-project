@@ -22,9 +22,9 @@ class ReviewService(_userRepo: UserRepository, _announcementRepo: AnnouncementRe
 
     fun addReview(buyerId: String, announcementId: String, reviewDto: AddReviewRequest) : ServiceResponse<UUID> {
         if (!SecureService.isValidId(announcementId))
-            return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Invalid announcement id format"))
+            return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Неверный формат announcementID"))
         if (reviewDto.score !in 1..10)
-            return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Score must be from 1 to 10"))
+            return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Оценка должна быть в пределах от 1 до 10"))
 
         try {
             val buyer = userRepo.findUserById(UUID.fromString(buyerId))
@@ -36,7 +36,7 @@ class ReviewService(_userRepo: UserRepository, _announcementRepo: AnnouncementRe
                 return ServiceResponse(HttpStatus.NOT_FOUND)
 
             if(buyerId == announcement.get().creatorId.toString())
-                return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Давай тоже не наглей, да"))
+                return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Нельзя создать отзыв на свое же объявление"))
 
             val review = Review(
                 UUID.randomUUID(),
