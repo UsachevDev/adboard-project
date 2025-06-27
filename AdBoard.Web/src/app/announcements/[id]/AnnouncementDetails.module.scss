@@ -1,0 +1,298 @@
+@use "@/styles/abstracts/variables" as *;
+@use "@/styles/abstracts/mixins" as *;
+@use "sass:color";
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: $spacing-lg;
+    display: flex;
+    gap: $spacing-xl;
+
+    @media (max-width: 991px) {
+        flex-direction: column;
+        padding: $spacing-xl;
+        gap: $spacing-lg;
+    }
+}
+
+.main {
+    flex: 2 1 600px;
+    background: $color-white;
+    border-radius: $border-radius-lg;
+    box-shadow: $box-shadow-md;
+    padding: $spacing-xl $spacing-lg;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.sellerCard {
+    flex: 1 1 320px;
+    background: $color-white;
+    border-radius: $border-radius-lg;
+    box-shadow: $box-shadow-md;
+    padding: $spacing-lg;
+    align-self: flex-start;
+    position: sticky;
+    top: $spacing-xl;
+    min-width: 260px;
+    max-width: 340px;
+
+    @media (max-width: 991px) {
+        position: static;
+        margin: 0 auto;
+        max-width: none;
+        width: 100%;
+    }
+}
+
+.headerWithFavorite {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-md;
+    margin-bottom: $spacing-sm;
+    flex-wrap: wrap;
+}
+
+.title {
+    font-size: $font-size-h1;
+    font-weight: 700;
+    color: $color-primary;
+    margin: 0;
+    flex: 1 1 0;
+    word-break: break-word;
+
+    @media (max-width: 500px) {
+        font-size: $font-size-h2;
+    }
+}
+
+.detailFavoriteButton {
+    background: none;
+    border: none;
+    font-size: 2.2rem;
+    cursor: pointer;
+    transition: transform 0.15s;
+    margin-left: $spacing-sm;
+
+    &:active {
+        transform: scale(1.1);
+    }
+}
+
+.price {
+    font-size: 2.2rem;
+    color: $color-secondary;
+    font-weight: 600;
+    margin-bottom: $spacing-sm;
+    margin-top: $spacing-md;
+    text-align: left;
+
+    @media (max-width: 500px) {
+        font-size: $font-size-h3;
+    }
+}
+
+.city {
+    font-size: $font-size-lg;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-lg;
+}
+
+.categories,
+.subcategories {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-bottom: $spacing-xs;
+}
+
+.createdAt {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-top: $spacing-md;
+    text-align: right;
+}
+
+.description {
+    font-size: $font-size-lg;
+    line-height: $line-height-lg;
+    color: $color-text-primary;
+    margin-bottom: $spacing-xl;
+    white-space: pre-wrap;
+    border-radius: $border-radius-md;
+    background: $color-light-gray;
+    padding: $spacing-md;
+}
+
+.imageGallery {
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+    gap: $spacing-md;
+    margin-bottom: $spacing-xl;
+    scroll-snap-type: x mandatory;
+
+    @media (min-width: 769px) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: $spacing-md;
+        overflow: visible;
+    }
+}
+
+.imageWrapper {
+    flex: 0 0 90vw;
+    max-width: 500px;
+    position: relative;
+    aspect-ratio: 3/2;
+    border-radius: $border-radius-lg;
+    overflow: hidden;
+    box-shadow: $box-shadow-sm;
+    scroll-snap-align: start;
+
+    @media (min-width: 769px) {
+        flex: 1 1 280px;
+        max-width: 100%;
+        aspect-ratio: 3/2;
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        background: $color-light-gray;
+        border-radius: inherit;
+        transition: transform 0.2s;
+
+        &:hover {
+            transform: scale(1.03);
+        }
+    }
+}
+
+/* SellerCard стили */
+.sellerTitle {
+    font-size: $font-size-h3;
+    font-weight: 700;
+    color: $color-primary;
+    margin-bottom: $spacing-sm;
+}
+
+.sellerInfoItem {
+    margin-bottom: $spacing-sm;
+    font-size: $font-size-base;
+
+    b {
+        color: $color-primary-dark;
+    }
+}
+
+.sellerProfileLink {
+    margin-top: $spacing-md;
+    display: inline-block;
+    @include button-secondary;
+    font-size: $font-size-base;
+    width: 100%;
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .container {
+        padding: $spacing-xs;
+    }
+
+    .main {
+        padding: $spacing-lg $spacing-xs;
+    }
+
+    .sellerCard {
+        padding: $spacing-md;
+    }
+}
+
+.favoriteButton {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: fill 0.2s ease, stroke 0.2s ease;
+
+    svg {
+        display: block;
+        width: 2.2rem; // можешь сделать чуть крупнее для детальной страницы
+        height: 2.2rem;
+    }
+
+    svg path {
+        stroke: $color-text-tertiary;
+        stroke-width: 2;
+        fill: none;
+        transition: fill 0.2s, stroke 0.2s;
+    }
+
+    &[aria-pressed="true"] svg path {
+        fill: $color-secondary;
+        stroke: $color-secondary;
+    }
+}
+
+.categoryBlock {
+    margin-bottom: $spacing-md;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+
+    .label {
+        font-size: $font-size-sm;
+        color: $color-text-secondary;
+        margin-right: $spacing-sm;
+        white-space: nowrap;
+    }
+}
+
+.chipList {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+}
+
+.chip {
+    display: inline-block;
+    padding: 2px 8px;
+    font-size: $font-size-sm;
+    color: $color-primary-dark;
+    background: $color-light-gray;
+    border-radius: $border-radius-sm;
+    white-space: nowrap;
+    transition: background 0.2s ease;
+
+    &:hover {
+        background: color.adjust($color-light-gray, $lightness: -5%);
+    }
+}
+
+.ownActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-top: $spacing-lg;
+  align-items: center;
+}
+
+.ownActions > button {
+  flex: 1 1 0;
+}
+
+.editButton {
+  @include button-primary;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+}
+
+.toggleHiddenButton {
+  @include button-secondary;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-base;
+}

@@ -1,0 +1,50 @@
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: adboard-db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: AdBoardDb
+    ports:
+      - "5433:5432"
+    volumes:
+      - adboard-db-data:/var/lib/postgresql/data
+      - ./ADBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
+
+  backend:
+    build:
+      context: ./ADBoard.Api
+      dockerfile: Dockerfile
+    container_name: adboard-backend
+    restart: on-failure
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - JWT_ACCESS_TOKEN_KEY=${JWT_ACCESS_TOKEN_KEY}
+      - JWT_REFRESH_TOKEN_KEY=${JWT_REFRESH_TOKEN_KEY}
+
+  frontend:
+    build:
+      context: ./AdBoard.Web
+      dockerfile: Dockerfile
+    container_name: adboard-frontend
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./AdBoard.Web/src:/app/src
+      - ./AdBoard.Web/public:/app/public
+      - ./AdBoard.Web/package.json:/app/package.json
+      - ./AdBoard.Web/package-lock.json:/app/package-lock.json
+    environment:
+      - NEXT_PUBLIC_API_URL=http://adboard-backend:8080
+
+volumes:
+  adboard-db-data:
