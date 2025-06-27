@@ -79,7 +79,7 @@ class AuthService(_authManager: AuthenticationManager, _jwtUtil: JwtUtil, _refre
         val authentication: Authentication
 
         try { authentication = authManager.authenticate(UsernamePasswordAuthenticationToken(request.email,request.password)) }
-        catch (ex: AuthenticationException) { return ServiceResponse(HttpStatus.FORBIDDEN, ServiceError("Incorrect email or password")) }
+        catch (ex: AuthenticationException) { return ServiceResponse(HttpStatus.BAD_REQUEST, ServiceError("Incorrect email or password")) }
 
         val userDetails: User = authentication.principal as User
         val accessToken = jwtUtil.generateAccessToken(userDetails.email, userDetails.id)
