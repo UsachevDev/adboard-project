@@ -190,3 +190,9 @@
     @include button-secondary;
   }
 }
+
+.allReviewsBtn {
+    @include button-primary;
+    margin-bottom: $spacing-md;
+    font-size: $font-size-base;
+}

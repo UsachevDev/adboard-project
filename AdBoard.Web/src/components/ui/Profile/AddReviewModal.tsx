@@ -1,6 +1,9 @@
+"use client";
+
 import React, { useState } from "react";
 import { Announcement } from "@/types";
 import { addReview } from "@/lib/api";
+import styles from "./AddReviewModal.module.scss";
 
 interface AddReviewModalProps {
     announcements: Announcement[];
@@ -36,32 +39,14 @@ const AddReviewModal: React.FC<AddReviewModalProps> = ({
     };
 
     return (
-        <div
-            style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                width: "100%",
-                height: "100%",
-                background: "rgba(0,0,0,0.2)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-            }}
-        >
-            <form
-                onSubmit={handleSubmit}
-                style={{
-                    background: "#fff",
-                    padding: 24,
-                    borderRadius: 8,
-                    minWidth: 300,
-                }}
-            >
-                <h3>Оставить отзыв</h3>
-                <div>
-                    <label>Объявление:</label>
+        <div className={styles.overlay}>
+            <form onSubmit={handleSubmit} className={styles.modal}>
+                <h3 className={styles.header}>Оставить отзыв</h3>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Объявление:</label>
                     <select
+                        className={styles.select}
                         value={announcementId}
                         onChange={(e) => setAnnouncementId(e.target.value)}
                         required
@@ -76,9 +61,11 @@ const AddReviewModal: React.FC<AddReviewModalProps> = ({
                         ))}
                     </select>
                 </div>
-                <div>
-                    <label>Оценка:</label>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Оценка:</label>
                     <input
+                        className={styles.input}
                         type="number"
                         min={1}
                         max={10}
@@ -86,26 +73,34 @@ const AddReviewModal: React.FC<AddReviewModalProps> = ({
                         onChange={(e) => setScore(Number(e.target.value))}
                     />
                 </div>
-                <div>
-                    <label>Комментарий:</label>
+
+                <div className={styles.formGroup}>
+                    <label className={styles.label}>Комментарий:</label>
                     <textarea
+                        className={styles.textarea}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                     />
                 </div>
-                <div style={{ marginTop: 16 }}>
-                    <button type="submit" disabled={loading}>
+
+                <div className={styles.actions}>
+                    <button
+                        type="submit"
+                        className={styles.btnPrimary}
+                        disabled={loading}
+                    >
                         Отправить
                     </button>
                     <button
                         type="button"
+                        className={styles.btnSecondary}
                         onClick={onClose}
-                        style={{ marginLeft: 12 }}
                     >
                         Отмена
                     </button>
                 </div>
-                {error && <div style={{ color: "red" }}>{error}</div>}
+
+                {error && <div className={styles.error}>{error}</div>}
             </form>
         </div>
     );
