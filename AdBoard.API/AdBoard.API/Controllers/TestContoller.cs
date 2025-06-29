@@ -1,18 +1,26 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using AdBoard.DAL;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace AdBoard.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TestContoller : Controller
+    public class TestController : Controller
     {
+        private readonly AdBoardDbContext _dbContext;
+        public TestController(AdBoardDbContext context)
+        {
+            _dbContext = context;
+        }
+
         /// <summary>
         ///     Тестовый GET метод
         /// </summary>
         /// <returns>Должен вернуть HELLO</returns>
-        [HttpGet]
-        public string Index() => "HELLO";
+        [HttpGet("users")]
+        public IActionResult Index() => Ok(_dbContext.Users.AsNoTracking().ToList());
 
         /// <summary>
         ///     Тестовый GET c id

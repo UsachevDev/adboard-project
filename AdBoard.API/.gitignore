@@ -4,7 +4,8 @@
 /AdBoard.Services/obj
 /AdBoard.API/vs\
 /AdBoard.API/bin
-
+/AdBoard.DAL/bin
+/AdBoard.Services/bin
 /.vs
 .idea
 
