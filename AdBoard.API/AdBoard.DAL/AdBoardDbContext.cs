@@ -17,19 +17,13 @@ namespace AdBoard.DAL
                 optionsBuilder.UseNpgsql(_configuration.GetConnectionString("AdBoardDbConnection"));
         }
 
-        public virtual DbSet<Announcement> Announcements { get; set; }
-
-        public virtual DbSet<Category> Categories { get; set; }
-
-        public virtual DbSet<Image> Images { get; set; }
-
-        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
-
-        public virtual DbSet<Review> Reviews { get; set; }
-
-        public virtual DbSet<Subcategory> Subcategories { get; set; }
-
-        public virtual DbSet<User> Users { get; set; }
+        public DbSet<Announcement> Announcements { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Image> Images { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+        public DbSet<Review> Reviews { get; set; }
+        public DbSet<Subcategory> Subcategories { get; set; }
+        public DbSet<User> Users { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -185,7 +179,7 @@ namespace AdBoard.DAL
                 entity.Property(e => e.Id)
                     .ValueGeneratedNever()
                     .HasColumnName("id");
-                entity.Property(e => e.Address)
+                entity.Property(e => e.City)
                     .HasMaxLength(255)
                     .HasColumnName("address");
                 entity.Property(e => e.CreatedAt)
@@ -203,25 +197,6 @@ namespace AdBoard.DAL
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(255)
                     .HasColumnName("phone_number");
-
-                entity.HasMany(d => d.AnnouncementsNavigation).WithMany(p => p.Users)
-                    .UsingEntity<Dictionary<string, object>>(
-                        "Favorite",
-                        r => r.HasOne<Announcement>().WithMany()
-                            .HasForeignKey("AnnouncementId")
-                            .OnDelete(DeleteBehavior.ClientSetNull)
-                            .HasConstraintName("fk64a8qh96yltw139h7hvype31q"),
-                        l => l.HasOne<User>().WithMany()
-                            .HasForeignKey("UserId")
-                            .OnDelete(DeleteBehavior.ClientSetNull)
-                            .HasConstraintName("fkk7du8b8ewipawnnpg76d55fus"),
-                        j =>
-                        {
-                            j.HasKey("UserId", "AnnouncementId").HasName("favorites_pkey");
-                            j.ToTable("favorites");
-                            j.IndexerProperty<Guid>("UserId").HasColumnName("user_id");
-                            j.IndexerProperty<Guid>("AnnouncementId").HasColumnName("announcement_id");
-                        });
             });
 
             OnModelCreatingPartial(modelBuilder);

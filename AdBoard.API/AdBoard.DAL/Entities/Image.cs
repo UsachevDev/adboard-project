@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AdBoard.DAL.Entities;
 
-public partial class Image
+public class Image
 {
     public Guid Id { get; set; }
 
@@ -13,5 +13,5 @@ public partial class Image
 
     public Guid AnnouncementId { get; set; }
 
-    public virtual Announcement Announcement { get; set; } = null!;
+    public Announcement Announcement { get; set; } = null!;
 }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AdBoard.DAL.Entities;
 
-public partial class RefreshToken
+public class RefreshToken
 {
     public long Id { get; set; }
 
@@ -13,5 +13,5 @@ public partial class RefreshToken
 
     public Guid? UserId { get; set; }
 
-    public virtual User? User { get; set; }
+    public User? User { get; set; }
 }

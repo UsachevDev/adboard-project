@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AdBoard.DAL.Entities;
 
-public partial class Subcategory
+public class Subcategory
 {
     public Guid Id { get; set; }
 
@@ -11,7 +11,6 @@ public partial class Subcategory
 
     public Guid CategoryId { get; set; }
 
-    public virtual ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
-
-    public virtual Category Category { get; set; } = null!;
+    public ICollection<Announcement> Announcements { get; set; } = new List<Announcement>();
+    public Category Category { get; set; } = null!;
 }

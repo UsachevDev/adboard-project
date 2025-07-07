@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace AdBoard.DAL.Entities;
 
-public partial class Announcement
+public class Announcement
 {
     public Guid Id { get; set; }
 
@@ -25,9 +25,7 @@ public partial class Announcement
 
     public DateTime? CreatedAt { get; set; }
 
-    public virtual User Creator { get; set; } = null!;
-
-    public virtual ICollection<Image> Images { get; set; } = new List<Image>();
-
-    public virtual Subcategory? Subcategory { get; set; }
+    public User Creator { get; set; } = null!;
+    public ICollection<Image>? Images { get; set; }
+    public Subcategory Subcategory { get; set; } = null!;
 }
