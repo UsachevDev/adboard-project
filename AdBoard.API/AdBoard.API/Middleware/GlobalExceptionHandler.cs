@@ -1,7 +1,10 @@
 ﻿using AdBoard.API.Models.Responses;
 using FluentValidation;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.Extensions.Options;
 using System.Net;
+using System.Text.Json;
 using ValidationException = FluentValidation.ValidationException;
 
 namespace AdBoard.API.Middleware
@@ -17,7 +20,7 @@ namespace AdBoard.API.Middleware
             _logger = logger;
         }
 
-        public async Task InvokeAsync(HttpContext context)
+        public async Task InvokeAsync(HttpContext context, IOptions<JsonOptions> jsonOptons)
         {
             try
             {
@@ -25,16 +28,16 @@ namespace AdBoard.API.Middleware
             }
             catch (Exception ex)
             {
-                await HandleExceptionAsync(context, ex);
+                await HandleExceptionAsync(context, ex, jsonOptons.Value.JsonSerializerOptions);
             }
         }
 
-        public Task HandleExceptionAsync(HttpContext context, Exception exception)
+        public Task HandleExceptionAsync(HttpContext context, Exception exception, JsonSerializerOptions jsonSerializerOptions)
         {
             var result = new ErrorResponse
             {
                 StatusCode = HttpStatusCode.InternalServerError,
-                Message = "Unhandled server error"
+                Message = "Unhandled server error",
             };
 
             switch (exception)
@@ -53,7 +56,8 @@ namespace AdBoard.API.Middleware
             }
 
             context.Response.StatusCode = (int)result.StatusCode;
-            return context.Response.WriteAsJsonAsync(result);
+            context.Response.ContentType = "application/json";
+            return context.Response.WriteAsync(JsonSerializer.Serialize(result, jsonSerializerOptions));
         }
     }
 }
