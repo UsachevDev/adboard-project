@@ -5,8 +5,10 @@ using AdBoard.DAL;
 using AdBoard.Services.Implementations;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.Configurations;
+using AdBoard.Services.Models.DTOs;
+using AdBoard.Services.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Options;
 namespace AdBoard.API
 {
     public class Program
@@ -25,6 +27,8 @@ namespace AdBoard.API
             builder.Services.AddControllers()
                 .AddCustomJsonSerializerOptions();
 
+            builder.Services.AddScoped<IValidator<RegistrationDto>, RegistrationDtoValidator>();
+
             builder.Services.AddEndpointsApiExplorer();
 
             builder.Services.AddSwaggerGen()
@@ -34,7 +38,7 @@ namespace AdBoard.API
 
             builder.Services.AddScoped<IJwtService, JwtService>();
             var app = builder.Build();
-
+            app.UseMiddleware<GlobalExceptionHandler>();
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger(); 
