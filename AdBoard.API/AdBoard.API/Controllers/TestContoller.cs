@@ -2,6 +2,9 @@
 using AdBoard.Services.Implementations;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.Configurations;
+using AdBoard.Services.Models.DTOs;
+using AdBoard.Services.Validators;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,12 +20,14 @@ namespace AdBoard.API.Controllers
     {
         private readonly AdBoardDbContext _dbContext;
         private readonly IJwtService _jwtService;
+        private readonly IValidator<RegistrationDto> _valiValidator;
         private readonly SecurityOptions _options;
-        public TestController(AdBoardDbContext context, IOptions<SecurityOptions> options, IJwtService jwtService)
+        public TestController(AdBoardDbContext context, IOptions<SecurityOptions> options, IJwtService jwtService, IValidator<RegistrationDto> validator)
         {
             _dbContext = context;
             _options = options.Value;
             _jwtService = jwtService;
+            _valiValidator = validator;
         }
 
         /// <summary>
@@ -53,6 +58,17 @@ namespace AdBoard.API.Controllers
             var user = _dbContext.Users.Find(Guid.Parse(id));
             var genAccessToken = _jwtService.GenerateAccessToken(user);
             return Ok(genAccessToken);
+        }
+        [HttpPost("registration")]
+        public IActionResult registration([FromBody] RegistrationDto dto)
+        {
+            var validatorResult = _valiValidator.Validate(dto);
+            if (!validatorResult.IsValid)
+            {
+                throw new ValidationException(validatorResult.Errors);
+            }
+
+            return Ok(dto);
         }
 
         [Authorize]
