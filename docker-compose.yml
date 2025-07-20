@@ -11,11 +11,11 @@ services:
       - "5433:5432"
     volumes:
       - adboard-db-data:/var/lib/postgresql/data
-      - ./ADBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
+      - ./AdBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
 
   backend:
     build:
-      context: ./ADBoard.Api
+      context: ./AdBoard.Api
       dockerfile: Dockerfile
     container_name: adboard-backend
     restart: on-failure
@@ -24,11 +24,10 @@ services:
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - JWT_ACCESS_TOKEN_KEY=${JWT_ACCESS_TOKEN_KEY}
-      - JWT_REFRESH_TOKEN_KEY=${JWT_REFRESH_TOKEN_KEY}
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__AdBoardDbConnection=Host=db;Port=5432;Database=AdBoardDb;Username=postgres;Password=admin
+      - Security__JwtAccessTokenKey=${JWT_ACCESS_TOKEN_KEY}
+      - Security__JwtRefreshTokenKey=${JWT_REFRESH_TOKEN_KEY}
 
   frontend:
     build:
