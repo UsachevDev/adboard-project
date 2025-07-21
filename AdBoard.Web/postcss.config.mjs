@@ -1,5 +1,12 @@
-const config = {
-  plugins: ["@tailwindcss/postcss"],
-};
+export default {
+    plugins: {
+        // вложенные селекторы (опционально)
+        "@tailwindcss/nesting": {},
 
-export default config;
+        // основной PostCSS-плагин Tailwind
+        "@tailwindcss/postcss": {},
+
+        // автопрефиксы
+        autoprefixer: {},
+    },
+};
