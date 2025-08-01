@@ -5,7 +5,7 @@ using AdBoard.DAL;
 using AdBoard.Services.Implementations;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.Configurations;
-using AdBoard.Services.Models.DTOs;
+using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
@@ -28,6 +28,9 @@ namespace AdBoard.API
                 .AddCustomJsonSerializerOptions();
 
             builder.Services.AddScoped<IValidator<RegistrationDto>, RegistrationDtoValidator>();
+            builder.Services.AddScoped<IJwtService, JwtService>();
+            builder.Services.AddScoped<ICookieService, CookieService>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddEndpointsApiExplorer();
 
@@ -35,8 +38,6 @@ namespace AdBoard.API
                 .AddCustomSwaggerOptions();
 
             builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection("Security"));
-
-            builder.Services.AddScoped<IJwtService, JwtService>();
             var app = builder.Build();
             app.UseMiddleware<GlobalExceptionHandler>();
             if (app.Environment.IsDevelopment())
