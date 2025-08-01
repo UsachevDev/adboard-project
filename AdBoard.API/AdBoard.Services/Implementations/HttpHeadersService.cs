@@ -13,15 +13,21 @@ using System.Threading.Tasks;
 
 namespace AdBoard.Services.Implementations
 {
-    public class CookieService : ICookieService
+    public class HttpHeadersService : IHttpHeadersService
     {
         private readonly ILogger logger;
         private readonly SecurityOptions securityOptions;
-        public CookieService(ILogger<ICookieService> logger, IOptions<SecurityOptions> options)
+        public HttpHeadersService(ILogger<IHttpHeadersService> logger, IOptions<SecurityOptions> options)
         {
             this.logger = logger;
             securityOptions = options.Value;
         }
+
+        public string getRefreshToken(IResponseCookies cookies)
+        {
+            throw new NotImplementedException();
+        }
+
         public void setRefreshToken(RefreshToken token, IResponseCookies cookies)
         {
             try

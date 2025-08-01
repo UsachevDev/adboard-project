@@ -9,8 +9,11 @@ using System.Threading.Tasks;
 
 namespace AdBoard.Services.Interfaces
 {
-    public interface ICookieService
+    public interface IHttpHeadersService
     {
         public void setRefreshToken(RefreshToken token, IResponseCookies cookies);
+
+        public string getRefreshToken(IResponseCookies cookies);
+
     }
 }

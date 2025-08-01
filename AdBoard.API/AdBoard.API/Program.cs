@@ -29,7 +29,7 @@ namespace AdBoard.API
 
             builder.Services.AddScoped<IValidator<RegistrationDto>, RegistrationDtoValidator>();
             builder.Services.AddScoped<IJwtService, JwtService>();
-            builder.Services.AddScoped<ICookieService, CookieService>();
+            builder.Services.AddScoped<IHttpHeadersService, HttpHeadersService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.AddEndpointsApiExplorer();
