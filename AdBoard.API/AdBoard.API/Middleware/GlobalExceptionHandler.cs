@@ -1,4 +1,5 @@
 ﻿using AdBoard.API.Models.Responses;
+using AdBoard.Services.Exceptions;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -52,7 +53,19 @@ namespace AdBoard.API.Middleware
                         Error = e.ErrorMessage
                     });
                     break;
-                }
+                };
+                case NotImplementedException implementedException:
+                {
+                    result.StatusCode = HttpStatusCode.NotImplemented;
+                    result.Message = "Функционал не реализован";
+                    break;
+                };
+                case RecordExistsException recordExistsException:
+                {
+                    result.StatusCode = HttpStatusCode.BadRequest;
+                    result.Message = recordExistsException.Message;
+                    break;
+                };
             }
 
             context.Response.StatusCode = (int)result.StatusCode;

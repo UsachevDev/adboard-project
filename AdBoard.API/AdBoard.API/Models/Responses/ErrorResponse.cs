@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net;
+using System.Text.Json.Serialization;
 
 namespace AdBoard.API.Models.Responses
 {
@@ -7,6 +8,6 @@ namespace AdBoard.API.Models.Responses
     {
         public HttpStatusCode StatusCode { get; set; }
         public string Message { get; set; }
-        public object? Errors { get; set; }
+        public object? Errors { get; set; } = null;
     }
 }
