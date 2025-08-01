@@ -1,6 +1,7 @@
 ﻿using AdBoard.DAL.Entities;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.Configurations;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,30 +14,41 @@ namespace AdBoard.Services.Implementations
     public class JwtService : IJwtService
     {
         private readonly SecurityOptions _options;
-        public JwtService(IOptions<SecurityOptions> options)
+        private readonly ILogger<IJwtService> _logger;
+        public JwtService(IOptions<SecurityOptions> options, ILogger<IJwtService> logger)
         {
             _options = options.Value;
+            _logger = logger;
         }
 
         public string GenerateAccessToken(User user)
         {
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var accessTokenKey = Encoding.ASCII.GetBytes(_options.JwtAccessTokenKey);
-            var tokenDescriprot = new SecurityTokenDescriptor
+            try
             {
-                Subject = new ClaimsIdentity(
-                [
-                    new Claim("id", user.Id.ToString()),
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var accessTokenKey = Encoding.ASCII.GetBytes(_options.JwtAccessTokenKey);
+                var tokenDescriprot = new SecurityTokenDescriptor
+                {
+                    Subject = new ClaimsIdentity(
+                    [
+                        new Claim("id", user.Id.ToString()),
                     new Claim("name", user.Name)
-                ]),
-                Expires = DateTime.UtcNow.AddMinutes(_options.JwtAccessTokenDurationInMinutes),
-                SigningCredentials = new SigningCredentials(
-                    new SymmetricSecurityKey(accessTokenKey),
-                    SecurityAlgorithms.HmacSha256Signature
-                )
-            };
-            SecurityToken token = tokenHandler.CreateToken(tokenDescriprot);
-            return tokenHandler.WriteToken(token);
+                    ]),
+                    Expires = DateTime.UtcNow.AddMinutes(_options.JwtAccessTokenDurationInMinutes),
+                    SigningCredentials = new SigningCredentials(
+                        new SymmetricSecurityKey(accessTokenKey),
+                        SecurityAlgorithms.HmacSha256Signature
+                    )
+                };
+                SecurityToken token = tokenHandler.CreateToken(tokenDescriprot);
+                return tokenHandler.WriteToken(token);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"Ошибка при генерации AccessToken: {ex.Message}");
+                throw;
+            }
+            
         }
 
         public string GenerateRefreshToken()
