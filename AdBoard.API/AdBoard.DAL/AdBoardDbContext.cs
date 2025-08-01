@@ -10,11 +10,13 @@ namespace AdBoard.DAL
         public AdBoardDbContext(DbContextOptions<AdBoardDbContext> options, IConfiguration configuration) : base(options) 
         {
             _configuration = configuration;
+            Database.EnsureCreated();
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
                 optionsBuilder.UseNpgsql(_configuration.GetConnectionString("AdBoardDbConnection"));
+
         }
 
         public DbSet<Announcement> Announcements { get; set; }
@@ -119,10 +121,6 @@ namespace AdBoard.DAL
                     .HasMaxLength(255)
                     .HasColumnName("token");
                 entity.Property(e => e.UserId).HasColumnName("user_id");
-
-                entity.HasOne(d => d.User).WithOne(p => p.RefreshToken)
-                    .HasForeignKey<RefreshToken>(d => d.UserId)
-                    .HasConstraintName("fk1lih5y2npsf8u5o3vhdb9y0os");
             });
 
             modelBuilder.Entity<Review>(entity =>
