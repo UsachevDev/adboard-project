@@ -8,7 +8,7 @@ public class User
 {
     public Guid Id { get; set; }
 
-    public string City { get; set; }
+    public string City { get; set; } = null!;
 
     public DateTime CreatedAt { get; set; }
 

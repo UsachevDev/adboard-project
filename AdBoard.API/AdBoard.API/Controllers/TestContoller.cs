@@ -2,7 +2,7 @@
 using AdBoard.Services.Implementations;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.Configurations;
-using AdBoard.Services.Models.DTOs;
+using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
@@ -22,7 +22,7 @@ namespace AdBoard.API.Controllers
         private readonly IJwtService _jwtService;
         private readonly IValidator<RegistrationDto> _valiValidator;
         private readonly SecurityOptions _options;
-        public TestController(AdBoardDbContext context, IOptions<SecurityOptions> options, IJwtService jwtService, IValidator<RegistrationDto> validator)
+        public TestController(AdBoardDbContext context, IOptions<SecurityOptions> options, IJwtService jwtService, IValidator<RegistrationDto> validator, IAuthService authService)
         {
             _dbContext = context;
             _options = options.Value;
@@ -47,6 +47,9 @@ namespace AdBoard.API.Controllers
 
         [HttpGet("items")]
         public string Items() => HttpContext.Items["User"]?.ToString();
+
+        [HttpGet("exception")]
+        public string Exception() => throw new HttpRequestException();
 
         [HttpGet("env")]
         public string EnvTest() => _options.JwtAccessTokenKey;
