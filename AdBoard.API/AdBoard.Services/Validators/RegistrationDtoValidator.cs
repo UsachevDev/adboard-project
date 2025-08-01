@@ -1,4 +1,4 @@
-﻿using AdBoard.Services.Models.DTOs;
+﻿using AdBoard.Services.Models.DTOs.Requests;
 using FluentValidation;
 using System;
 using System.Collections.Generic;
