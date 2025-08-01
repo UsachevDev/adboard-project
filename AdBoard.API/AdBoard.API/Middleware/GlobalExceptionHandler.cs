@@ -60,6 +60,12 @@ namespace AdBoard.API.Middleware
                     result.Message = "Функционал не реализован";
                     break;
                 };
+                case InvalidInputException notFoundException:
+                {
+                    result.StatusCode = HttpStatusCode.BadRequest;
+                    result.Message = notFoundException.Message;
+                    break;
+                }
                 case RecordExistsException recordExistsException:
                 {
                     result.StatusCode = HttpStatusCode.BadRequest;

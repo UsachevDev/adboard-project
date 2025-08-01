@@ -43,5 +43,18 @@ namespace AdBoard.API.Controllers
                 }
             );
         }
+        [HttpPost("login")]
+        public async Task<IActionResult> Login(
+            [FromBody] LoginDto dto
+        )
+        {
+            AuthResponseDto authResponseDto = await _authService.Login(dto);
+            _cookieService.setRefreshToken(authResponseDto.RefreshToken, Response.Cookies);
+            return Ok(new SuccessResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Data = new { accessToken = authResponseDto.AccessToken }
+            });
+        }
     }
 }

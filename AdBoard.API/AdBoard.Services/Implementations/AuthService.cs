@@ -29,9 +29,32 @@ namespace AdBoard.Services.Implementations
             _securityOptions = options.Value;
             _jwtService = jwtService;
         }
-        public Task<AuthResponseDto> Login(LoginDto dto)
-        {
-            throw new NotImplementedException();
+        public async Task<AuthResponseDto> Login(LoginDto dto)
+        {     
+            var user = await _dbContext.Users.AsNoTracking().Where(u => u.Email == dto.Email).FirstOrDefaultAsync();
+            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
+                throw new InvalidInputException("Неверный логин или пароль");
+
+            try
+            {
+                var accessToken = _jwtService.GenerateAccessToken(user);
+                var refreshToken = _jwtService.GenerateRefreshToken();
+
+                var refreshTokenRecord = new RefreshToken
+                {
+                    UserId = user.Id,
+                    Token = refreshToken,
+                    ExpiryDate = DateTime.Now.AddDays(_securityOptions.JwtRefreshTokenDurationInDays)
+                };
+                user.RefreshToken.Add(refreshTokenRecord);
+                await _dbContext.SaveChangesAsync();
+                return new AuthResponseDto(accessToken,refreshTokenRecord);
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"При логине пользователя произошла ошибка: {ex.Message}");
+                throw;
+            }
         }
 
         public void Logout()
