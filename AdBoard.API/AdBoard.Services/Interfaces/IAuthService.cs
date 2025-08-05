@@ -12,7 +12,9 @@ namespace AdBoard.Services.Interfaces
     {
         public Task<AuthResponseDto> Register(RegistrationDto dto);
         public Task<AuthResponseDto> Login(LoginDto dto);
-        public void Refresh();
+        public Task<AuthResponseDto> Refresh(string refreshToken);
         public void Logout();
+
+        public void LogoutAll();
     }
 }

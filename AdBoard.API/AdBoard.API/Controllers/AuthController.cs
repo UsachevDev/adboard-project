@@ -1,4 +1,5 @@
 ﻿using AdBoard.API.Models.Responses;
+using AdBoard.Services.Exceptions;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Models.DTOs.Responses;
@@ -14,11 +15,12 @@ namespace AdBoard.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _authService;
-        private readonly ICookieService _cookieService;
-        public AuthController(IAuthService authService, ICookieService cookieService)
+        private readonly IHttpHeadersService _headersService;
+
+        public AuthController(IAuthService authService, IHttpHeadersService cookieService)
         {
             _authService = authService;
-            _cookieService = cookieService;
+            _headersService = cookieService;
         }
 
         [HttpPost("register")]
@@ -33,23 +35,47 @@ namespace AdBoard.API.Controllers
                 throw new ValidationException(validationResult.Errors);
             }
             AuthResponseDto registrationResult = await _authService.Register(dto);
-            _cookieService.setRefreshToken(registrationResult.RefreshToken, Response.Cookies);
+            _headersService.SetRefreshToken(registrationResult.RefreshToken, Response.Cookies);
             return Created(
                 registrationResult.UserId.ToString(), 
-                new SuccessResponse 
-                { 
+                new SuccessResponse
+                {
                     StatusCode = HttpStatusCode.Created,
-                    Data = new {accessToken = registrationResult.AccessToken }
+                    Data = new { accessToken = registrationResult.AccessToken }
                 }
             );
         }
+
         [HttpPost("login")]
         public async Task<IActionResult> Login(
-            [FromBody] LoginDto dto
+            [FromBody] LoginDto dto,
+            [FromServices] IValidator<LoginDto> validator
         )
         {
+            var validationResult = validator.Validate(dto);
+            if (!validationResult.IsValid)
+            {
+                throw new ValidationException(validationResult.Errors);
+            }
             AuthResponseDto authResponseDto = await _authService.Login(dto);
-            _cookieService.setRefreshToken(authResponseDto.RefreshToken, Response.Cookies);
+            _headersService.SetRefreshToken(authResponseDto.RefreshToken, Response.Cookies);
+            return Ok(new SuccessResponse
+            {
+                StatusCode = HttpStatusCode.OK,
+                Data = new { accessToken = authResponseDto.AccessToken }
+            });
+        }
+        [HttpPost("refresh")]
+        public async Task<IActionResult> Refresh()
+        {
+            var refreshToken = _headersService.GetRefreshToken(Request.Cookies);
+            if(string.IsNullOrEmpty(refreshToken))
+            {
+                throw new UnauthorizedException("Отсутствует RefreshToken, пройдите аутентификацию");
+            }
+
+            AuthResponseDto authResponseDto = await _authService.Refresh(refreshToken);
+            _headersService.SetRefreshToken(authResponseDto.RefreshToken, Response.Cookies);
             return Ok(new SuccessResponse
             {
                 StatusCode = HttpStatusCode.OK,

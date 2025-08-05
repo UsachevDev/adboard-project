@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using AdBoard.Services.Models.Configurations;
 using AdBoard.Services.Models.DTOs.Responses;
+using System.Threading.Tasks;
 
 namespace AdBoard.Services.Implementations
 {
@@ -31,7 +32,7 @@ namespace AdBoard.Services.Implementations
         }
         public async Task<AuthResponseDto> Login(LoginDto dto)
         {     
-            var user = await _dbContext.Users.AsNoTracking().Where(u => u.Email == dto.Email).FirstOrDefaultAsync();
+            var user = await _dbContext.Users.Where(u => u.Email == dto.Email).Include(u => u.RefreshTokens).FirstOrDefaultAsync();
             if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.Password))
                 throw new InvalidInputException("Неверный логин или пароль");
 
@@ -46,7 +47,7 @@ namespace AdBoard.Services.Implementations
                     Token = refreshToken,
                     ExpiryDate = DateTime.Now.AddDays(_securityOptions.JwtRefreshTokenDurationInDays)
                 };
-                user.RefreshToken.Add(refreshTokenRecord);
+                user.RefreshTokens.Add(refreshTokenRecord);
                 await _dbContext.SaveChangesAsync();
                 return new AuthResponseDto(accessToken,refreshTokenRecord);
             }
@@ -62,9 +63,45 @@ namespace AdBoard.Services.Implementations
             throw new NotImplementedException();
         }
 
-        public void Refresh()
+        public void LogoutAll()
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<AuthResponseDto> Refresh(string refreshToken)
+        {
+            try 
+            {
+                var refresh = await _dbContext.RefreshTokens.Include(u => u.User).FirstOrDefaultAsync(r => r.Token == refreshToken);
+                if (refresh == null || refresh.IsRevoked)
+                    throw new UnauthorizedException("Refresh Token недействителен. Пройдите аутентификацию");
+                if(refresh.ExpiryDate <= DateTime.Now)
+                {
+                    _dbContext.RefreshTokens.Remove(refresh);
+                    await _dbContext.SaveChangesAsync();
+                    throw new UnauthorizedException("Refresh Token истек. Пройдите аутентификацию");
+                }
+
+                var newRefreshToken = _jwtService.GenerateRefreshToken();
+                if (refresh.User == null)
+                    throw new Exception($"Владелец токена не найден. TokenId: {refresh.Id}, UserId: {refresh.UserId}.");
+
+                var accessToken = _jwtService.GenerateAccessToken(refresh.User);
+
+                refresh.Token = newRefreshToken;
+                refresh.ExpiryDate = DateTime.Now.AddDays(_securityOptions.JwtRefreshTokenDurationInDays);
+                await _dbContext.SaveChangesAsync();
+                return new AuthResponseDto(accessToken, refresh);
+            }
+            catch(UnauthorizedException)
+            {
+                throw;
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"При обновлении токена произошла ошибка {ex.Message}");
+                throw;
+            }
         }
 
         public async Task<AuthResponseDto> Register(RegistrationDto dto)

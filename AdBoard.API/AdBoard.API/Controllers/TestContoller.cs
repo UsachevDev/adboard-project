@@ -63,7 +63,7 @@ namespace AdBoard.API.Controllers
             return Ok(genAccessToken);
         }
         [HttpPost("registration")]
-        public IActionResult registration([FromBody] RegistrationDto dto)
+        public IActionResult Registration([FromBody] RegistrationDto dto)
         {
             var validatorResult = _valiValidator.Validate(dto);
             if (!validatorResult.IsValid)

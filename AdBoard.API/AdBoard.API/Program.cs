@@ -28,6 +28,8 @@ namespace AdBoard.API
                 .AddCustomJsonSerializerOptions();
 
             builder.Services.AddScoped<IValidator<RegistrationDto>, RegistrationDtoValidator>();
+            builder.Services.AddScoped<IValidator<LoginDto>, LoginDtoValidator>();
+
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IHttpHeadersService, HttpHeadersService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
@@ -38,6 +40,7 @@ namespace AdBoard.API
                 .AddCustomSwaggerOptions();
 
             builder.Services.Configure<SecurityOptions>(builder.Configuration.GetSection("Security"));
+
             var app = builder.Build();
             app.UseMiddleware<GlobalExceptionHandler>();
             if (app.Environment.IsDevelopment())

@@ -11,9 +11,11 @@ namespace AdBoard.Services.Interfaces
 {
     public interface IHttpHeadersService
     {
-        public void setRefreshToken(RefreshToken token, IResponseCookies cookies);
+        public void SetRefreshToken(RefreshToken token, IResponseCookies cookies);
 
-        public string getRefreshToken(IResponseCookies cookies);
+        public void RevokeRefreshToken(IResponseCookies cookies);
+
+        public string? GetRefreshToken(IRequestCookieCollection cookies);
 
     }
 }

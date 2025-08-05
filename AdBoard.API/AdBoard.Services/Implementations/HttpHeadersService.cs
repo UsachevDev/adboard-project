@@ -23,12 +23,32 @@ namespace AdBoard.Services.Implementations
             securityOptions = options.Value;
         }
 
-        public string getRefreshToken(IResponseCookies cookies)
+        public string? GetRefreshToken(IRequestCookieCollection cookies)
         {
-            throw new NotImplementedException();
+            return cookies[securityOptions.AuthHttpOnlyCookieName];
         }
 
-        public void setRefreshToken(RefreshToken token, IResponseCookies cookies)
+        public void RevokeRefreshToken(IResponseCookies cookies)
+        {
+            try
+            {
+                Cookie cookie = new Cookie
+                {
+                    Name = securityOptions.AuthHttpOnlyCookieName,
+                    Value = string.Empty,
+                    Expires = DateTime.Now.AddDays(-1),
+                    HttpOnly = true
+                };
+                cookies.Append(cookie.Name, cookie.Value, new CookieOptions { Expires = cookie.Expires, HttpOnly = true });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError($"При обнулении refresh токена в Cookies произошла ошибка: {ex.Message}");
+                throw;
+            }
+        }
+
+        public void SetRefreshToken(RefreshToken token, IResponseCookies cookies)
         {
             try
             {

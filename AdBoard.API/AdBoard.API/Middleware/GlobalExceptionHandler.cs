@@ -66,6 +66,12 @@ namespace AdBoard.API.Middleware
                     result.Message = notFoundException.Message;
                     break;
                 }
+                case UnauthorizedException unauthorizedException:
+                {
+                    result.StatusCode = HttpStatusCode.Unauthorized;
+                    result.Message = unauthorizedException.Message;
+                    break;
+                }
                 case RecordExistsException recordExistsException:
                 {
                     result.StatusCode = HttpStatusCode.BadRequest;
