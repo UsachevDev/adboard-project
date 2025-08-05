@@ -22,7 +22,7 @@ public class User
 
     public ICollection<Announcement>? Announcements { get; set; }
 
-    public ICollection<RefreshToken> RefreshToken { get; set; } = new List<RefreshToken>();
+    public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     public ICollection<Review>? ReviewBuyers { get; set; }
 

@@ -109,7 +109,7 @@ namespace AdBoard.DAL
 
                 entity.ToTable("refresh_tokens");
 
-                entity.HasIndex(e => e.UserId, "uk7tdcd6ab5wsgoudnvj7xf1b7l").IsUnique();
+                entity.HasIndex(e => e.UserId, "uk7tdcd6ab5wsgoudnvj7xf1b7l");
 
                 entity.HasIndex(e => e.Token, "ukghpmfn23vmxfu3spu3lfg4r2d").IsUnique();
 
