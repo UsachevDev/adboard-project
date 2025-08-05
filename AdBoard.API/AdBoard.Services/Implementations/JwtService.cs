@@ -32,7 +32,7 @@ namespace AdBoard.Services.Implementations
                     Subject = new ClaimsIdentity(
                     [
                         new Claim("id", user.Id.ToString()),
-                    new Claim("name", user.Name)
+                        new Claim("name", user.Name)
                     ]),
                     Expires = DateTime.UtcNow.AddMinutes(_options.JwtAccessTokenDurationInMinutes),
                     SigningCredentials = new SigningCredentials(

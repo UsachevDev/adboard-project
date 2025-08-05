@@ -78,6 +78,11 @@ namespace AdBoard.API.Middleware
                     result.Message = recordExistsException.Message;
                     break;
                 };
+                case Exception ex:
+                {
+                    _logger.LogError(ex.Message);
+                    break;
+                }
             }
 
             context.Response.StatusCode = (int)result.StatusCode;

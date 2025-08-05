@@ -1,12 +1,15 @@
 ﻿using AdBoard.API.Models.Responses;
+using AdBoard.DAL.Entities;
 using AdBoard.Services.Exceptions;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Models.DTOs.Responses;
 using FluentValidation;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
+using System.Security.Claims;
 
 namespace AdBoard.API.Controllers
 {
@@ -71,7 +74,7 @@ namespace AdBoard.API.Controllers
             var refreshToken = _headersService.GetRefreshToken(Request.Cookies);
             if(string.IsNullOrEmpty(refreshToken))
             {
-                throw new UnauthorizedException("Отсутствует RefreshToken, пройдите аутентификацию");
+                throw new UnauthorizedException("RefreshToken отсутствует или истек");
             }
 
             AuthResponseDto authResponseDto = await _authService.Refresh(refreshToken);
@@ -81,6 +84,33 @@ namespace AdBoard.API.Controllers
                 StatusCode = HttpStatusCode.OK,
                 Data = new { accessToken = authResponseDto.AccessToken }
             });
+        }
+        [Authorize]
+        [HttpPost("logout")]
+        public async Task<IActionResult> Logout()
+        {
+            var refreshToken = _headersService.GetRefreshToken(Request.Cookies);
+            if (string.IsNullOrEmpty(refreshToken))
+            {
+                throw new UnauthorizedException("Отсутствует RefreshToken");
+            }
+
+            await _authService.Logout(refreshToken);
+            _headersService.RevokeRefreshToken(Response.Cookies);
+            return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK });
+        }
+
+        [Authorize]
+        [HttpPost("logout-all")]
+        public async Task<IActionResult> LogoutAll()
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userId))
+            {
+                throw new UnauthorizedException("Ошибка авторизации");
+            }
+            await _authService.LogoutAll(userId);
+            return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK });
         }
     }
 }

@@ -58,14 +58,23 @@ namespace AdBoard.Services.Implementations
             }
         }
 
-        public void Logout()
+        public async Task Logout(string refreshToken)
         {
-            throw new NotImplementedException();
-        }
-
-        public void LogoutAll()
-        {
-            throw new NotImplementedException();
+            try
+            {
+                var refreshTokenRecord = await _dbContext.RefreshTokens.Where(t => t.Token == refreshToken).FirstOrDefaultAsync();
+                if(refreshTokenRecord != null)
+                {
+                    _dbContext.RefreshTokens.Remove(refreshTokenRecord);
+                    await _dbContext.SaveChangesAsync();
+                }
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"При получении Refresh токена для логаута произошла ошибка: { ex.Message}");
+                throw;
+            }
         }
 
         public async Task<AuthResponseDto> Refresh(string refreshToken)
@@ -148,6 +157,26 @@ namespace AdBoard.Services.Implementations
                 throw;
             }
 
+        }
+
+        public async Task LogoutAll(string userId)
+        {
+            try
+            {
+                var tokens = _dbContext.RefreshTokens.Where(t => t.UserId.ToString() == userId).ToList();
+                if (tokens != null)
+                {
+                    _dbContext.RefreshTokens.RemoveRange(tokens);
+                    await _dbContext.SaveChangesAsync();
+                }
+                return;
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError($"При полном логгауте произошла ошибка: {ex.Message}");
+                throw;
+            }
+            
         }
     }
 }
