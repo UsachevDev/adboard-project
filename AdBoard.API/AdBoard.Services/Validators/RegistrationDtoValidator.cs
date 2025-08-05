@@ -13,18 +13,18 @@ namespace AdBoard.Services.Validators
         public RegistrationDtoValidator()
         {
             RuleFor(x => x.Email)
-                .NotNull().WithMessage("Поле 'Email' обязателено")
+                .NotNull().WithMessage("Поле 'Email' обязательно")
                 .EmailAddress().WithMessage("Некорретный email");
 
             RuleFor(x => x.PasswordConfirm)
                 .Equal(x => x.Password).WithMessage("Пароли должны совпадать");
 
             RuleFor(x => x.Password)
-                .NotNull().WithMessage("Поле 'Пароль' обязательено")
+                .NotNull().WithMessage("Поле 'Пароль' обязательно")
                 .MinimumLength(8).WithMessage("Пароль должен быть длинной не менее 8 символов");
 
             RuleFor(x => x.PhoneNumber)
-                .NotNull().WithMessage("Поле 'Номер телефона' обязательено")
+                .NotNull().WithMessage("Поле 'Номер телефона' обязательно")
                 .Matches(@"^\+?\d+$").WithMessage("Номер телефона должен содержать только цифры с необязательным '+' в начале");
 
             RuleFor(x => x.City)
