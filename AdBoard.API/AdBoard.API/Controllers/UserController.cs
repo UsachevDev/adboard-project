@@ -1,8 +1,11 @@
-﻿using AdBoard.Services.Exceptions;
+﻿using AdBoard.API.Models.Responses;
+using AdBoard.Services.Exceptions;
 using AdBoard.Services.Interfaces;
+using AdBoard.Services.Models.DTOs.Requests;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 using System.Security.Claims;
 
 namespace AdBoard.API.Controllers
@@ -32,7 +35,7 @@ namespace AdBoard.API.Controllers
         {
             var guidId = ParseToGuid(id);
             var userInfo = _userService.GetUserInfoById(guidId);
-            return Ok(userInfo);
+            return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK, Data = userInfo});
         }
         [Authorize]
         [HttpGet("profile")]
@@ -41,9 +44,16 @@ namespace AdBoard.API.Controllers
             var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var guidId = ParseToGuid(userId);
             var userInfo = _userService.GetFullUserInfoById(guidId);
-            return Ok(userInfo);
+            return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK, Data = userInfo });
         }
-
-        public async Task<IActionResult> Update()
+        [Authorize]
+        [HttpPatch]
+        public async Task<IActionResult> Update([FromBody] UpdateUserInfoDto dto)
+        {
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            var guidId = ParseToGuid(userId);
+            await _userService.UpdateUser(dto, guidId);
+            return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK });
+        }
     }
 }
