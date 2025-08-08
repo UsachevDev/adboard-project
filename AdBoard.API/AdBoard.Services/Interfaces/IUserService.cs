@@ -1,4 +1,5 @@
-﻿using AdBoard.Services.Models.DTOs.Responses;
+﻿using AdBoard.Services.Models.DTOs.Requests;
+using AdBoard.Services.Models.DTOs.Responses;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,6 +12,6 @@ namespace AdBoard.Services.Interfaces
     {
         public UserInfoDto GetUserInfoById(Guid id);
         public FullUserInfo GetFullUserInfoById(Guid id);
-        public Task UpdateUser(UserInfoDto user);
+        public Task UpdateUser(UpdateUserInfoDto dto, Guid userId);
     }
 }

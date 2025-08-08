@@ -1,6 +1,8 @@
 ﻿using AdBoard.DAL;
+using AdBoard.DAL.Entities;
 using AdBoard.Services.Exceptions;
 using AdBoard.Services.Interfaces;
+using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Models.DTOs.Responses;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -77,9 +79,27 @@ namespace AdBoard.Services.Implementations
             }
         }
 
-        public Task UpdateUser(UserInfoDto user)
+        public async Task UpdateUser(UpdateUserInfoDto dto, Guid userId)
         {
-            throw new NotImplementedException();
+            var user = _dbContext.Users.Where(u => u.Id == userId).FirstOrDefault();
+            if (user == null)
+            {
+                throw new Exception("Авторизованный пользователь не найден в базе данных");
+            }
+            foreach (var property in typeof(UpdateUserInfoDto).GetProperties())
+            {
+                if(property.GetValue(dto) != null)
+                {
+                    var userProperty = typeof(User).GetProperty(property.Name);
+                    if (userProperty != null)
+                    {
+                        userProperty.SetValue(user, property.GetValue(dto));
+                    }
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }
