@@ -33,7 +33,7 @@ namespace AdBoard.API
             builder.Services.AddScoped<IJwtService, JwtService>();
             builder.Services.AddScoped<IHttpHeadersService, HttpHeadersService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
-
+            builder.Services.AddScoped<IUserService,UserService>();
             builder.Services.AddEndpointsApiExplorer();
 
             builder.Services.AddSwaggerGen()
