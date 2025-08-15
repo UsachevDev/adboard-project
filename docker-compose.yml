@@ -11,23 +11,50 @@ services:
       - "5433:5432"
     volumes:
       - adboard-db-data:/var/lib/postgresql/data
-      - ./AdBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
 
   backend:
+    # .NET
     build:
       context: ./AdBoard.Api
       dockerfile: Dockerfile
     container_name: adboard-backend
     restart: on-failure
-    depends_on:
-      - db
-    ports:
-      - "8080:8080"
+    depends_on: [ db ]
+    ports: [ "8080:8080" ]
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ConnectionStrings__AdBoardDbConnection=Host=db;Port=5432;Database=AdBoardDb;Username=postgres;Password=admin
       - Security__JwtAccessTokenKey=${JWT_ACCESS_TOKEN_KEY}
       - Security__JwtRefreshTokenKey=${JWT_REFRESH_TOKEN_KEY}
+
+  backend-legacy:
+    # Spring
+    build:
+      context: ./AdBoard.Api.Spring
+      dockerfile: Dockerfile
+    container_name: adboard-backend-legacy
+    restart: on-failure
+    depends_on: [ db ]
+    ports: [ "8081:8080" ] # наружу 8081, внутри 8080
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/AdBoardDb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=admin
+
+      # JWT ключи берём строго из .env / окружения; без дефолтов
+      - JWT_ACCESS_TOKEN_KEY=${JWT_ACCESS_TOKEN_KEY}
+      - JWT_REFRESH_TOKEN_KEY=${JWT_REFRESH_TOKEN_KEY}
+
+      # показать текст ошибки и стек в HTTP-ответе:
+      - server.error.include-message=always
+      - server.error.include-binding-errors=always
+      - server.error.include-stacktrace=ALWAYS
+      # (частая причина 500 при сериализации коллекций)
+      - spring.jpa.open-in-view=true
+      # можно усилить логирование приложения:
+      - logging.level.ru.atom=DEBUG
+      # приглушить «WrongThreadException» от Tomcat compat:
+      - logging.level.org.apache.tomcat.util.compat=ERROR
 
   frontend:
     build:
@@ -35,8 +62,7 @@ services:
       dockerfile: Dockerfile
     container_name: adboard-frontend
     restart: on-failure
-    ports:
-      - "3000:3000"
+    ports: [ "3000:3000" ]
     volumes:
       - ./AdBoard.Web/src:/app/src
       - ./AdBoard.Web/public:/app/public
@@ -44,6 +70,7 @@ services:
       - ./AdBoard.Web/package-lock.json:/app/package-lock.json
     environment:
       - NEXT_PUBLIC_API_URL=http://adboard-backend:8080
+      - NEXT_PUBLIC_API_URL_LEGACY=http://adboard-backend-legacy:8080 # ВНУТРЕННИЙ порт!
 
 volumes:
   adboard-db-data:

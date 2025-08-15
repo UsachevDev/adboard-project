@@ -1,241 +1,262 @@
-import { UserProfile, Announcement, AddAnnouncementRequest, UpdateAnnouncementRequest } from "@/types";
+// src/lib/api.ts
+// .NET (новый бэк) — Auth/Users
+// Legacy (старый Spring) — ВРЕМЕННО только READ для категорий/объявлений.
 
-const API_BASE_URL = "/api";
+import type {
+  UserProfile,
+  Announcement as AnnouncementType,
+  AddAnnouncementRequest,
+  UpdateAnnouncementRequest,
+} from "@/types";
 
-export interface ControllerResponse<T> {
-    data: T | null;
-    error: unknown | null;
+const API_DOTNET = "/api";        // next.config.ts -> http://adboard-backend:8080/api
+const API_LEGACY = "/api-legacy"; // next.config.ts -> http://adboard-backend-legacy:8080/api
+
+type ApiOk<T> = { statusCode: number; data: T };
+type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string };
+type ValidationProblemDetails = ProblemDetails & { errors?: Record<string, unknown> };
+
+type FetchOptions = Omit<RequestInit, "body" | "headers"> & {
+  body?: unknown;
+  headers?: Record<string, string>;
+};
+
+let accessTokenCache: string | null = null;
+
+function getAccessToken(): string | null {
+  if (accessTokenCache !== null) return accessTokenCache;
+  accessTokenCache = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  return accessTokenCache;
 }
 
-type FetchOptions = Omit<RequestInit, "body"> & { body?: unknown };
+function setAccessToken(token: string | null) {
+  accessTokenCache = token;
+  if (typeof window !== "undefined") {
+    if (token) localStorage.setItem("access_token", token);
+    else localStorage.removeItem("access_token");
+  }
+}
 
-async function apiFetch<T>(
-    endpoint: string,
-    options: FetchOptions = {}
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "access_token") accessTokenCache = e.newValue;
+  });
+}
+
+function toStr(x: unknown): string {
+  if (x == null) return "";
+  const t = typeof x;
+  if (t === "string" || t === "number" || t === "boolean") return String(x);
+  if (t === "object") {
+    const o = x as Record<string, unknown>;
+    for (const k of ["errorMessage", "ErrorMessage", "message", "Message", "detail", "Detail", "title", "Title", "description", "Description"]) {
+      const v = o[k];
+      if (typeof v === "string") return v;
+    }
+    try { return JSON.stringify(x); } catch { /* ignore */ }
+  }
+  return String(x);
+}
+
+function flattenErrors(errors: Record<string, unknown> | undefined): string {
+  if (!errors) return "";
+  const list: unknown[] = [];
+  for (const v of Object.values(errors)) {
+    if (Array.isArray(v)) list.push(...v);
+    else list.push(v);
+  }
+  const lines = list.map(toStr).filter(Boolean);
+  return lines.join("\n");
+}
+
+async function request<T>(
+  base: string,
+  endpoint: string,
+  options: FetchOptions = {},
+  { tryRefresh = true }: { tryRefresh?: boolean } = {}
 ): Promise<T> {
-    const token = localStorage.getItem("access_token");
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-    const init: RequestInit = {
-        credentials: "include",
-        method: options.method || "GET",
-        headers,
-        body: options.body != null ? JSON.stringify(options.body) : undefined,
-    };
+  const token = getAccessToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    "Accept": "application/json, application/problem+json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
 
-    let response = await fetch(`${API_BASE_URL}${endpoint}`, init);
+  const init: RequestInit = {
+    method: options.method || "GET",
+    credentials: "include",
+    headers,
+    body: options.body != null ? JSON.stringify(options.body) : undefined,
+  };
 
-    if (response.status === 401 && !endpoint.startsWith("/auth/")) {
-        await refreshToken();
-        const newToken = localStorage.getItem("access_token");
-        if (!newToken) throw new Error("Unauthorized");
-        init.headers = { ...headers, Authorization: `Bearer ${newToken}` };
-        response = await fetch(`${API_BASE_URL}${endpoint}`, init);
+  let res = await fetch(`${base}${endpoint}`, init);
+
+  if (res.status === 401 && tryRefresh && base === API_DOTNET && !endpoint.startsWith("/Auth/")) {
+    const ok = await refreshAccessToken();
+    if (!ok) throw new Error("Unauthorized");
+    const newToken = getAccessToken();
+    res = await fetch(`${base}${endpoint}`, {
+      ...init,
+      headers: { ...headers, ...(newToken ? { Authorization: `Bearer ${newToken}` } : {}) },
+    });
+  }
+
+  if (res.status === 204) {
+    // @ts-ignore
+    return undefined;
+  }
+
+  const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+  let json: any = null;
+  if (contentType.includes("json")) {
+    try { json = await res.json(); } catch { /* ignore */ }
+  } else {
+    try { json = await res.text(); } catch { /* ignore */ }
+  }
+
+  if (!res.ok) {
+    // ASP.NET ValidationProblemDetails
+    if (json && typeof json === "object" && "errors" in json) {
+      const v = json as ValidationProblemDetails;
+      const msg =
+        flattenErrors(v.errors) ||
+        toStr(v.title) ||
+        toStr(v.detail) ||
+        `HTTP ${res.status}`;
+      throw new Error(msg);
     }
 
-    let payload: ControllerResponse<T> | null = null;
-    try {
-        payload = (await response.json()) as ControllerResponse<T>;
-    } catch {
-        if (response.ok) {
-            // @ts-ignore
-            return undefined;
-        }
-        throw new Error(`HTTP ${response.status}`);
-    }
+    // ProblemDetails / произвольная ошибка
+    const msg =
+      (json && typeof json === "object"
+        ? (toStr((json as any).message) ||
+           toStr((json as any).detail) ||
+           toStr((json as any).title))
+        : (typeof json === "string" ? json : "")) || `HTTP ${res.status}`;
 
-    if (!response.ok || payload.error) {
-        const err = payload.error;
-        let msg: string;
-        if (err && typeof err === "object" && "message" in err) {
-            // @ts-ignore
-            msg = err.message;
-        } else {
-            msg = String(err) || `HTTP ${response.status}`;
-        }
-        throw new Error(msg);
-    }
+    throw new Error(msg);
+  }
 
-    return payload.data!;
+  if (json && typeof json === "object" && "data" in json) {
+    return (json as ApiOk<T>).data;
+  }
+  return json as T;
 }
 
-async function refreshToken(): Promise<void> {
-    const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-    });
-    try {
-        const json = (await resp.json()) as ControllerResponse<string>;
-        if (resp.ok && json.data) {
-            localStorage.setItem("access_token", json.data);
-        } else {
-            localStorage.removeItem("access_token");
-        }
-    } catch {
-        localStorage.removeItem("access_token");
-    }
-}
+// ===== AUTH (.NET)
 
-// === Auth ===
-export async function login(
-    email: string,
-    password: string
-): Promise<void> {
-    const token = await apiFetch<string>("/auth/login", {
-        method: "POST",
-        body: { email, password },
-    });
-    localStorage.setItem("access_token", token);
+export async function login(email: string, password: string): Promise<void> {
+  const res = await request<{ accessToken: string }>(API_DOTNET, "/Auth/login", {
+    method: "POST",
+    body: { email, password },
+  });
+  setAccessToken(res?.accessToken);
 }
 
 export async function register(
-    email: string,
-    password: string,
-    name: string,
-    phoneNumber?: string,
-    city?: string
+  email: string,
+  password: string,
+  name: string,
+  phoneNumber?: string,
+  city?: string,
+  passwordConfirm?: string
 ): Promise<void> {
-    const token = await apiFetch<string>("/auth/registration", {
-        method: "POST",
-        body: { email, password, name, phoneNumber, city },
-    });
-    localStorage.setItem("access_token", token);
+  const res = await request<{ accessToken: string }>(API_DOTNET, "/Auth/register", {
+    method: "POST",
+    body: { email, name, password, passwordConfirm: passwordConfirm ?? password, phoneNumber, city },
+  });
+  setAccessToken(res?.accessToken);
 }
 
 export async function logout(): Promise<void> {
-    try {
-        await apiFetch<unknown>("/auth/logout", { method: "POST" });
-    } finally {
-        localStorage.removeItem("access_token");
-    }
+  try {
+    await request<void>(API_DOTNET, "/Auth/logout", { method: "POST" });
+  } finally {
+    setAccessToken(null);
+  }
 }
 
-// === Categories ===
-export interface CategoryDto {
-    id: string;
-    name: string;
-    subcategories: { id: string; name: string }[];
-}
-export async function getCategories(): Promise<CategoryDto[]> {
-    return apiFetch<CategoryDto[]>("/categories", { method: "GET" });
-}
-export async function getCategoryById(
-    id: string
-): Promise<CategoryDto> {
-    return apiFetch<CategoryDto>(`/categories/${id}`, { method: "GET" });
+async function refreshAccessToken(): Promise<boolean> {
+  const res = await fetch(`${API_DOTNET}/Auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", "Accept": "application/json, application/problem+json" },
+  });
+  if (!res.ok) {
+    setAccessToken(null);
+    return false;
+  }
+  const json = (await res.json()) as ApiOk<{ accessToken: string }>;
+  if (json?.data?.accessToken) {
+    setAccessToken(json.data.accessToken);
+    return true;
+  }
+  setAccessToken(null);
+  return false;
 }
 
-// === User ===
+// ===== USERS (.NET)
+
 export async function getCurrentUser(): Promise<UserProfile> {
-    return apiFetch<UserProfile>("/users", { method: "GET" });
+  return request<UserProfile>(API_DOTNET, "/Users/profile", { method: "GET" });
 }
 
-export async function updateCurrentUser(
-    patch: Partial<UserProfile>
-): Promise<UserProfile> {
-    return apiFetch<UserProfile>("/users", {
-        method: "PATCH",
-        body: patch,
-    });
-}
-
-// === Announcements ===
-/**
- * Получить объявления (с опциональной фильтрацией по категории/подкатегории)
- */
-export async function getAnnouncements(
-    categoryId?: string,
-    subcategoryId?: string
-): Promise<Announcement[]> {
-    const params = new URLSearchParams();
-    if (categoryId) params.append("categoryId", categoryId);
-    if (subcategoryId) params.append("subcategoryId", subcategoryId);
-    const query = params.toString() ? `?${params.toString()}` : "";
-    return apiFetch<Announcement[]>(`/announcements${query}`);
-}
-
-export async function getAnnouncementById(
-    id: string
-): Promise<Announcement> {
-    return apiFetch<Announcement>(`/announcements/${id}`);
-}
-
-export async function addAnnouncement(
-    payload: AddAnnouncementRequest
-): Promise<Announcement> {
-    const token = localStorage.getItem("access_token");
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
-    const response = await fetch(`${API_BASE_URL}/announcements`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-        let errorText = `HTTP ${response.status}`;
-        try {
-            const errJson = await response.json();
-            errorText =
-                errJson.error && typeof errJson.error === "string"
-                    ? errJson.error
-                    : JSON.stringify(errJson);
-        } catch {
-            // ignore
-        }
-        throw new Error(errorText);
-    }
-
-    const location = response.headers.get("Location");
-    if (!location) {
-        throw new Error("Missing Location header in response");
-    }
-    const parts = location.split("/");
-    const id = parts.pop() || "";
-    if (!id) {
-        throw new Error(
-            "Cannot parse announcement ID from Location header"
-        );
-    }
-    return getAnnouncementById(id);
-}
-
-export async function updateAnnouncement(
-    id: string,
-    patch: UpdateAnnouncementRequest
-): Promise<Announcement> {
-    return apiFetch<Announcement>(`/announcements/${id}`, {
-        method: "PATCH",
-        body: patch,
-    });
-}
-
-// === Favorites ===
-export async function addToFavorites(
-    id: string
-): Promise<void> {
-    await apiFetch<void>(`/favorites/${id}`, { method: "POST" });
-}
-
-export async function removeFromFavorites(
-    id: string
-): Promise<void> {
-    await apiFetch<void>(`/favorites/${id}`, { method: "DELETE" });
-}
-
-export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
-    await apiFetch<void>(`/reviews/${announcementId}`, {
-        method: "POST",
-        body: { score, description },
-    });
+export async function updateCurrentUser(patch: Partial<UserProfile>): Promise<UserProfile> {
+  return request<UserProfile>(API_DOTNET, "/Users", { method: "PATCH", body: patch });
 }
 
 export async function getUserById(id: string): Promise<UserProfile> {
-    return apiFetch<UserProfile>(`/users/${id}`, { method: "GET" });
+  return request<UserProfile>(API_DOTNET, `/Users/${encodeURIComponent(id)}`, { method: "GET" });
+}
+
+// ===== CATEGORIES & ANNOUNCEMENTS — legacy read-only
+
+export interface CategoryDto {
+  id: string;
+  name: string;
+  subcategories: { id: string; name: string }[];
+}
+
+export type Announcement = AnnouncementType;
+
+export async function getCategories(): Promise<CategoryDto[]> {
+  return request<CategoryDto[]>(API_LEGACY, "/categories", { method: "GET" }, { tryRefresh: false });
+}
+
+export async function getCategoryById(id: string): Promise<CategoryDto> {
+  return request<CategoryDto>(API_LEGACY, `/categories/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+}
+
+export async function getAnnouncements(
+  categoryId?: string,
+  subcategoryId?: string
+): Promise<Announcement[]> {
+  const params = new URLSearchParams();
+  if (categoryId) params.set("categoryId", categoryId);
+  if (subcategoryId) params.set("subcategoryId", subcategoryId);
+  const q = params.toString() ? `?${params.toString()}` : "";
+  return request<Announcement[]>(API_LEGACY, `/announcements${q}`, { method: "GET" }, { tryRefresh: false });
+}
+
+export async function getAnnouncementById(id: string): Promise<Announcement> {
+  return request<Announcement>(API_LEGACY, `/announcements/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+}
+
+// ===== пока нет write-эндпоинтов
+
+export async function addAnnouncement(_payload: AddAnnouncementRequest): Promise<Announcement> {
+  throw new Error("Создание объявления недоступно: ждём .NET эндпоинт");
+}
+export async function updateAnnouncement(_id: string, _patch: UpdateAnnouncementRequest): Promise<Announcement> {
+  throw new Error("Обновление объявления недоступно: ждём .NET эндпоинт");
+}
+export async function addToFavorites(_id: string): Promise<void> {
+  throw new Error("Избранное недоступно: ждём .NET эндпоинт");
+}
+export async function removeFromFavorites(_id: string): Promise<void> {
+  throw new Error("Избранное недоступно: ждём .NET эндпоинт");
+}
+export async function addReview(_announcementId: string, _score: number, _description: string): Promise<void> {
+  throw new Error("Отзывы недоступны: ждём .NET эндпоинт");
 }
