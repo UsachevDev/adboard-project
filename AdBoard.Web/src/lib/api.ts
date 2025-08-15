@@ -1,4 +1,3 @@
-// src/lib/api.ts
 // .NET (новый бэк) — Auth/Users
 // Legacy (старый Spring) — ВРЕМЕННО только READ для категорий/объявлений.
 
@@ -10,11 +9,11 @@ import type {
 } from "@/types";
 
 const API_DOTNET = "/api";        // next.config.ts -> http://adboard-backend:8080/api
-const API_LEGACY = "/api-legacy"; // next.config.ts -> http://adboard-backend-legacy:8080/api
+const API_LEGACY = "/api-legacy"; // next.config.ts -> http://adboard-backend-legacy:8081/api
 
 type ApiOk<T> = { statusCode: number; data: T };
-type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string };
-type ValidationProblemDetails = ProblemDetails & { errors?: Record<string, unknown> };
+type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string; traceId?: string };
+type ValidationProblemDetails = ProblemDetails & { errors?: Record<string, string[] | string> };
 
 type FetchOptions = Omit<RequestInit, "body" | "headers"> & {
   body?: unknown;
@@ -43,30 +42,11 @@ if (typeof window !== "undefined") {
   });
 }
 
-function toStr(x: unknown): string {
-  if (x == null) return "";
-  const t = typeof x;
-  if (t === "string" || t === "number" || t === "boolean") return String(x);
-  if (t === "object") {
-    const o = x as Record<string, unknown>;
-    for (const k of ["errorMessage", "ErrorMessage", "message", "Message", "detail", "Detail", "title", "Title", "description", "Description"]) {
-      const v = o[k];
-      if (typeof v === "string") return v;
-    }
-    try { return JSON.stringify(x); } catch { /* ignore */ }
-  }
-  return String(x);
-}
-
-function flattenErrors(errors: Record<string, unknown> | undefined): string {
-  if (!errors) return "";
-  const list: unknown[] = [];
-  for (const v of Object.values(errors)) {
-    if (Array.isArray(v)) list.push(...v);
-    else list.push(v);
-  }
-  const lines = list.map(toStr).filter(Boolean);
-  return lines.join("\n");
+// Оставляем только цифры (на бэке валидатор допускает "+", но цифры всегда ок)
+function normalizePhoneForApi(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  const digits = raw.replace(/\D+/g, "");
+  return digits || undefined;
 }
 
 async function request<T>(
@@ -76,10 +56,16 @@ async function request<T>(
   { tryRefresh = true }: { tryRefresh?: boolean } = {}
 ): Promise<T> {
   const token = getAccessToken();
+  const isDotnet = base === API_DOTNET;
+
+  // ВАЖНО: Authorization добавляем ТОЛЬКО для .NET и НЕ для /Auth/*
+  const shouldAttachAuth = Boolean(
+    isDotnet && token && !endpoint.startsWith("/Auth/")
+  );
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    "Accept": "application/json, application/problem+json",
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...(shouldAttachAuth ? { Authorization: `Bearer ${token}` } : {}),
     ...(options.headers || {}),
   };
 
@@ -92,7 +78,8 @@ async function request<T>(
 
   let res = await fetch(`${base}${endpoint}`, init);
 
-  if (res.status === 401 && tryRefresh && base === API_DOTNET && !endpoint.startsWith("/Auth/")) {
+  // Авто-рефреш токена только для .NET и только вне /Auth/*
+  if (res.status === 401 && tryRefresh && isDotnet && !endpoint.startsWith("/Auth/")) {
     const ok = await refreshAccessToken();
     if (!ok) throw new Error("Unauthorized");
     const newToken = getAccessToken();
@@ -107,37 +94,50 @@ async function request<T>(
     return undefined;
   }
 
-  const contentType = (res.headers.get("content-type") ?? "").toLowerCase();
+  const contentType = res.headers.get("content-type") ?? "";
   let json: any = null;
-  if (contentType.includes("json")) {
-    try { json = await res.json(); } catch { /* ignore */ }
+  if (contentType.includes("application/json")) {
+    try { json = await res.json(); } catch { }
   } else {
-    try { json = await res.text(); } catch { /* ignore */ }
+    try { json = await res.text(); } catch { }
   }
 
   if (!res.ok) {
-    // ASP.NET ValidationProblemDetails
-    if (json && typeof json === "object" && "errors" in json) {
+    // .NET ValidationProblemDetails (errors: Record<string, string[] | string>)
+    if (json && typeof json === "object" && (json as any).errors && !Array.isArray((json as any).errors)) {
       const v = json as ValidationProblemDetails;
-      const msg =
-        flattenErrors(v.errors) ||
-        toStr(v.title) ||
-        toStr(v.detail) ||
-        `HTTP ${res.status}`;
+      const parts: string[] = [];
+      for (const [prop, val] of Object.entries(v.errors ?? {})) {
+        const arr = Array.isArray(val) ? val : [val];
+        for (const m of arr) parts.push(`{"property":"${prop}","error":"${String(m)}"}`);
+      }
+      const msg = parts.join("\n") || v.detail || v.title || `HTTP ${res.status}`;
       throw new Error(msg);
     }
 
-    // ProblemDetails / произвольная ошибка
-    const msg =
-      (json && typeof json === "object"
-        ? (toStr((json as any).message) ||
-           toStr((json as any).detail) ||
-           toStr((json as any).title))
-        : (typeof json === "string" ? json : "")) || `HTTP ${res.status}`;
+    // Наш формат: { errors: [{ property, error }...] }
+    if (json && typeof json === "object" && Array.isArray((json as any).errors)) {
+      const parts = (json as any).errors.map((e: any) =>
+        `{"property":"${e?.property ?? "?"}","error":"${String(e?.error ?? "Ошибка")}"}`,
+      );
+      throw new Error(parts.join("\n"));
+    }
 
-    throw new Error(msg);
+    // ProblemDetails / произвольное сообщение
+    const pdMsg =
+      (json && typeof json === "object" && ((json as any).detail || (json as any).title || (json as any).message)) ||
+      (typeof json === "string" && json) ||
+      `HTTP ${res.status}`;
+
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.error("API error:", { url: `${base}${endpoint}`, status: res.status, body: options.body, response: json });
+    }
+
+    throw new Error(String(pdMsg));
   }
 
+  // API-обёртка { statusCode, data }
   if (json && typeof json === "object" && "data" in json) {
     return (json as ApiOk<T>).data;
   }
@@ -151,7 +151,7 @@ export async function login(email: string, password: string): Promise<void> {
     method: "POST",
     body: { email, password },
   });
-  setAccessToken(res?.accessToken);
+  setAccessToken(res.accessToken);
 }
 
 export async function register(
@@ -162,11 +162,19 @@ export async function register(
   city?: string,
   passwordConfirm?: string
 ): Promise<void> {
+  const normalizedPhone = normalizePhoneForApi(phoneNumber);
   const res = await request<{ accessToken: string }>(API_DOTNET, "/Auth/register", {
     method: "POST",
-    body: { email, name, password, passwordConfirm: passwordConfirm ?? password, phoneNumber, city },
+    body: {
+      email,
+      name,
+      password,
+      passwordConfirm: passwordConfirm ?? password,
+      phoneNumber: normalizedPhone, // <- только цифры
+      city,
+    },
   });
-  setAccessToken(res?.accessToken);
+  setAccessToken(res.accessToken);
 }
 
 export async function logout(): Promise<void> {
@@ -181,7 +189,7 @@ async function refreshAccessToken(): Promise<boolean> {
   const res = await fetch(`${API_DOTNET}/Auth/refresh`, {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json", "Accept": "application/json, application/problem+json" },
+    headers: { "Content-Type": "application/json" },
   });
   if (!res.ok) {
     setAccessToken(null);
@@ -210,7 +218,7 @@ export async function getUserById(id: string): Promise<UserProfile> {
   return request<UserProfile>(API_DOTNET, `/Users/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
-// ===== CATEGORIES & ANNOUNCEMENTS — legacy read-only
+// ===== CATEGORIES & ANNOUNCEMENTS — legacy read-only (БЕЗ Authorization!)
 
 export interface CategoryDto {
   id: string;
