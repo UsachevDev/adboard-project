@@ -58,9 +58,9 @@ async function request<T>(
   const token = getAccessToken();
   const isDotnet = base === API_DOTNET;
 
-  // ВАЖНО: Authorization добавляем ТОЛЬКО для .NET и НЕ для /Auth/*
+  const AUTH_NO_BEARER = /^\/Auth\/(login|register|refresh)\b/;
   const shouldAttachAuth = Boolean(
-    isDotnet && token && !endpoint.startsWith("/Auth/")
+    isDotnet && token && !AUTH_NO_BEARER.test(endpoint)
   );
 
   const headers: Record<string, string> = {
@@ -179,9 +179,10 @@ export async function register(
 
 export async function logout(): Promise<void> {
   try {
-    await request<void>(API_DOTNET, "/Auth/logout", { method: "POST" });
+    await request<void>(API_DOTNET, "/Auth/logout", { method: "POST" }, { tryRefresh: false });
   } finally {
     setAccessToken(null);
+    window.location.href = "/";
   }
 }
 
