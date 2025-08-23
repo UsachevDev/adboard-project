@@ -21,7 +21,7 @@ public class User
     public string PhoneNumber { get; set; } = null!;
 
     public ICollection<Announcement>? Announcements { get; set; }
-
+    public ICollection<Announcement> Favorites { get; set; } = new List<Announcement>();
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
     public ICollection<Review>? ReviewBuyers { get; set; }

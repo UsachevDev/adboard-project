@@ -31,39 +31,49 @@ namespace AdBoard.DAL
         {
             modelBuilder.Entity<Announcement>(entity =>
             {
-                entity.HasKey(e => e.Id).HasName("announcements_pkey");
+            entity.HasKey(e => e.Id).HasName("announcements_pkey");
 
-                entity.ToTable("announcements");
+            entity.ToTable("announcements");
 
-                entity.Property(e => e.Id)
-                    .ValueGeneratedNever()
-                    .HasColumnName("id");
-                entity.Property(e => e.City)
-                    .HasMaxLength(255)
-                    .HasColumnName("city");
-                entity.Property(e => e.Count).HasColumnName("count");
-                entity.Property(e => e.CreatedAt)
-                    .HasColumnType("timestamp(6) without time zone")
-                    .HasColumnName("created_at");
-                entity.Property(e => e.CreatorId).HasColumnName("creator_id");
-                entity.Property(e => e.Description)
-                    .HasMaxLength(255)
-                    .HasColumnName("description");
-                entity.Property(e => e.IsHidden).HasColumnName("is_hidden");
-                entity.Property(e => e.Price).HasColumnName("price");
-                entity.Property(e => e.SubcategoryId).HasColumnName("subcategory_id");
-                entity.Property(e => e.Title)
-                    .HasMaxLength(255)
-                    .HasColumnName("title");
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("id");
+            entity.Property(e => e.City)
+                .HasMaxLength(255)
+                .HasColumnName("city");
+            entity.Property(e => e.Count).HasColumnName("count");
+            entity.Property(e => e.CreatedAt)
+                .HasColumnType("timestamp(6) without time zone")
+                .HasColumnName("created_at");
+            entity.Property(e => e.CreatorId).HasColumnName("creator_id");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.IsHidden).HasColumnName("is_hidden");
+            entity.Property(e => e.Price).HasColumnName("price");
+            entity.Property(e => e.SubcategoryId).HasColumnName("subcategory_id");
+            entity.Property(e => e.Title)
+                .HasMaxLength(255)
+                .HasColumnName("title");
 
-                entity.HasOne(d => d.Creator).WithMany(p => p.Announcements)
-                    .HasForeignKey(d => d.CreatorId)
-                    .OnDelete(DeleteBehavior.ClientSetNull)
-                    .HasConstraintName("fk73q2bt9jjr30t9vagpj1v0d0f");
+            entity.HasOne(d => d.Creator).WithMany(p => p.Announcements)
+                .HasForeignKey(d => d.CreatorId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("fk73q2bt9jjr30t9vagpj1v0d0f");
 
-                entity.HasOne(d => d.Subcategory).WithMany(p => p.Announcements)
-                    .HasForeignKey(d => d.SubcategoryId)
-                    .HasConstraintName("fkhy8diliq1xh5bb3k9g0cnop30");
+            entity.HasOne(d => d.Subcategory).WithMany(p => p.Announcements)
+                .HasForeignKey(d => d.SubcategoryId)
+                .HasConstraintName("fkhy8diliq1xh5bb3k9g0cnop30");
+
+            entity.HasMany(u => u.InFavorites).WithMany(p => p.Favorites)
+                .UsingEntity(j =>
+                {
+                    j.ToTable("favorites");
+
+                    j.Property<Guid>("UserId").HasColumnName("user_id");
+                    j.Property<Guid>("AnnouncementId").HasColumnName("announcement_id");
+                });
+
             });
 
             modelBuilder.Entity<Category>(entity =>
@@ -195,6 +205,7 @@ namespace AdBoard.DAL
                 entity.Property(e => e.PhoneNumber)
                     .HasMaxLength(255)
                     .HasColumnName("phone_number");
+
             });
 
             OnModelCreatingPartial(modelBuilder);

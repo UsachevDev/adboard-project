@@ -27,5 +27,7 @@ public class Announcement
 
     public User Creator { get; set; } = null!;
     public ICollection<Image>? Images { get; set; }
+    public ICollection<User> InFavorites { get; set; } = new List<User>();
+
     public Subcategory Subcategory { get; set; } = null!;
 }
