@@ -31,6 +31,7 @@ namespace AdBoard.API
             builder.Services.AddScoped<IValidator<LoginDto>, LoginDtoValidator>();
 
             builder.Services.AddScoped<IJwtService, JwtService>();
+            builder.Services.AddScoped<IAnnouncementService, AnnouncementService>();
             builder.Services.AddScoped<IHttpHeadersService, HttpHeadersService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService,UserService>();

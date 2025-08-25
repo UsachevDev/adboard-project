@@ -66,7 +66,7 @@ namespace AdBoard.Services.Implementations
                     .Select(u => new UserInfoDto(u.Id, u.Name, u.CreatedAt, u.Announcements, u.ReviewBuyers))
                     .FirstOrDefault();
 
-                return user == null ? throw new NotFoundException($"Пользователь с id: {id} не найден") : user;
+                return user ?? throw new NotFoundException($"Пользователь с id: {id} не найден");
             }
             catch (NotFoundException)
             {
