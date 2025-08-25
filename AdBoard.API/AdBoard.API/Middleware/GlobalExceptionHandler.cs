@@ -78,6 +78,13 @@ namespace AdBoard.API.Middleware
                     result.Message = recordExistsException.Message;
                     break;
                 };
+                case NotFoundException notFoundException:
+                {
+                    result.StatusCode = HttpStatusCode.NotFound;
+                    result.Message = notFoundException.Message;
+                    break;
+                }
+                ;
                 case Exception ex:
                 {
                     _logger.LogError(ex.Message);
