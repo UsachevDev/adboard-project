@@ -36,7 +36,7 @@ namespace AdBoard.DAL
             entity.ToTable("announcements");
 
             entity.Property(e => e.Id)
-                .ValueGeneratedNever()
+                .HasDefaultValueSql("gen_random_uuid()")
                 .HasColumnName("id");
             entity.Property(e => e.City)
                 .HasMaxLength(255)
