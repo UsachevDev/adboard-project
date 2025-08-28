@@ -14,5 +14,6 @@ namespace AdBoard.Services.Interfaces
         public Task<Announcement> AddAnnouncement(AddAnnouncementDto addAnnouncement, Guid UserId);
         public Task<Announcement> GetAnnouncementById(Guid AnnouncementId);
         public Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter);
+        public Task UpdateAnnouncement(UpdateAnnouncementDto dto, Guid UserId, Guid AnnouncementId);
     }
 }

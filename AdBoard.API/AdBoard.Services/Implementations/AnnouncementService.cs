@@ -7,12 +7,8 @@ using AdBoard.Services.Models.Extensions;
 using AdBoard.Services.Models.RequestFilters;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace AdBoard.Services.Implementations
 {
@@ -32,7 +28,9 @@ namespace AdBoard.Services.Implementations
             var subcategory = await _dbContext.Subcategories.FindAsync(addAnnouncementDto.SubcategoryId);
             if(subcategory == null) 
             {
-                throw new ValidationException([new ValidationFailure("subcategoryId", "Подкатегории с таким id не существует")]);
+                throw new ValidationException(
+                    [new ValidationFailure("subcategoryId", "Подкатегории с таким id не существует")]
+                );
             }
             Announcement announcement = new Announcement() 
             {
@@ -54,8 +52,11 @@ namespace AdBoard.Services.Implementations
         {
             try
             {
-                var announcement = await _dbContext.Announcements.FindAsync(AnnouncementId)
+                var announcement = await _dbContext.Announcements
+                    .Where(a => a.Id == AnnouncementId && !a.IsHidden)
+                    .FirstOrDefaultAsync()
                     ?? throw new NotFoundException("Объявление с таким ID не найдено.");
+
                 return announcement;
             }
             catch (NotFoundException)
@@ -71,7 +72,34 @@ namespace AdBoard.Services.Implementations
 
         public async Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter)
         {
-            return _dbContext.Announcements.PageFilter(pageFilter).ToList();
+            return await _dbContext.Announcements
+                .Where(a => !a.IsHidden)
+                .PageFilter(pageFilter)
+                .ToListAsync();
+        }
+        public async Task UpdateAnnouncement(UpdateAnnouncementDto dto, Guid UserId, Guid AnnouncementId)
+        {
+            var announcement = _dbContext.Announcements.Find(AnnouncementId)
+                ?? throw new NotFoundException("Объявление с таким ID не найдено");
+
+            if (announcement.CreatorId != UserId)
+                throw new ForbiddenException("Вы не автор объявления");
+
+
+            foreach (var property in typeof(UpdateAnnouncementDto).GetProperties())
+            {
+                if (property.GetValue(dto) != null)
+                {
+                    var userProperty = typeof(Announcement).GetProperty(property.Name);
+                    if (userProperty != null)
+                    {
+                        userProperty.SetValue(announcement, property.GetValue(dto));
+                    }
+                }
+            }
+
+            await _dbContext.SaveChangesAsync();
+            return;
         }
     }
 }
