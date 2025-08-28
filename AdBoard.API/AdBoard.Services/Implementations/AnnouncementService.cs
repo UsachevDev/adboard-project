@@ -73,6 +73,7 @@ namespace AdBoard.Services.Implementations
         public async Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter)
         {
             return await _dbContext.Announcements
+                .AsNoTracking()
                 .Where(a => !a.IsHidden)
                 .PageFilter(pageFilter)
                 .ToListAsync();
