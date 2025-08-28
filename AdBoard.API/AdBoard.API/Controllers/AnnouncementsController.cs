@@ -46,5 +46,20 @@ namespace AdBoard.API.Controllers
             var serviceResponse = await _announcementService.GetAnnouncements(pageFilter);
             return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK, Data = serviceResponse });
         }
+
+        [Authorize]
+        [HttpPatch("{id}")]
+        public async Task<IActionResult> UpdateAnnouncement(string id, [FromBody] UpdateAnnouncementDto updateDto)
+        {
+            if (!Guid.TryParse(id, out var guidAnnouncementId))
+                throw new InvalidInputException("ID объявления должен быть в формате UUID");
+
+            await _announcementService.UpdateAnnouncement(
+                updateDto,
+                Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value),
+                guidAnnouncementId);
+
+            return NoContent();
+        }
     }
 }
