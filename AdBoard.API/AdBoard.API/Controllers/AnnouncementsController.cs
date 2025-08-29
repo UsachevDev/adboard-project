@@ -61,5 +61,32 @@ namespace AdBoard.API.Controllers
 
             return NoContent();
         }
+        
+        [Authorize]
+        [HttpPost("{id}/favorites")]
+        public async Task<IActionResult> AddToFavorites(string id)
+        {
+            if(!Guid.TryParse(id, out var guidAnnouncementId))
+                throw new InvalidInputException("ID объявления должен быть в формате UUID");
+
+            await _announcementService.AddToFavorites(
+                Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value),
+                guidAnnouncementId);
+
+            return NoContent();
+        }
+        [Authorize]
+        [HttpDelete("{id}/favorites")]
+        public async Task<IActionResult> RemoveFromFavorites(string id)
+        {
+            if (!Guid.TryParse(id, out var guidAnnouncementId))
+                throw new InvalidInputException("ID объявления должен быть в формате UUID");
+
+            await _announcementService.RemoveFromFavorites(
+                Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value),
+                guidAnnouncementId);
+
+            return NoContent();
+        }
     }
 }

@@ -48,6 +48,22 @@ namespace AdBoard.Services.Implementations
             return announcement;
         }
 
+        public async  Task AddToFavorites(Guid UserId, Guid AnnouncementId)
+        {
+            var user = await _dbContext.Users
+                .Where(u => u.Id == UserId)
+                .Include(u => u.Favorites)
+                .FirstOrDefaultAsync()
+                    ?? throw new Exception("Пользователь не найден в БД, но был авторизован");
+
+            var announcement = await _dbContext.Announcements.FindAsync(AnnouncementId)
+                ?? throw new NotFoundException("Объявление с таким ID не найдено.");
+
+            user.Favorites.Add(announcement);
+            await _dbContext.SaveChangesAsync();
+            return;
+        }
+
         public async Task<Announcement> GetAnnouncementById(Guid AnnouncementId)
         {
             try
@@ -78,6 +94,23 @@ namespace AdBoard.Services.Implementations
                 .PageFilter(pageFilter)
                 .ToListAsync();
         }
+
+        public async Task RemoveFromFavorites(Guid UserId, Guid AnnouncementId)
+        {
+            var user = await _dbContext.Users
+                .Where(u => u.Id == UserId)
+                .Include(u => u.Favorites)
+                .FirstOrDefaultAsync()
+                    ?? throw new Exception("Пользователь не найден в БД, но был авторизован");
+
+            var announcement = await _dbContext.Announcements.FindAsync(AnnouncementId)
+                ?? throw new NotFoundException("Объявление с таким ID не найдено.");
+
+            user.Favorites.Remove(announcement);
+            await _dbContext.SaveChangesAsync();
+            return;
+        }
+
         public async Task UpdateAnnouncement(UpdateAnnouncementDto dto, Guid UserId, Guid AnnouncementId)
         {
             var announcement = _dbContext.Announcements.Find(AnnouncementId)
@@ -102,5 +135,7 @@ namespace AdBoard.Services.Implementations
             await _dbContext.SaveChangesAsync();
             return;
         }
+
+
     }
 }

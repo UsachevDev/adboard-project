@@ -31,6 +31,7 @@ namespace AdBoard.Services.Implementations
                 FullUserInfo? user = _dbContext.Users
                     .AsNoTracking()
                     .Where(u => u.Id == id)
+                    .Include(u => u.Favorites)
                     .Select(u => new FullUserInfo(
                         u.Id, 
                         u.Name, 
@@ -39,6 +40,7 @@ namespace AdBoard.Services.Implementations
                         u.PhoneNumber,
                         u.CreatedAt, 
                         u.Announcements,
+                        u.Favorites,
                         u.ReviewBuyers,
                         u.ReviewSellers))
                     .FirstOrDefault();
