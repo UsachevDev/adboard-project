@@ -41,8 +41,8 @@ namespace AdBoard.Services.Implementations
                         u.CreatedAt, 
                         u.Announcements,
                         u.Favorites,
-                        u.ReviewBuyers,
-                        u.ReviewSellers))
+                        u.BuyersReviews,
+                        u.UserReviews))
                     .FirstOrDefault();
 
                 return user == null ? throw new NotFoundException($"Пользователь с id: {id} не найден") : user;
@@ -65,7 +65,8 @@ namespace AdBoard.Services.Implementations
                 UserInfoDto? user = _dbContext.Users
                     .AsNoTracking()
                     .Where(u => u.Id == id)
-                    .Select(u => new UserInfoDto(u.Id, u.Name, u.CreatedAt, u.Announcements, u.ReviewBuyers))
+                    .Include(u => u.BuyersReviews)
+                    .Select(u => new UserInfoDto(u.Id, u.Name, u.CreatedAt, u.Announcements, u.BuyersReviews))
                     .FirstOrDefault();
 
                 return user ?? throw new NotFoundException($"Пользователь с id: {id} не найден");

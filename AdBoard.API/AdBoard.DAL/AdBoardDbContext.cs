@@ -140,7 +140,7 @@ namespace AdBoard.DAL
                 entity.ToTable("reviews");
 
                 entity.Property(e => e.Id)
-                    .ValueGeneratedNever()
+                    .HasDefaultValueSql("gen_random_uuid()")
                     .HasColumnName("id");
                 entity.Property(e => e.AnnouncementId).HasColumnName("announcement_id");
                 entity.Property(e => e.BuyerId).HasColumnName("buyer_id");
@@ -150,11 +150,11 @@ namespace AdBoard.DAL
                 entity.Property(e => e.Score).HasColumnName("score");
                 entity.Property(e => e.SellerId).HasColumnName("seller_id");
 
-                entity.HasOne(d => d.Buyer).WithMany(p => p.ReviewBuyers)
+                entity.HasOne(d => d.Buyer).WithMany(p => p.UserReviews)
                     .HasForeignKey(d => d.BuyerId)
                     .HasConstraintName("fk2noibxu5e960l1c3wk929342s");
 
-                entity.HasOne(d => d.Seller).WithMany(p => p.ReviewSellers)
+                entity.HasOne(d => d.Seller).WithMany(p => p.BuyersReviews)
                     .HasForeignKey(d => d.SellerId)
                     .HasConstraintName("fkouykkgwv4jl9590w2neamcktb");
             });

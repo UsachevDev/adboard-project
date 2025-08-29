@@ -88,5 +88,21 @@ namespace AdBoard.API.Controllers
 
             return NoContent();
         }
+        [Authorize]
+        [HttpPost("{id}/reviews")]
+        public async Task<IActionResult> AddReview(string id, [FromBody] AddReviewDto reviewDto)
+        {
+            if (!Guid.TryParse(id, out var guidAnnouncementId))
+                throw new InvalidInputException("ID объявления должен быть в формате UUID");
+
+            Guid userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+
+            await _announcementService.AddReview(
+                reviewDto,
+                userId,
+                guidAnnouncementId);
+
+            return NoContent();
+        }
     }
 }

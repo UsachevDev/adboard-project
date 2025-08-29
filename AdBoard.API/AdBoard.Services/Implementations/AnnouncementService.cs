@@ -48,6 +48,33 @@ namespace AdBoard.Services.Implementations
             return announcement;
         }
 
+        public async Task AddReview(AddReviewDto dto, Guid UserId, Guid AnnouncementId)
+        {
+            var user = await _dbContext.Users
+                .Where(u => u.Id == UserId)
+                .Include(u => u.Favorites)
+                .FirstOrDefaultAsync()
+                    ?? throw new Exception("Пользователь не найден в БД, но был авторизован");
+
+            var announcement = await _dbContext.Announcements.FindAsync(AnnouncementId)
+                ?? throw new NotFoundException("Объявление с таким ID не найдено.");
+
+            if (UserId == announcement.CreatorId)
+                throw new ForbiddenException("Вы не можете добавить отзыв на свое объявление");
+
+            var review = new Review
+            {
+                SellerId = announcement.CreatorId,
+                BuyerId = UserId,
+                Score = dto.Score,
+                Description = dto.Description,
+                Announcement = announcement,
+            };
+            await _dbContext.Reviews.AddAsync(review);
+            await _dbContext.SaveChangesAsync();
+            return;
+        }
+
         public async  Task AddToFavorites(Guid UserId, Guid AnnouncementId)
         {
             var user = await _dbContext.Users

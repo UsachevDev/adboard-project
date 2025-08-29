@@ -16,6 +16,7 @@ namespace AdBoard.Services.Interfaces
         public Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter);
         public Task UpdateAnnouncement(UpdateAnnouncementDto dto, Guid UserId, Guid AnnouncementId);
         public Task AddToFavorites(Guid UserId, Guid AnnouncementId);
+        public Task AddReview(AddReviewDto dto, Guid UserId, Guid AnnouncementId);
         public Task RemoveFromFavorites(Guid UserId, Guid AnnouncementId);
     }
 }

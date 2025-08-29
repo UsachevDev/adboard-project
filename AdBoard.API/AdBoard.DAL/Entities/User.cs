@@ -24,7 +24,7 @@ public class User
     public ICollection<Announcement> Favorites { get; set; } = new List<Announcement>();
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
 
-    public ICollection<Review>? ReviewBuyers { get; set; }
+    public ICollection<Review> UserReviews { get; set; } = new List<Review>();
 
-    public ICollection<Review>? ReviewSellers { get; set; } 
+    public ICollection<Review> BuyersReviews { get; set; } = new List<Review>();
 }
