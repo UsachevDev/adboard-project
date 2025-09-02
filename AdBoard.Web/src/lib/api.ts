@@ -1,5 +1,4 @@
-// .NET (новый бэк) — Auth/Users
-// Legacy (старый Spring) — ВРЕМЕННО только READ для категорий/объявлений.
+// .NET API — Auth/Users/Categories/Announcements
 
 import type {
   UserProfile,
@@ -8,8 +7,7 @@ import type {
   UpdateAnnouncementRequest,
 } from "@/types";
 
-const API_DOTNET = "/api";        // next.config.ts -> http://adboard-backend:8080/api
-const API_LEGACY = "/api-legacy"; // next.config.ts -> http://adboard-backend-legacy:8081/api
+const API_DOTNET = "/api"; // next.config.ts -> http://adboard-backend:8080/api
 
 type ApiOk<T> = { statusCode: number; data: T };
 type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string; traceId?: string };
@@ -219,7 +217,7 @@ export async function getUserById(id: string): Promise<UserProfile> {
   return request<UserProfile>(API_DOTNET, `/Users/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
-// ===== CATEGORIES & ANNOUNCEMENTS — legacy read-only (БЕЗ Authorization!)
+// ===== CATEGORIES & ANNOUNCEMENTS (публичные эндпоинты без авторизации)
 
 export interface CategoryDto {
   id: string;
@@ -230,11 +228,11 @@ export interface CategoryDto {
 export type Announcement = AnnouncementType;
 
 export async function getCategories(): Promise<CategoryDto[]> {
-  return request<CategoryDto[]>(API_LEGACY, "/categories", { method: "GET" }, { tryRefresh: false });
+  return request<CategoryDto[]>(API_DOTNET, "/Categories", { method: "GET" });
 }
 
 export async function getCategoryById(id: string): Promise<CategoryDto> {
-  return request<CategoryDto>(API_LEGACY, `/categories/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+  return request<CategoryDto>(API_DOTNET, `/Categories/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
 export async function getAnnouncements(
@@ -245,13 +243,11 @@ export async function getAnnouncements(
   if (categoryId) params.set("categoryId", categoryId);
   if (subcategoryId) params.set("subcategoryId", subcategoryId);
   const q = params.toString() ? `?${params.toString()}` : "";
-  const anns = await request<Announcement[]>(API_LEGACY, `/announcements${q}`, { method: "GET" }, { tryRefresh: false });
-  return anns.map((a) => ({ ...a, category: a.category ?? a.subcategory?.category }));
+  return request<Announcement[]>(API_DOTNET, `/Announcements${q}`, { method: "GET" });
 }
 
 export async function getAnnouncementById(id: string): Promise<Announcement> {
-  const ann = await request<Announcement>(API_LEGACY, `/announcements/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
-  return { ...ann, category: ann.category ?? ann.subcategory?.category };
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
 // ===== ANNOUNCEMENTS write-эндпоинты (.NET)
