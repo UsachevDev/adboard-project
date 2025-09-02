@@ -37,6 +37,7 @@ export interface Announcement {
     price: number;
     city: string;
     count: number;
+    subcategoryId: UUID;
     images?: string[];
     category?: Category;
     subcategory?: Subcategory;

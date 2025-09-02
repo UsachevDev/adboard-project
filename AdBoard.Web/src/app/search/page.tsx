@@ -45,6 +45,7 @@ const SearchPage: React.FC = () => {
     );
 
     useEffect(() => {
+        if (!categories.length) return;
         setLoading(true);
 
         (async () => {
@@ -63,7 +64,17 @@ const SearchPage: React.FC = () => {
                         )
                     );
                 }
-                setResults(filtered);
+                const mapped = filtered.map((ann) => {
+                    const sub = allSubcategories.find(
+                        (s) => s.id === ann.subcategoryId
+                    );
+                    return {
+                        ...ann,
+                        subcategory: sub,
+                        category: sub?.category,
+                    };
+                });
+                setResults(mapped);
             } catch (e) {
                 console.error("Ошибка загрузки объявлений:", e);
                 setResults([]);

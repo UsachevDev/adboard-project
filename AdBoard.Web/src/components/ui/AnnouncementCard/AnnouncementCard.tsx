@@ -18,7 +18,8 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
     const { user, toggleFavorite } = useUserContext();
     const isFav = user?.favorites?.some((a) => a.id === announcement.id) ?? false;
 
-    const category = announcement.category;
+    const category =
+        announcement.category || announcement.subcategory?.category;
     const subcategory = announcement.subcategory;
 
     const handleCardClick = () => {
