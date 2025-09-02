@@ -3,21 +3,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
 import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
-import { getAnnouncements, getCategories, CategoryDto } from "@/lib/api";
+import { getAnnouncements, getCategories } from "@/lib/api";
 import { Announcement, Category, Subcategory } from "@/types";
 import styles from "@/styles/pages/Home.module.scss";
+import { mapCategory } from "@/utils/category";
 
 const BATCH_SIZE = 12;
-
-const mapCategory = (dto: CategoryDto): Category => ({
-    id: dto.id,
-    name: dto.name,
-    subcategories: dto.subcategories.map((sub) => ({
-        id: sub.id,
-        name: sub.name,
-        category: { id: dto.id, name: dto.name },
-    })),
-});
 
 export default function HomePage() {
     const [allAnns, setAllAnns] = useState<Announcement[]>([]);

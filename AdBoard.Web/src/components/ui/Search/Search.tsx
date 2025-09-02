@@ -11,8 +11,9 @@ import React, {
 } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import styles from "./Search.module.scss";
-import { getCategories, CategoryDto } from "@/lib/api";
+import { getCategories } from "@/lib/api";
 import { Category, Subcategory } from "@/types";
+import { mapCategory } from "@/utils/category";
 import { FiSearch, FiGrid, FiX } from "react-icons/fi";
 
 interface SearchSuggestion {
@@ -34,21 +35,6 @@ const commonPhrases: string[] = [
     "Ремонт iPhone",
 ];
 
-// Мапим CategoryDto → Category с полем `subcategories`
-const mapCategory = (dto: CategoryDto): Category => ({
-    id: dto.id,
-    name: dto.name,
-    // image может подтягиваться из API, здесь оставляем undefined
-    image: undefined,
-    subcategories: dto.subcategories.map((sub) => ({
-        id: sub.id,
-        name: sub.name,
-        image: undefined,
-        // в Subcategory.category кладём родительскую Category
-        category: { id: dto.id, name: dto.name, image: undefined },
-    })),
-});
-
 const Search: React.FC = () => {
     const [query, setQuery] = useState("");
     const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
@@ -69,7 +55,7 @@ const Search: React.FC = () => {
     // загружаем категории
     useEffect(() => {
         getCategories()
-            .then((dtos: CategoryDto[]) => {
+            .then((dtos) => {
                 const cats = dtos.map(mapCategory);
                 setCategories(cats);
                 // собираем все subcategories из категорий

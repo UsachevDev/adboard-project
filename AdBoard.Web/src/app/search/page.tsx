@@ -4,19 +4,10 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
 import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
-import { getAnnouncements, getCategories, CategoryDto } from "@/lib/api";
+import { getAnnouncements, getCategories } from "@/lib/api";
 import { Announcement, Category, Subcategory } from "@/types";
 import styles from "./SearchPage.module.scss";
-
-const mapCategory = (dto: CategoryDto): Category => ({
-    id: dto.id,
-    name: dto.name,
-    subcategories: dto.subcategories.map((sub) => ({
-        id: sub.id,
-        name: sub.name,
-        category: { id: dto.id, name: dto.name },
-    })),
-});
+import { mapCategory } from "@/utils/category";
 
 const SearchPage: React.FC = () => {
     const searchParams = useSearchParams();
