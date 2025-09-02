@@ -65,7 +65,7 @@ export default function AddAnnouncementPage() {
             const newAnn = await addAnnouncement(payload);
             router.push(`/announcements/${newAnn.id}`);
         } catch (err: unknown) {
-            const msg = err instanceof Error ? err.message : "Не удалось создать объявление.";
+            const msg = err instanceof Error ? err.message : String(err);
             console.error("Ошибка создания объявления:", msg);
             setMessage({ type: "error", text: msg });
             setLoading(false);

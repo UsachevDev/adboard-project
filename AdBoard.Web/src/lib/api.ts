@@ -88,21 +88,29 @@ async function request<T>(
   }
 
   if (res.status === 204) {
-    // @ts-ignore
+    // @ts-expect-error: no content expected from server
     return undefined;
   }
 
   const contentType = res.headers.get("content-type") ?? "";
-  let json: any = null;
+  const raw = await res.text();
+  let json: unknown = null;
   if (contentType.includes("application/json")) {
-    try { json = await res.json(); } catch { }
-  } else {
-    try { json = await res.text(); } catch { }
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
   }
 
   if (!res.ok) {
     // .NET ValidationProblemDetails (errors: Record<string, string[] | string>)
-    if (json && typeof json === "object" && (json as any).errors && !Array.isArray((json as any).errors)) {
+    if (
+      json &&
+      typeof json === "object" &&
+      (json as Record<string, unknown>).errors &&
+      !Array.isArray((json as Record<string, unknown>).errors)
+    ) {
       const v = json as ValidationProblemDetails;
       const parts: string[] = [];
       for (const [prop, val] of Object.entries(v.errors ?? {})) {
@@ -114,32 +122,58 @@ async function request<T>(
     }
 
     // Наш формат: { errors: [{ property, error }...] }
-    if (json && typeof json === "object" && Array.isArray((json as any).errors)) {
-      const parts = (json as any).errors.map((e: any) =>
+    if (
+      json &&
+      typeof json === "object" &&
+      Array.isArray((json as Record<string, unknown>).errors)
+    ) {
+      const parts = (
+        (json as { errors: { property?: string; error?: unknown }[] }).errors
+      ).map((e) =>
         `{"property":"${e?.property ?? "?"}","error":"${String(e?.error ?? "Ошибка")}"}`,
       );
       throw new Error(parts.join("\n"));
     }
 
+    if (
+      !json ||
+      typeof json !== "object" ||
+      (!(json as Record<string, unknown>).title &&
+        !(json as Record<string, unknown>).detail &&
+        !(json as Record<string, unknown>).message)
+    ) {
+      json = { title: `HTTP ${res.status}`, detail: raw };
+    }
+
     // ProblemDetails / произвольное сообщение
     const pdMsg =
-      (json && typeof json === "object" && ((json as any).detail || (json as any).title || (json as any).message)) ||
-      (typeof json === "string" && json) ||
-      `HTTP ${res.status}`;
+      (json &&
+        typeof json === "object" &&
+        ((json as Record<string, unknown>).detail ||
+          (json as Record<string, unknown>).title ||
+          (json as Record<string, unknown>).message)) ||
+      `HTTP ${res.status}${raw ? `: ${raw}` : ""}`;
 
     if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
-      console.error("API error:", { url: `${base}${endpoint}`, status: res.status, body: options.body, response: json });
+      console.error("API error:", {
+        url: `${base}${endpoint}`,
+        status: res.status,
+        body: options.body,
+        response: raw,
+      });
     }
 
     throw new Error(String(pdMsg));
   }
 
   // API-обёртка { statusCode, data }
-  if (json && typeof json === "object" && "data" in json) {
+  if (json && typeof json === "object" && "data" in (json as Record<string, unknown>)) {
     return (json as ApiOk<T>).data;
   }
-  return json as T;
+  if (contentType.includes("application/json")) {
+    return json as T;
+  }
+  return raw as T;
 }
 
 // ===== AUTH (.NET)
