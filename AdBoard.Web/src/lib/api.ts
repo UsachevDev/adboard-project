@@ -104,6 +104,17 @@ async function request<T>(
   }
 
   if (!res.ok) {
+    if (res.status >= 500) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("API error:", {
+          url: `${base}${endpoint}`,
+          status: res.status,
+          body: options.body,
+          response: raw,
+        });
+      }
+      throw new Error("Сервер временно недоступен. Попробуйте позже.");
+    }
     // .NET ValidationProblemDetails (errors: Record<string, string[] | string>)
     if (
       json &&
