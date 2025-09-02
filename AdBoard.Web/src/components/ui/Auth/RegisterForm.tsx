@@ -5,6 +5,21 @@ import Link from "next/link";
 import { register } from "@/lib/api";
 import styles from "./RegisterForm.module.scss";
 
+const parseApiError = (err: unknown): string => {
+    if (err instanceof Error) {
+        try {
+            const messages = err.message
+                .split("\n")
+                .map((line) => JSON.parse(line).error)
+                .filter(Boolean);
+            return messages.join(" ") || err.message;
+        } catch {
+            return err.message;
+        }
+    }
+    return "Ошибка сети при попытке регистрации.";
+};
+
 interface RegisterFormProps {
     onRegisterSuccess: () => void;
     onSwitchToLogin: () => void;
@@ -46,6 +61,12 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
         e.preventDefault();
         setLoading(true);
         setMessage(null);
+
+        if (password.length < 8) {
+            setMessage({ type: "error", text: "Пароль должен быть не короче 8 символов." });
+            setLoading(false);
+            return;
+        }
 
         // Проверяем наличие телефона
         if (!phoneNumber.trim()) {
@@ -94,8 +115,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
             onRegisterSuccess();
         } catch (err: unknown) {
             console.error("Ошибка при регистрации:", err);
-            const text = err instanceof Error ? err.message : "Ошибка сети при попытке регистрации.";
-            setMessage({ type: "error", text });
+            setMessage({ type: "error", text: parseApiError(err) });
         } finally {
             setLoading(false);
         }
@@ -135,6 +155,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+                    <small className={styles.hint}>Пароль должен быть не короче 8 символов</small>
                 </div>
 
                 {/* Подтверждение пароля */}

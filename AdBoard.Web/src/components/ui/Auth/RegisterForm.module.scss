@@ -105,3 +105,10 @@
         text-decoration: underline;
     }
 }
+
+.hint {
+    margin-top: $spacing-xs;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    display: block;
+}
