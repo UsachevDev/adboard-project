@@ -9,7 +9,7 @@ import { updateAnnouncement } from "@/lib/api";
 interface Props {
     announcement: Announcement;
     onClose: () => void;
-    onUpdated: () => void;
+    onUpdated: (updated: Announcement) => void;
 }
 
 export default function EditAnnouncementModal({
@@ -37,8 +37,8 @@ export default function EditAnnouncementModal({
             isHidden,
         };
         try {
-            await updateAnnouncement(announcement.id, payload);
-            onUpdated();
+            const updated = await updateAnnouncement(announcement.id, payload);
+            onUpdated(updated);
         } catch (err) {
             console.error("Ошибка при обновлении:", err);
             setLoading(false);

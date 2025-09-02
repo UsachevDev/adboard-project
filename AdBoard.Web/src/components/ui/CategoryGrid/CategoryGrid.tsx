@@ -16,7 +16,6 @@ const CategoryGrid: React.FC<CategoryGridProps> = ({ items, basePath, isCategory
     return (
         <div className={styles.gridContainer}>
             {items.map((item) => {
-                const isCategory = 'subcategories' in item;
                 let href = '';
 
                 if (isCategoryGrid) {
