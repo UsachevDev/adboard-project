@@ -15,7 +15,7 @@ const mapCategory = (dto: CategoryDto): Category => ({
     subcategories: dto.subcategories.map((sub) => ({
         id: sub.id,
         name: sub.name,
-        categoryId: dto.id,
+        category: { id: dto.id, name: dto.name },
     })),
 });
 

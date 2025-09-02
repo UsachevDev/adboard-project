@@ -11,10 +11,10 @@ import styles from "./SearchPage.module.scss";
 const mapCategory = (dto: CategoryDto): Category => ({
     id: dto.id,
     name: dto.name,
-    subcategory: dto.subcategories.map((sub) => ({
+    subcategories: dto.subcategories.map((sub) => ({
         id: sub.id,
         name: sub.name,
-        category: [{ id: dto.id, name: dto.name }],
+        category: { id: dto.id, name: dto.name },
     })),
 });
 
@@ -40,10 +40,7 @@ const SearchPage: React.FC = () => {
     }, []);
 
     const allSubcategories = useMemo<Subcategory[]>(
-        () =>
-            categories.flatMap((c) =>
-                c.subcategory ? c.subcategory : []
-            ),
+        () => categories.flatMap((c) => c.subcategories ?? []),
         [categories]
     );
 
@@ -112,7 +109,7 @@ const SearchPage: React.FC = () => {
                 <>
                     <CategoryGrid
                         items={allSubcategories.filter(
-                            (s) => s.category[0].id === categoryId
+                            (s) => s.category.id === categoryId
                         )}
                         basePath="/search"
                     />

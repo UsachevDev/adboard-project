@@ -2,9 +2,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
     getAnnouncementById,
     getUserById,
@@ -17,7 +16,6 @@ import EditAnnouncementModal from "@/components/ui/Profile/EditAnnouncementModal
 
 export default function AnnouncementPage() {
     const { id } = useParams<{ id: string }>();
-    const router = useRouter();
     const { user, toggleFavorite } = useUserContext();
 
     const [announcement, setAnnouncement] =
@@ -113,24 +111,26 @@ export default function AnnouncementPage() {
                 </div>
                 <div className={styles.city}>{announcement.city}</div>
 
-                {announcement.subcategory && (
+                {(announcement.category || announcement.subcategory) && (
                     <div className={styles.categoryBlock}>
                         <span className={styles.label}>Категория:</span>
                         <div className={styles.chipList}>
-                            {/* Ссылка на все объявления в категории */}
-                            <Link
-                                href={`/search?categoryId=${announcement.subcategory.category.id}`}
-                                className={styles.chip}
-                            >
-                                {announcement.subcategory.category.name}
-                            </Link>
-                            {/* Ссылка на все объявления в подкатегории */}
-                            <Link
-                                href={`/search?subcategoryId=${announcement.subcategory.id}`}
-                                className={styles.chip}
-                            >
-                                {announcement.subcategory.name}
-                            </Link>
+                            {announcement.category && (
+                                <Link
+                                    href={`/search?categoryId=${announcement.category.id}`}
+                                    className={styles.chip}
+                                >
+                                    {announcement.category.name}
+                                </Link>
+                            )}
+                            {announcement.subcategory && (
+                                <Link
+                                    href={`/search?subcategoryId=${announcement.subcategory.id}`}
+                                    className={styles.chip}
+                                >
+                                    {announcement.subcategory.name}
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )}
