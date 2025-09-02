@@ -2,9 +2,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
 import {
     getAnnouncementById,
     getUserById,
@@ -17,7 +16,6 @@ import EditAnnouncementModal from "@/components/ui/Profile/EditAnnouncementModal
 
 export default function AnnouncementPage() {
     const { id } = useParams<{ id: string }>();
-    const router = useRouter();
     const { user, toggleFavorite } = useUserContext();
 
     const [announcement, setAnnouncement] =
@@ -75,13 +73,14 @@ export default function AnnouncementPage() {
 
     const toggleHidden = async () => {
         if (!announcement) return;
-        await updateAnnouncement(announcement.id, {
-            isHidden: !announcement.isHidden,
-        });
-        setAnnouncement({
-            ...announcement,
-            isHidden: !announcement.isHidden,
-        });
+        try {
+            const updated = await updateAnnouncement(announcement.id, {
+                isHidden: !announcement.isHidden,
+            });
+            setAnnouncement(updated);
+        } catch (e) {
+            console.error("Не удалось изменить статус объявления:", e);
+        }
     };
 
     return (
