@@ -34,18 +34,18 @@ const commonPhrases: string[] = [
     "Ремонт iPhone",
 ];
 
-// Мапим CategoryDto → Category с нужным полем `subcategory`
+// Мапим CategoryDto → Category с полем `subcategories`
 const mapCategory = (dto: CategoryDto): Category => ({
     id: dto.id,
     name: dto.name,
-    // image у вас может подтягиваться из API, здесь оставляем undefined
+    // image может подтягиваться из API, здесь оставляем undefined
     image: undefined,
-    subcategory: dto.subcategories.map((sub) => ({
+    subcategories: dto.subcategories.map((sub) => ({
         id: sub.id,
         name: sub.name,
         image: undefined,
-        // в Subcategory.category кладём массив из родительской Category
-        category: [{ id: dto.id, name: dto.name, image: undefined }],
+        // в Subcategory.category кладём родительскую Category
+        category: { id: dto.id, name: dto.name, image: undefined },
     })),
 });
 
@@ -55,7 +55,6 @@ const Search: React.FC = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isCategoriesPanelOpen, setIsCategoriesPanelOpen] = useState(false);
     const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-    const [justNavigated, setJustNavigated] = useState(false);
 
     const [categories, setCategories] = useState<Category[]>([]);
     const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -73,8 +72,8 @@ const Search: React.FC = () => {
             .then((dtos: CategoryDto[]) => {
                 const cats = dtos.map(mapCategory);
                 setCategories(cats);
-                // собираем все subcategory из категорий
-                setSubcategories(cats.flatMap((c) => c.subcategory ?? []));
+                // собираем все subcategories из категорий
+                setSubcategories(cats.flatMap((c) => c.subcategories ?? []));
             })
             .catch((err) => console.error("Ошибка при загрузке категорий:", err));
     }, []);
@@ -117,7 +116,6 @@ const Search: React.FC = () => {
         }
         setShowSuggestions(false);
         setIsCategoriesPanelOpen(false);
-        setJustNavigated(false);
     }, [pathname, searchParams, categories, subcategories]);
 
     // подсказки только при фокусе
@@ -169,7 +167,6 @@ const Search: React.FC = () => {
             e.preventDefault();
             const t = query.trim();
             if (t) {
-                setJustNavigated(true);
                 router.push(`/search?q=${encodeURIComponent(t)}`);
                 setShowSuggestions(false);
             }
@@ -186,7 +183,6 @@ const Search: React.FC = () => {
             } else if (s.type === "subcategory" && s.id) {
                 url = `/search?subcategoryId=${encodeURIComponent(s.id)}`;
             }
-            setJustNavigated(true);
             router.push(url);
             setShowSuggestions(false);
         },
@@ -235,7 +231,6 @@ const Search: React.FC = () => {
             } else {
                 url = `/search?subcategoryId=${encodeURIComponent(item.id)}`;
             }
-            setJustNavigated(true);
             router.push(url);
             setShowSuggestions(false);
             setIsCategoriesPanelOpen(false);
@@ -246,9 +241,7 @@ const Search: React.FC = () => {
     const filteredSubcategories = useMemo<Subcategory[]>(
         () =>
             activeCategoryId
-                ? subcategories.filter((s) =>
-                    s.category.some((c) => c.id === activeCategoryId)
-                )
+                ? subcategories.filter((s) => s.category.id === activeCategoryId)
                 : [],
         [activeCategoryId, subcategories]
     );

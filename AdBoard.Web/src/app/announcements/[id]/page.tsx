@@ -112,24 +112,26 @@ export default function AnnouncementPage() {
                 </div>
                 <div className={styles.city}>{announcement.city}</div>
 
-                {announcement.subcategory && (
+                {(announcement.category || announcement.subcategory) && (
                     <div className={styles.categoryBlock}>
                         <span className={styles.label}>Категория:</span>
                         <div className={styles.chipList}>
-                            {/* Ссылка на все объявления в категории */}
-                            <Link
-                                href={`/search?categoryId=${announcement.subcategory.category.id}`}
-                                className={styles.chip}
-                            >
-                                {announcement.subcategory.category.name}
-                            </Link>
-                            {/* Ссылка на все объявления в подкатегории */}
-                            <Link
-                                href={`/search?subcategoryId=${announcement.subcategory.id}`}
-                                className={styles.chip}
-                            >
-                                {announcement.subcategory.name}
-                            </Link>
+                            {announcement.category && (
+                                <Link
+                                    href={`/search?categoryId=${announcement.category.id}`}
+                                    className={styles.chip}
+                                >
+                                    {announcement.category.name}
+                                </Link>
+                            )}
+                            {announcement.subcategory && (
+                                <Link
+                                    href={`/search?subcategoryId=${announcement.subcategory.id}`}
+                                    className={styles.chip}
+                                >
+                                    {announcement.subcategory.name}
+                                </Link>
+                            )}
                         </div>
                     </div>
                 )}

@@ -245,11 +245,13 @@ export async function getAnnouncements(
   if (categoryId) params.set("categoryId", categoryId);
   if (subcategoryId) params.set("subcategoryId", subcategoryId);
   const q = params.toString() ? `?${params.toString()}` : "";
-  return request<Announcement[]>(API_LEGACY, `/announcements${q}`, { method: "GET" }, { tryRefresh: false });
+  const anns = await request<Announcement[]>(API_LEGACY, `/announcements${q}`, { method: "GET" }, { tryRefresh: false });
+  return anns.map((a) => ({ ...a, category: a.category ?? a.subcategory?.category }));
 }
 
 export async function getAnnouncementById(id: string): Promise<Announcement> {
-  return request<Announcement>(API_LEGACY, `/announcements/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+  const ann = await request<Announcement>(API_LEGACY, `/announcements/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+  return { ...ann, category: ann.category ?? ann.subcategory?.category };
 }
 
 // ===== ANNOUNCEMENTS write-эндпоинты (.NET)
