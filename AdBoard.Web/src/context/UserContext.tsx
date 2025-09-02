@@ -44,12 +44,11 @@ export const UserProvider: React.FC<React.PropsWithChildren> = ({ children }) =>
         await addToFavorites(announcementId);
         const ann = await getAnnouncementById(announcementId);
         setUser((prev) =>
-          prev ? { ...prev, favorites: [...(prev.favorites ?? []), ann] } : prev
+          prev ? { ...prev, favorites: [...(prev.favorites ?? []), { ...ann, isFavorite: true }] } : prev
         );
       }
     } catch (e) {
-      // сейчас эти эндпоинты заглушки — не ломаем UI
-      console.warn("toggleFavorite not available yet:", e);
+      console.error("Не удалось изменить избранное:", e);
     }
   };
 

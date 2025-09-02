@@ -252,20 +252,37 @@ export async function getAnnouncementById(id: string): Promise<Announcement> {
   return request<Announcement>(API_LEGACY, `/announcements/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
 }
 
-// ===== пока нет write-эндпоинтов
+// ===== ANNOUNCEMENTS write-эндпоинты (.NET)
 
-export async function addAnnouncement(_payload: AddAnnouncementRequest): Promise<Announcement> {
-  throw new Error("Создание объявления недоступно: ждём .NET эндпоинт");
+export async function addAnnouncement(payload: AddAnnouncementRequest): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, "/Announcements", {
+    method: "POST",
+    body: payload,
+  });
 }
-export async function updateAnnouncement(_id: string, _patch: UpdateAnnouncementRequest): Promise<Announcement> {
-  throw new Error("Обновление объявления недоступно: ждём .NET эндпоинт");
+
+export async function updateAnnouncement(id: string, patch: UpdateAnnouncementRequest): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: patch,
+  });
 }
-export async function addToFavorites(_id: string): Promise<void> {
-  throw new Error("Избранное недоступно: ждём .NET эндпоинт");
+
+export async function addToFavorites(id: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}/favorites`, {
+    method: "POST",
+  });
 }
-export async function removeFromFavorites(_id: string): Promise<void> {
-  throw new Error("Избранное недоступно: ждём .NET эндпоинт");
+
+export async function removeFromFavorites(id: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}/favorites`, {
+    method: "DELETE",
+  });
 }
-export async function addReview(_announcementId: string, _score: number, _description: string): Promise<void> {
-  throw new Error("Отзывы недоступны: ждём .NET эндпоинт");
+
+export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(announcementId)}/reviews`, {
+    method: "POST",
+    body: { score, description },
+  });
 }
