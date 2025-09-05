@@ -33,6 +33,14 @@ namespace AdBoard.DAL
             {
             entity.HasKey(e => e.Id).HasName("announcements_pkey");
 
+            entity.
+                HasGeneratedTsVectorColumn(
+                    e => e.SearchVector,
+                    "russian",
+                    e => new { e.Title, e.Description })
+                .HasIndex(e => e.SearchVector)
+                .HasMethod("GIN");
+
             entity.ToTable("announcements");
 
             entity.Property(e => e.Id)
