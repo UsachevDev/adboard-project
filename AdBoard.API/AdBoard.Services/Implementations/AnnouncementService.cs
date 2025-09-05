@@ -122,7 +122,7 @@ namespace AdBoard.Services.Implementations
             else
                 query = query.Where(a => !a.IsHidden);
 
-            return await query.PageFilter(pageFilter).ToListAsync();
+            return await query.OrderByDescending(a => a.CreatedAt).PageFilter(pageFilter).ToListAsync();
 
         }
 
