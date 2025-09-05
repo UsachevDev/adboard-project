@@ -1,5 +1,4 @@
-// .NET (новый бэк) — Auth/Users
-// Legacy (старый Spring) — ВРЕМЕННО только READ для категорий/объявлений.
+// .NET API — Auth/Users/Categories/Announcements
 
 import type {
   UserProfile,
@@ -8,8 +7,7 @@ import type {
   UpdateAnnouncementRequest,
 } from "@/types";
 
-const API_DOTNET = "/api";        // next.config.ts -> http://adboard-backend:8080/api
-const API_LEGACY = "/api-legacy"; // next.config.ts -> http://adboard-backend-legacy:8081/api
+const API_DOTNET = "/api"; // next.config.ts -> http://adboard-backend:8080/api
 
 type ApiOk<T> = { statusCode: number; data: T };
 type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string; traceId?: string };
@@ -90,21 +88,40 @@ async function request<T>(
   }
 
   if (res.status === 204) {
-    // @ts-ignore
+    // @ts-expect-error: no content expected from server
     return undefined;
   }
 
   const contentType = res.headers.get("content-type") ?? "";
-  let json: any = null;
+  const raw = await res.text();
+  let json: unknown = null;
   if (contentType.includes("application/json")) {
-    try { json = await res.json(); } catch { }
-  } else {
-    try { json = await res.text(); } catch { }
+    try {
+      json = JSON.parse(raw);
+    } catch {
+      /* ignore */
+    }
   }
 
   if (!res.ok) {
+    if (res.status >= 500) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("API error:", {
+          url: `${base}${endpoint}`,
+          status: res.status,
+          body: options.body,
+          response: raw,
+        });
+      }
+      throw new Error("Сервер временно недоступен. Попробуйте позже.");
+    }
     // .NET ValidationProblemDetails (errors: Record<string, string[] | string>)
-    if (json && typeof json === "object" && (json as any).errors && !Array.isArray((json as any).errors)) {
+    if (
+      json &&
+      typeof json === "object" &&
+      (json as Record<string, unknown>).errors &&
+      !Array.isArray((json as Record<string, unknown>).errors)
+    ) {
       const v = json as ValidationProblemDetails;
       const parts: string[] = [];
       for (const [prop, val] of Object.entries(v.errors ?? {})) {
@@ -116,32 +133,58 @@ async function request<T>(
     }
 
     // Наш формат: { errors: [{ property, error }...] }
-    if (json && typeof json === "object" && Array.isArray((json as any).errors)) {
-      const parts = (json as any).errors.map((e: any) =>
+    if (
+      json &&
+      typeof json === "object" &&
+      Array.isArray((json as Record<string, unknown>).errors)
+    ) {
+      const parts = (
+        (json as { errors: { property?: string; error?: unknown }[] }).errors
+      ).map((e) =>
         `{"property":"${e?.property ?? "?"}","error":"${String(e?.error ?? "Ошибка")}"}`,
       );
       throw new Error(parts.join("\n"));
     }
 
+    if (
+      !json ||
+      typeof json !== "object" ||
+      (!(json as Record<string, unknown>).title &&
+        !(json as Record<string, unknown>).detail &&
+        !(json as Record<string, unknown>).message)
+    ) {
+      json = { title: `HTTP ${res.status}`, detail: raw };
+    }
+
     // ProblemDetails / произвольное сообщение
     const pdMsg =
-      (json && typeof json === "object" && ((json as any).detail || (json as any).title || (json as any).message)) ||
-      (typeof json === "string" && json) ||
-      `HTTP ${res.status}`;
+      (json &&
+        typeof json === "object" &&
+        ((json as Record<string, unknown>).detail ||
+          (json as Record<string, unknown>).title ||
+          (json as Record<string, unknown>).message)) ||
+      `HTTP ${res.status}${raw ? `: ${raw}` : ""}`;
 
     if (process.env.NODE_ENV !== "production") {
-      // eslint-disable-next-line no-console
-      console.error("API error:", { url: `${base}${endpoint}`, status: res.status, body: options.body, response: json });
+      console.error("API error:", {
+        url: `${base}${endpoint}`,
+        status: res.status,
+        body: options.body,
+        response: raw,
+      });
     }
 
     throw new Error(String(pdMsg));
   }
 
   // API-обёртка { statusCode, data }
-  if (json && typeof json === "object" && "data" in json) {
+  if (json && typeof json === "object" && "data" in (json as Record<string, unknown>)) {
     return (json as ApiOk<T>).data;
   }
-  return json as T;
+  if (contentType.includes("application/json")) {
+    return json as T;
+  }
+  return raw as T;
 }
 
 // ===== AUTH (.NET)
@@ -219,7 +262,7 @@ export async function getUserById(id: string): Promise<UserProfile> {
   return request<UserProfile>(API_DOTNET, `/Users/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
-// ===== CATEGORIES & ANNOUNCEMENTS — legacy read-only (БЕЗ Authorization!)
+// ===== CATEGORIES & ANNOUNCEMENTS (публичные эндпоинты без авторизации)
 
 export interface CategoryDto {
   id: string;
@@ -230,11 +273,11 @@ export interface CategoryDto {
 export type Announcement = AnnouncementType;
 
 export async function getCategories(): Promise<CategoryDto[]> {
-  return request<CategoryDto[]>(API_LEGACY, "/categories", { method: "GET" }, { tryRefresh: false });
+  return request<CategoryDto[]>(API_DOTNET, "/Categories", { method: "GET" });
 }
 
 export async function getCategoryById(id: string): Promise<CategoryDto> {
-  return request<CategoryDto>(API_LEGACY, `/categories/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+  return request<CategoryDto>(API_DOTNET, `/Categories/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
 export async function getAnnouncements(
@@ -245,27 +288,44 @@ export async function getAnnouncements(
   if (categoryId) params.set("categoryId", categoryId);
   if (subcategoryId) params.set("subcategoryId", subcategoryId);
   const q = params.toString() ? `?${params.toString()}` : "";
-  return request<Announcement[]>(API_LEGACY, `/announcements${q}`, { method: "GET" }, { tryRefresh: false });
+  return request<Announcement[]>(API_DOTNET, `/Announcements${q}`, { method: "GET" });
 }
 
 export async function getAnnouncementById(id: string): Promise<Announcement> {
-  return request<Announcement>(API_LEGACY, `/announcements/${encodeURIComponent(id)}`, { method: "GET" }, { tryRefresh: false });
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, { method: "GET" });
 }
 
-// ===== пока нет write-эндпоинтов
+// ===== ANNOUNCEMENTS write-эндпоинты (.NET)
 
-export async function addAnnouncement(_payload: AddAnnouncementRequest): Promise<Announcement> {
-  throw new Error("Создание объявления недоступно: ждём .NET эндпоинт");
+export async function addAnnouncement(payload: AddAnnouncementRequest): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, "/Announcements", {
+    method: "POST",
+    body: payload,
+  });
 }
-export async function updateAnnouncement(_id: string, _patch: UpdateAnnouncementRequest): Promise<Announcement> {
-  throw new Error("Обновление объявления недоступно: ждём .NET эндпоинт");
+
+export async function updateAnnouncement(id: string, patch: UpdateAnnouncementRequest): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: patch,
+  });
 }
-export async function addToFavorites(_id: string): Promise<void> {
-  throw new Error("Избранное недоступно: ждём .NET эндпоинт");
+
+export async function addToFavorites(id: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}/favorites`, {
+    method: "POST",
+  });
 }
-export async function removeFromFavorites(_id: string): Promise<void> {
-  throw new Error("Избранное недоступно: ждём .NET эндпоинт");
+
+export async function removeFromFavorites(id: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}/favorites`, {
+    method: "DELETE",
+  });
 }
-export async function addReview(_announcementId: string, _score: number, _description: string): Promise<void> {
-  throw new Error("Отзывы недоступны: ждём .NET эндпоинт");
+
+export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(announcementId)}/reviews`, {
+    method: "POST",
+    body: { score, description },
+  });
 }

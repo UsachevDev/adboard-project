@@ -65,17 +65,9 @@ export default function AddAnnouncementPage() {
             const newAnn = await addAnnouncement(payload);
             router.push(`/announcements/${newAnn.id}`);
         } catch (err: unknown) {
-            if (err instanceof Error) {
-                if (err.message.includes("Invalid JSON response")) {
-                    router.push("/profile");
-                    return;
-                }
-                console.error("Ошибка создания объявления:", err.message);
-            } else {
-                console.error("Ошибка создания объявления (не Error):", err);
-            }
-
-            setMessage({ type: "error", text: "Не удалось создать объявление." });
+            const msg = err instanceof Error ? err.message : String(err);
+            console.error("Ошибка создания объявления:", msg);
+            setMessage({ type: "error", text: msg });
             setLoading(false);
         }
     };

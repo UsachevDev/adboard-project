@@ -49,8 +49,10 @@ const ProfilePage: React.FC = () => {
 
     const toggleHidden = async (ann: Announcement) => {
         try {
-            await updateAnnouncement(ann.id, { isHidden: !ann.isHidden });
-            await loadProfile();
+            const updated = await updateAnnouncement(ann.id, { isHidden: !ann.isHidden });
+            setUserAnnouncements((prev) =>
+                prev.map((a) => (a.id === updated.id ? updated : a))
+            );
         } catch (e) {
             console.error("Ошибка при изменении статуса скрытия объявления:", e);
         }
@@ -192,9 +194,11 @@ const ProfilePage: React.FC = () => {
                         <EditAnnouncementModal
                             announcement={editingAnn}
                             onClose={() => setShowModal(false)}
-                            onUpdated={async () => {
+                            onUpdated={(updated) => {
                                 setShowModal(false);
-                                await loadProfile();
+                                setUserAnnouncements((prev) =>
+                                    prev.map((a) => (a.id === updated.id ? updated : a))
+                                );
                             }}
                         />
                     )}

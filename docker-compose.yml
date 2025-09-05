@@ -70,8 +70,7 @@ services:
       - ./AdBoard.Web/package.json:/app/package.json
       - ./AdBoard.Web/package-lock.json:/app/package-lock.json
     environment:
-      - NEXT_PUBLIC_API_URL=http://adboard-backend:8080
-      - NEXT_PUBLIC_API_URL_LEGACY=http://adboard-backend-legacy:8080 # ВНУТРЕННИЙ порт!
+      - NEXT_PUBLIC_API_URL=http://adboard-backend:8080 # ВНУТРЕННИЙ порт
 
 volumes:
   adboard-db-data:
