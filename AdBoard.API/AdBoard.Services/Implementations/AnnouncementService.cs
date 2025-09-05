@@ -113,13 +113,17 @@ namespace AdBoard.Services.Implementations
             }
         }
 
-        public async Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter)
+        public async Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter, string? searchQuery)
         {
-            return await _dbContext.Announcements
-                .AsNoTracking()
-                .Where(a => !a.IsHidden)
-                .PageFilter(pageFilter)
-                .ToListAsync();
+            IQueryable<Announcement> query = _dbContext.Announcements
+                    .AsNoTracking();
+            if (!string.IsNullOrEmpty(searchQuery))
+                query = query.Where(a => a.SearchVector.Matches(EF.Functions.PhraseToTsQuery("russian",searchQuery)) && !a.IsHidden);
+            else
+                query = query.Where(a => !a.IsHidden);
+
+            return await query.PageFilter(pageFilter).ToListAsync();
+
         }
 
         public async Task RemoveFromFavorites(Guid UserId, Guid AnnouncementId)

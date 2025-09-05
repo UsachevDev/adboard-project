@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace AdBoard.DAL.Entities;
 
@@ -27,7 +28,7 @@ public class Announcement
     public string Title { get; set; } = null!;
 
     public DateTime? CreatedAt { get; set; }
-
+    [JsonIgnore]
     public NpgsqlTsVector SearchVector { get; set; } = null!;
     public User Creator { get; set; } = null!;
     public ICollection<Image>? Images { get; set; }

@@ -13,7 +13,7 @@ namespace AdBoard.Services.Interfaces
     {
         public Task<Announcement> AddAnnouncement(AddAnnouncementDto addAnnouncement, Guid UserId);
         public Task<Announcement> GetAnnouncementById(Guid AnnouncementId);
-        public Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter);
+        public Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter, string? searchQuery);
         public Task UpdateAnnouncement(UpdateAnnouncementDto dto, Guid UserId, Guid AnnouncementId);
         public Task AddToFavorites(Guid UserId, Guid AnnouncementId);
         public Task AddReview(AddReviewDto dto, Guid UserId, Guid AnnouncementId);

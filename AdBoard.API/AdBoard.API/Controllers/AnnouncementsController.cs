@@ -40,10 +40,10 @@ namespace AdBoard.API.Controllers
             return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK, Data = serviceResponse});
         }
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] PageFilter? pageFilter)
+        public async Task<IActionResult> GetAll([FromQuery] PageFilter? pageFilter, [FromQuery] string? searchQuery)
         {
 
-            var serviceResponse = await _announcementService.GetAnnouncements(pageFilter);
+            var serviceResponse = await _announcementService.GetAnnouncements(pageFilter, searchQuery);
             return Ok(new SuccessResponse { StatusCode = HttpStatusCode.OK, Data = serviceResponse });
         }
 
