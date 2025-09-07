@@ -7,6 +7,7 @@ using AdBoard.Services.Models.Extensions;
 using AdBoard.Services.Models.RequestFilters;
 using FluentValidation;
 using FluentValidation.Results;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -15,10 +16,12 @@ namespace AdBoard.Services.Implementations
     public class AnnouncementService : IAnnouncementService
     {
         private readonly AdBoardDbContext _dbContext;
+        private readonly Supabase.Client _supabaseClient;
         private readonly ILogger _logger;
-        public AnnouncementService(AdBoardDbContext dbContext, ILogger<IAnnouncementService> logger)
+        public AnnouncementService(AdBoardDbContext dbContext, Supabase.Client supabaseClient, ILogger<IAnnouncementService> logger)
         {
             _dbContext = dbContext;
+            _supabaseClient = supabaseClient;
             _logger = logger;
         }
 
@@ -167,6 +170,48 @@ namespace AdBoard.Services.Implementations
             return;
         }
 
+        public async Task UploadImages(Guid announcementId, Guid userId, IFormFileCollection images)
+        {
+            var announcement = _dbContext.Announcements.Where(a => a.Id == announcementId).SingleOrDefault();
+            if (announcement == null)
+                throw new NotFoundException("Объявление с таким ID не найдено.");
+            if (announcement.CreatorId != userId)
+                throw new ForbiddenException("У вас нет доступа к редактированию этого объявления.");
 
+            var bucket = _supabaseClient.Storage.From("adboard-announcements-images");
+            var uploadedFileNames = new List<string>(images.Count);
+            try
+            {
+                foreach (var image in images)
+                {
+                    var fileName = $"{announcementId}/{Guid.NewGuid().ToString()}.{image.ContentType.Split('/').Last()}";
+                    using var stream = new MemoryStream();
+
+                    await image.CopyToAsync(stream);
+                    await bucket.Upload(stream.ToArray(), fileName);
+
+                    uploadedFileNames.Add(fileName);
+
+                    Image imageEntity = new Image()
+                    {
+                        AnnouncementId = announcementId,
+                        FileName = fileName,
+                        Url = bucket.GetPublicUrl(fileName)
+                    };
+                    announcement.Images.Add(imageEntity);
+                }
+                await _dbContext.SaveChangesAsync();
+            }
+            catch
+            {
+                foreach(var fileName in uploadedFileNames)
+                {
+                    await bucket.Remove(fileName);
+                }
+                throw;
+            }
+            
+
+        }
     }
 }

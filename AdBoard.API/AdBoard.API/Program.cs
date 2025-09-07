@@ -9,6 +9,8 @@ using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
+using Supabase;
 namespace AdBoard.API
 {
     public class Program
@@ -18,6 +20,11 @@ namespace AdBoard.API
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddDbContext<AdBoardDbContext>();
+            builder.Services.AddScoped(_ => new Supabase.Client(
+                supabaseUrl: builder.Configuration["Supabase:Url"],
+                supabaseKey: builder.Configuration["Supabase:Key"],
+                new SupabaseOptions { AutoConnectRealtime = false }));
+
             builder.Services.AddAuthentication(opt =>
             {
                 opt.DefaultAuthenticateScheme = "CustomScheme";

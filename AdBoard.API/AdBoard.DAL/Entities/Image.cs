@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace AdBoard.DAL.Entities;
 
+[Table(name: "images")]
 public class Image
 {
     public Guid Id { get; set; }

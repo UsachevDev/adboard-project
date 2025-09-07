@@ -105,7 +105,7 @@ namespace AdBoard.DAL
                 entity.ToTable("images");
 
                 entity.Property(e => e.Id)
-                    .ValueGeneratedNever()
+                    .HasDefaultValueSql("gen_random_uuid()")
                     .HasColumnName("id");
                 entity.Property(e => e.AnnouncementId).HasColumnName("announcement_id");
                 entity.Property(e => e.FileName)

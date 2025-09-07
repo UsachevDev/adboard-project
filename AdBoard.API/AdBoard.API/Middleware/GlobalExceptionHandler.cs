@@ -94,6 +94,7 @@ namespace AdBoard.API.Middleware
                 case Exception ex:
                 {
                     _logger.LogError(ex.Message);
+                    _logger.LogError(ex.StackTrace);
                     break;
                 }
             }
