@@ -3,6 +3,7 @@ using AdBoard.DAL.Entities;
 using AdBoard.Services.Exceptions;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.DTOs.Requests;
+using AdBoard.Services.Models.DTOs.Responses;
 using AdBoard.Services.Models.Extensions;
 using AdBoard.Services.Models.RequestFilters;
 using FluentValidation;
@@ -99,6 +100,8 @@ namespace AdBoard.Services.Implementations
             try
             {
                 var announcement = await _dbContext.Announcements
+                    .AsNoTracking()
+                    .Include(a => a.Images)
                     .Where(a => a.Id == AnnouncementId && !a.IsHidden)
                     .FirstOrDefaultAsync()
                     ?? throw new NotFoundException("Объявление с таким ID не найдено.");
@@ -116,7 +119,7 @@ namespace AdBoard.Services.Implementations
             }
         }
 
-        public async Task<IEnumerable<Announcement>> GetAnnouncements(PageFilter? pageFilter, string? searchQuery)
+        public async Task<IEnumerable<ShortAnnouncementInfo>> GetAnnouncements(PageFilter? pageFilter, string? searchQuery)
         {
             IQueryable<Announcement> query = _dbContext.Announcements
                     .AsNoTracking();
@@ -125,7 +128,22 @@ namespace AdBoard.Services.Implementations
             else
                 query = query.Where(a => !a.IsHidden);
 
-            return await query.OrderByDescending(a => a.CreatedAt).PageFilter(pageFilter).ToListAsync();
+            return await query
+                .OrderByDescending(a => a.CreatedAt)
+                .PageFilter(pageFilter)
+                .Select(a => new ShortAnnouncementInfo
+                {
+                    id = a.Id,
+                    Title = a.Title,
+                    Description = a.Description,
+                    Count = a.Count,
+                    Price = a.Price,
+                    City = a.City,
+                    CreatedAt = a.CreatedAt,
+                    Subcategory = a.Subcategory,
+                    Image = a.Images.Select(i => new ImageDto {FileName = i.FileName, Url = i.Url }).FirstOrDefault()
+                })
+                .ToListAsync();
 
         }
 
@@ -195,7 +213,7 @@ namespace AdBoard.Services.Implementations
                     Image imageEntity = new Image()
                     {
                         AnnouncementId = announcementId,
-                        FileName = fileName,
+                        FileName = image.FileName,
                         Url = bucket.GetPublicUrl(fileName)
                     };
                     announcement.Images.Add(imageEntity);

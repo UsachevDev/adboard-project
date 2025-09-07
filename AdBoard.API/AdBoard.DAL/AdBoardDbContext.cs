@@ -10,7 +10,6 @@ namespace AdBoard.DAL
         public AdBoardDbContext(DbContextOptions<AdBoardDbContext> options, IConfiguration configuration) : base(options) 
         {
             _configuration = configuration;
-            Database.EnsureCreated();
         }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
