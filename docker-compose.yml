@@ -1,6 +1,9 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:15-alpine
+    platform: linux/amd64
     container_name: adboard-db
     restart: always
     environment:
@@ -8,69 +11,58 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: AdBoardDb
     ports:
-      - "5433:5432"
+      - "5050:5432"
     volumes:
       - adboard-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d AdBoardDb || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   backend:
-    # .NET
+    # .NET 8 API
+    platform: linux/amd64
     build:
-      context: ./AdBoard.Api
+      context: ./AdBoard.API
       dockerfile: Dockerfile
     container_name: adboard-backend
     restart: on-failure
-    depends_on: [ db ]
-    ports: [ "8080:8080" ]
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_DETAILEDERRORS=true # <<< покажет детали 500 в ответе (dev)
-      - ConnectionStrings__AdBoardDbConnection=Host=db;Port=5432;Database=AdBoardDb;Username=postgres;Password=admin
-      - Security__JwtAccessTokenKey=${JWT_ACCESS_TOKEN_KEY}
-      - Security__JwtRefreshTokenKey=${JWT_REFRESH_TOKEN_KEY}
-
-  backend-legacy:
-    # Spring
-    build:
-      context: ./AdBoard.Api.Spring
-      dockerfile: Dockerfile
-    container_name: adboard-backend-legacy
-    restart: on-failure
-    depends_on: [ db ]
-    ports: [ "8081:8080" ] # наружу 8081, внутри 8080
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/AdBoardDb
-      - SPRING_DATASOURCE_USERNAME=postgres
-      - SPRING_DATASOURCE_PASSWORD=admin
-
-      # JWT ключи берём строго из .env / окружения; без дефолтов
-      - JWT_ACCESS_TOKEN_KEY=${JWT_ACCESS_TOKEN_KEY}
-      - JWT_REFRESH_TOKEN_KEY=${JWT_REFRESH_TOKEN_KEY}
-
-      # показать текст ошибки и стек в HTTP-ответе:
-      - server.error.include-message=always
-      - server.error.include-binding-errors=always
-      - server.error.include-stacktrace=ALWAYS
-      # (частая причина 500 при сериализации коллекций)
-      - spring.jpa.open-in-view=true
-      # можно усилить логирование приложения:
-      - logging.level.ru.atom=DEBUG
-      # приглушить «WrongThreadException» от Tomcat compat:
-      - logging.level.org.apache.tomcat.util.compat=ERROR
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_DETAILEDERRORS: "true"
+      ConnectionStrings__AdBoardDbConnection: Host=db;Port=5432;Database=AdBoardDb;Username=postgres;Password=admin
+      Security__JwtAccessTokenKey: ${JWT_ACCESS_TOKEN_KEY}
+      Security__JwtRefreshTokenKey: ${JWT_REFRESH_TOKEN_KEY}
+      Supabase__Url: ${SUPABASE_URL}
+      Supabase__Key: ${SUPABASE_KEY}
 
   frontend:
+    # Next.js dev
+    platform: linux/amd64
     build:
       context: ./AdBoard.Web
       dockerfile: Dockerfile
     container_name: adboard-frontend
     restart: on-failure
-    ports: [ "3000:3000" ]
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://adboard-backend:8080
     volumes:
       - ./AdBoard.Web/src:/app/src
       - ./AdBoard.Web/public:/app/public
       - ./AdBoard.Web/package.json:/app/package.json
       - ./AdBoard.Web/package-lock.json:/app/package-lock.json
-    environment:
-      - NEXT_PUBLIC_API_URL=http://adboard-backend:8080 # ВНУТРЕННИЙ порт
 
 volumes:
   adboard-db-data:

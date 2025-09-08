@@ -2,10 +2,8 @@
 /AdBoard.API/obj
 /AdBoard.DAL/obj
 /AdBoard.Services/obj
-/AdBoard.API/vs\
 /AdBoard.API/bin
 /AdBoard.DAL/bin
-/AdBoard.DAL/Migrations
 /AdBoard.Services/bin
 /.vs
 .idea

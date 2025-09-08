@@ -1,9 +1,9 @@
 import type { NextConfig } from "next";
 
-// ВАЖНО: внутри docker-сети обращаемся к внутреннему порту сервиса.
-// .NET живёт на 8080.
+// Базовый URL API. По умолчанию используется локальный backend.
+// При работе в Docker значение следует переопределять через NEXT_PUBLIC_API_URL.
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://adboard-backend:8080";
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
