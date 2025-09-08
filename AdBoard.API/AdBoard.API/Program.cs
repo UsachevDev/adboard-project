@@ -10,6 +10,7 @@ using AdBoard.Services.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
+using Microsoft.EntityFrameworkCore;
 using Supabase;
 namespace AdBoard.API
 {
@@ -61,6 +62,9 @@ namespace AdBoard.API
             app.UseAuthentication();
             app.UseAuthorization();
             app.MapControllers();
+            using (var scope = app.Services.CreateScope())
+                scope.ServiceProvider.GetRequiredService<AdBoardDbContext>()
+                                     .Database.Migrate();
             app.Run();
         }
     }
