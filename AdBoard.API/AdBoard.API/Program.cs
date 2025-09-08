@@ -9,6 +9,7 @@ using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.EntityFrameworkCore;
 namespace AdBoard.API
 {
     public class Program
