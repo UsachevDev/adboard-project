@@ -1,15 +1,11 @@
-﻿using AdBoard.API.Configurations;
-using AdBoard.API.Models.Responses;
+﻿using AdBoard.API.Models.Responses;
+using AdBoard.DAL;
 using AdBoard.Services.Exceptions;
 using AdBoard.Services.Interfaces;
 using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Models.RequestFilters;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.FileProviders;
-using Supabase.Storage;
 using System.Net;
 using System.Security.Claims;
 
@@ -117,7 +113,7 @@ namespace AdBoard.API.Controllers
             Guid userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
             foreach(var image in images)
             {
-                if (!CloudImageStorageConfiguration.AllowedTypes.Contains(image.ContentType.Split('/').Last()))
+                if (!CloudImageStorageConfiguration.BUCKET_ANNOUNCEMENTS_IMAGES_ALLOWEDTYPES.Contains(image.ContentType.Split('/').Last()))
                     throw new InvalidInputException("Все фотографии должны быть формата: 'png', 'jpg, 'jpeg'");
             }
             if (!Guid.TryParse(id, out var guidAnnouncementId))
@@ -125,5 +121,18 @@ namespace AdBoard.API.Controllers
             await _announcementService.UploadImages(guidAnnouncementId, userId, images);
             return Created();
         }
+
+        [Authorize]
+        [HttpDelete("{id}/images/{imageId}")]
+        public async Task<IActionResult> DeleteImage(string imageId)
+        {
+            Guid userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)!.Value);
+            if (!Guid.TryParse(imageId, out var guidImageId))
+                throw new InvalidInputException(INCORRECT_ID_FORMAT_MESSAGE);
+            await _announcementService.RemoveImage(guidImageId, userId);
+
+            return NoContent();
+        }
+
     }
 }

@@ -9,8 +9,6 @@ using AdBoard.Services.Models.DTOs.Requests;
 using AdBoard.Services.Validators;
 using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Options;
-using Supabase;
 namespace AdBoard.API
 {
     public class Program
@@ -23,13 +21,14 @@ namespace AdBoard.API
             builder.Services.AddScoped(_ => new Supabase.Client(
                 supabaseUrl: builder.Configuration["Supabase:Url"],
                 supabaseKey: builder.Configuration["Supabase:Key"],
-                new SupabaseOptions { AutoConnectRealtime = false }));
+                CloudImageStorageConfiguration.Options));
 
             builder.Services.AddAuthentication(opt =>
             {
                 opt.DefaultAuthenticateScheme = "CustomScheme";
                 opt.DefaultChallengeScheme = "CustomScheme";
             }).AddScheme<AuthenticationSchemeOptions, CustomAuthenticationHandler>("CustomScheme", null);
+
             builder.Services.AddAuthorization();
             builder.Services.AddControllers()
                 .AddCustomJsonSerializerOptions();
@@ -52,6 +51,7 @@ namespace AdBoard.API
 
             var app = builder.Build();
             app.UseMiddleware<GlobalExceptionHandler>();
+
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger(); 

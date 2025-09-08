@@ -163,6 +163,30 @@ namespace AdBoard.Services.Implementations
             return;
         }
 
+        public async Task RemoveImage(Guid imageId, Guid userId)
+        {
+            var image = await _dbContext.Images.Where(i => i.Id == imageId).Include(i => i.Announcement).FirstOrDefaultAsync()
+                ?? throw new NotFoundException("Фотография с таким ID не найдена.");
+
+            if (image.Announcement.CreatorId != userId)
+                throw new ForbiddenException("У вас нет прав на удаление этой фотографии.");
+
+            try
+            {
+                 _dbContext.Images.Remove(image);
+                string supabaseFileName = image.Url.Split($"{CloudImageStorageConfiguration.BUCKET_ANNOUNCEMENTS_IMAGES_NAME}/").Last();
+
+                await _supabaseClient.Storage.From(CloudImageStorageConfiguration.BUCKET_ANNOUNCEMENTS_IMAGES_NAME).Remove(supabaseFileName);
+                await _dbContext.SaveChangesAsync();
+            }
+            catch
+            {
+                _logger.LogError($"Ошибка при удалении фотографии с URL: {image.Url}");
+                throw;
+            }
+            
+        }
+
         public async Task UpdateAnnouncement(UpdateAnnouncementDto dto, Guid UserId, Guid AnnouncementId)
         {
             var announcement = _dbContext.Announcements.Find(AnnouncementId)
@@ -196,7 +220,7 @@ namespace AdBoard.Services.Implementations
             if (announcement.CreatorId != userId)
                 throw new ForbiddenException("У вас нет доступа к редактированию этого объявления.");
 
-            var bucket = _supabaseClient.Storage.From("adboard-announcements-images");
+            var bucket = _supabaseClient.Storage.From(CloudImageStorageConfiguration.BUCKET_ANNOUNCEMENTS_IMAGES_NAME);
             var uploadedFileNames = new List<string>(images.Count);
             try
             {
@@ -207,7 +231,6 @@ namespace AdBoard.Services.Implementations
 
                     await image.CopyToAsync(stream);
                     await bucket.Upload(stream.ToArray(), fileName);
-
                     uploadedFileNames.Add(fileName);
 
                     Image imageEntity = new Image()

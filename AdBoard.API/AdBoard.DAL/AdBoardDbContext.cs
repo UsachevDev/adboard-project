@@ -15,7 +15,6 @@ namespace AdBoard.DAL
         {
             if (!optionsBuilder.IsConfigured)
                 optionsBuilder.UseNpgsql(_configuration.GetConnectionString("AdBoardDbConnection"));
-
         }
 
         public DbSet<Announcement> Announcements { get; set; }
