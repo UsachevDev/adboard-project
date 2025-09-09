@@ -38,7 +38,6 @@ export default function AddAnnouncementPage() {
         setMessage(null);
         setLoading(true);
 
-        // Проверка: город не должен содержать цифр
         if (!/^[^\d]+$/.test(city)) {
             setMessage({ type: "error", text: "Поле «Город» не должно содержать цифр." });
             setLoading(false);
