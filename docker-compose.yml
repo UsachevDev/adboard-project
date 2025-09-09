@@ -1,6 +1,9 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:15-alpine
+    platform: linux/amd64
     container_name: adboard-db
     restart: always
     environment:
@@ -8,43 +11,58 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: AdBoardDb
     ports:
-      - "5433:5432"
+      - "5050:5432"
     volumes:
       - adboard-db-data:/var/lib/postgresql/data
-      - ./ADBoard.Api/src/main/resources/scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d AdBoardDb || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   backend:
+    # .NET 8 API
+    platform: linux/amd64
     build:
-      context: ./ADBoard.Api
+      context: ./AdBoard.API
       dockerfile: Dockerfile
     container_name: adboard-backend
     restart: on-failure
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - JWT_ACCESS_TOKEN_KEY=${JWT_ACCESS_TOKEN_KEY}
-      - JWT_REFRESH_TOKEN_KEY=${JWT_REFRESH_TOKEN_KEY}
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ASPNETCORE_DETAILEDERRORS: "true"
+      ConnectionStrings__AdBoardDbConnection: Host=db;Port=5432;Database=AdBoardDb;Username=postgres;Password=admin
+      Security__JwtAccessTokenKey: ${JWT_ACCESS_TOKEN_KEY}
+      Security__JwtRefreshTokenKey: ${JWT_REFRESH_TOKEN_KEY}
+      Supabase__Url: ${SUPABASE_URL}
+      Supabase__Key: ${SUPABASE_KEY}
 
   frontend:
+    # Next.js dev
+    platform: linux/amd64
     build:
       context: ./AdBoard.Web
       dockerfile: Dockerfile
     container_name: adboard-frontend
     restart: on-failure
+    depends_on:
+      backend:
+        condition: service_started
     ports:
       - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://adboard-backend:8080
     volumes:
       - ./AdBoard.Web/src:/app/src
       - ./AdBoard.Web/public:/app/public
       - ./AdBoard.Web/package.json:/app/package.json
       - ./AdBoard.Web/package-lock.json:/app/package-lock.json
-    environment:
-      - NEXT_PUBLIC_API_URL=http://adboard-backend:8080
 
 volumes:
   adboard-db-data:

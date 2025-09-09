@@ -5,6 +5,21 @@ import Link from "next/link";
 import { login } from "@/lib/api";
 import styles from "./LoginForm.module.scss";
 
+const parseApiError = (err: unknown): string => {
+    if (err instanceof Error) {
+        try {
+            const messages = err.message
+                .split("\n")
+                .map((line) => JSON.parse(line).error)
+                .filter(Boolean);
+            return messages.join(" ") || err.message;
+        } catch {
+            return err.message;
+        }
+    }
+    return "Ошибка сети при попытке входа.";
+};
+
 interface LoginFormProps {
     onLoginSuccess: (accessToken: string) => void;
     onSwitchToRegister: () => void;
@@ -27,6 +42,12 @@ const LoginForm: React.FC<LoginFormProps> = ({
         setLoading(true);
         setMessage(null);
 
+        if (password.length < 8) {
+            setMessage({ type: "error", text: "Пароль должен быть не короче 8 символов." });
+            setLoading(false);
+            return;
+        }
+
         try {
             await login(email, password);
             const token = localStorage.getItem("access_token");
@@ -40,11 +61,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
             }
         } catch (err: unknown) {
             console.error("Ошибка при логине:", err);
-            const text =
-                err instanceof Error
-                    ? err.message
-                    : "Ошибка сети при попытке входа.";
-            setMessage({ type: "error", text });
+            setMessage({ type: "error", text: parseApiError(err) });
         } finally {
             setLoading(false);
         }
@@ -79,6 +96,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
                         onChange={(e) => setPassword(e.target.value)}
                         required
                     />
+                    <small className={styles.hint}>
+                        Пароль должен быть не короче 8 символов
+                    </small>
                 </div>
                 <button
                     type="submit"
@@ -91,11 +111,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
 
             {message && (
                 <p
-                    className={`${styles.message} ${
-                        message.type === "success"
+                    className={`${styles.message} ${message.type === "success"
                             ? styles.success
                             : styles.error
-                    }`}
+                        }`}
                 >
                     {message.text}
                 </p>

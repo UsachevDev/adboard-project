@@ -18,11 +18,9 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
     const { user, toggleFavorite } = useUserContext();
     const isFav = user?.favorites?.some((a) => a.id === announcement.id) ?? false;
 
-    const category = announcement.subcategory?.category;
-    const categoryId = Array.isArray(category) ? category[0]?.id : category?.id;
-    const categoryName = Array.isArray(category) ? category[0]?.name : category?.name;
-    const subcategoryId = announcement.subcategory?.id;
-    const subcategoryName = announcement.subcategory?.name;
+    const category =
+        announcement.category || announcement.subcategory?.category;
+    const subcategory = announcement.subcategory;
 
     const handleCardClick = () => {
         router.push(`/announcements/${announcement.id}`);
@@ -79,26 +77,26 @@ const AnnouncementCard: React.FC<AnnouncementCardProps> = ({ announcement }) => 
                         {announcement.price.toLocaleString("ru-RU")} ₽
                     </p>
                     <p className={styles.city}>{announcement.city}</p>
-                    {(categoryId || subcategoryId) && (
+                    {(category || subcategory) && (
                         <p className={styles.categories}>
-                            {categoryId && categoryName && (
+                            {category && (
                                 <Link
-                                    href={`/search?categoryId=${categoryId}`}
+                                    href={`/search?categoryId=${category.id}`}
                                     onClick={(e) => e.stopPropagation()}
                                     className={styles.categoryBadge}
                                 >
-                                    {categoryName}
+                                    {category.name}
                                 </Link>
                             )}
-                            {subcategoryId && subcategoryName && (
+                            {subcategory && (
                                 <>
                                     {" / "}
                                     <Link
-                                        href={`/search?subcategoryId=${subcategoryId}`}
+                                        href={`/search?subcategoryId=${subcategory.id}`}
                                         onClick={(e) => e.stopPropagation()}
                                         className={styles.subcategoryBadge}
                                     >
-                                        {subcategoryName}
+                                        {subcategory.name}
                                     </Link>
                                 </>
                             )}

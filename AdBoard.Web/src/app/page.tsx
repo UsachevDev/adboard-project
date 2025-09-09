@@ -3,21 +3,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
 import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
-import { getAnnouncements, getCategories, CategoryDto } from "@/lib/api";
-import { Announcement, Category } from "@/types";
+import { getAnnouncements, getCategories } from "@/lib/api";
+import { Announcement, Category, Subcategory } from "@/types";
 import styles from "@/styles/pages/Home.module.scss";
+import { mapCategory } from "@/utils/category";
 
 const BATCH_SIZE = 12;
-
-const mapCategory = (dto: CategoryDto): Category => ({
-    id: dto.id,
-    name: dto.name,
-    subcategories: dto.subcategories.map((sub) => ({
-        id: sub.id,
-        name: sub.name,
-        categoryId: dto.id,
-    })),
-});
 
 export default function HomePage() {
     const [allAnns, setAllAnns] = useState<Announcement[]>([]);
@@ -26,32 +17,45 @@ export default function HomePage() {
     const [error, setError] = useState<string | null>(null);
     const loaderRef = useRef<HTMLDivElement | null>(null);
 
-    useEffect(() => {
-        (async () => {
-            try {
-                const anns = await getAnnouncements();
-                const safeAnns = Array.isArray(anns) ? anns : [];
-                setAllAnns(safeAnns);
-                setDisplayedAnns(safeAnns.slice(0, BATCH_SIZE));
-            } catch (err: unknown) {
-                const msg = err instanceof Error ? err.message : String(err);
-                console.error("Не удалось загрузить объявления:", msg);
-                setError(msg);
-                setAllAnns([]);
-                setDisplayedAnns([]);
-            }
-        })();
-    }, []);
+    const mapAnnouncements = (
+        anns: Announcement[],
+        categories: Category[]
+    ): Announcement[] => {
+        const subs: Subcategory[] = categories.flatMap(
+            (c) => c.subcategories ?? []
+        );
+        return anns.map((ann) => {
+            const sub = subs.find((s) => s.id === ann.subcategoryId);
+            return {
+                ...ann,
+                subcategory: sub,
+                category: sub?.category,
+            };
+        });
+    };
 
     useEffect(() => {
         (async () => {
             try {
-                const dtos = await getCategories();
-                setCats(dtos.map(mapCategory));
+                const [annsRaw, dtos] = await Promise.all([
+                    getAnnouncements(),
+                    getCategories(),
+                ]);
+                const categories = dtos.map(mapCategory);
+                const mappedAnns = mapAnnouncements(annsRaw, categories);
+                setCats(categories);
+                setAllAnns(mappedAnns);
+                setDisplayedAnns(mappedAnns.slice(0, BATCH_SIZE));
             } catch (err: unknown) {
                 const msg = err instanceof Error ? err.message : String(err);
-                console.error("Не удалось загрузить категории:", msg);
+                console.error(
+                    "Не удалось загрузить объявления или категории:",
+                    msg
+                );
+                setError(msg);
                 setCats([]);
+                setAllAnns([]);
+                setDisplayedAnns([]);
             }
         })();
     }, []);

@@ -4,19 +4,10 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useSearchParams } from "next/navigation";
 import AnnouncementCard from "@/components/ui/AnnouncementCard/AnnouncementCard";
 import CategoryGrid from "@/components/ui/CategoryGrid/CategoryGrid";
-import { getAnnouncements, getCategories, CategoryDto } from "@/lib/api";
+import { getAnnouncements, getCategories } from "@/lib/api";
 import { Announcement, Category, Subcategory } from "@/types";
 import styles from "./SearchPage.module.scss";
-
-const mapCategory = (dto: CategoryDto): Category => ({
-    id: dto.id,
-    name: dto.name,
-    subcategory: dto.subcategories.map((sub) => ({
-        id: sub.id,
-        name: sub.name,
-        category: [{ id: dto.id, name: dto.name }],
-    })),
-});
+import { mapCategory } from "@/utils/category";
 
 const SearchPage: React.FC = () => {
     const searchParams = useSearchParams();
@@ -40,14 +31,12 @@ const SearchPage: React.FC = () => {
     }, []);
 
     const allSubcategories = useMemo<Subcategory[]>(
-        () =>
-            categories.flatMap((c) =>
-                c.subcategory ? c.subcategory : []
-            ),
+        () => categories.flatMap((c) => c.subcategories ?? []),
         [categories]
     );
 
     useEffect(() => {
+        if (!categories.length) return;
         setLoading(true);
 
         (async () => {
@@ -66,7 +55,17 @@ const SearchPage: React.FC = () => {
                         )
                     );
                 }
-                setResults(filtered);
+                const mapped = filtered.map((ann) => {
+                    const sub = allSubcategories.find(
+                        (s) => s.id === ann.subcategoryId
+                    );
+                    return {
+                        ...ann,
+                        subcategory: sub,
+                        category: sub?.category,
+                    };
+                });
+                setResults(mapped);
             } catch (e) {
                 console.error("Ошибка загрузки объявлений:", e);
                 setResults([]);
@@ -112,7 +111,7 @@ const SearchPage: React.FC = () => {
                 <>
                     <CategoryGrid
                         items={allSubcategories.filter(
-                            (s) => s.category[0].id === categoryId
+                            (s) => s.category.id === categoryId
                         )}
                         basePath="/search"
                     />
