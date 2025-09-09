@@ -1,241 +1,331 @@
-import { UserProfile, Announcement, AddAnnouncementRequest, UpdateAnnouncementRequest } from "@/types";
+// .NET API — Auth/Users/Categories/Announcements
 
-const API_BASE_URL = "/api";
+import type {
+  UserProfile,
+  Announcement as AnnouncementType,
+  AddAnnouncementRequest,
+  UpdateAnnouncementRequest,
+} from "@/types";
 
-export interface ControllerResponse<T> {
-    data: T | null;
-    error: unknown | null;
+const API_DOTNET = "/api"; // next.config.ts -> http://adboard-backend:8080/api
+
+type ApiOk<T> = { statusCode: number; data: T };
+type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string; traceId?: string };
+type ValidationProblemDetails = ProblemDetails & { errors?: Record<string, string[] | string> };
+
+type FetchOptions = Omit<RequestInit, "body" | "headers"> & {
+  body?: unknown;
+  headers?: Record<string, string>;
+};
+
+let accessTokenCache: string | null = null;
+
+function getAccessToken(): string | null {
+  if (accessTokenCache !== null) return accessTokenCache;
+  accessTokenCache = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
+  return accessTokenCache;
 }
 
-type FetchOptions = Omit<RequestInit, "body"> & { body?: unknown };
+function setAccessToken(token: string | null) {
+  accessTokenCache = token;
+  if (typeof window !== "undefined") {
+    if (token) localStorage.setItem("access_token", token);
+    else localStorage.removeItem("access_token");
+  }
+}
 
-async function apiFetch<T>(
-    endpoint: string,
-    options: FetchOptions = {}
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "access_token") accessTokenCache = e.newValue;
+  });
+}
+
+// Оставляем только цифры (на бэке валидатор допускает "+", но цифры всегда ок)
+function normalizePhoneForApi(raw?: string): string | undefined {
+  if (!raw) return undefined;
+  const digits = raw.replace(/\D+/g, "");
+  return digits || undefined;
+}
+
+async function request<T>(
+  base: string,
+  endpoint: string,
+  options: FetchOptions = {},
+  { tryRefresh = true }: { tryRefresh?: boolean } = {}
 ): Promise<T> {
-    const token = localStorage.getItem("access_token");
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-    const init: RequestInit = {
-        credentials: "include",
-        method: options.method || "GET",
-        headers,
-        body: options.body != null ? JSON.stringify(options.body) : undefined,
-    };
+  const token = getAccessToken();
+  const isDotnet = base === API_DOTNET;
 
-    let response = await fetch(`${API_BASE_URL}${endpoint}`, init);
+  const AUTH_NO_BEARER = /^\/Auth\/(login|register|refresh)\b/;
+  const shouldAttachAuth = Boolean(
+    isDotnet && token && !AUTH_NO_BEARER.test(endpoint)
+  );
 
-    if (response.status === 401 && !endpoint.startsWith("/auth/")) {
-        await refreshToken();
-        const newToken = localStorage.getItem("access_token");
-        if (!newToken) throw new Error("Unauthorized");
-        init.headers = { ...headers, Authorization: `Bearer ${newToken}` };
-        response = await fetch(`${API_BASE_URL}${endpoint}`, init);
-    }
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(shouldAttachAuth ? { Authorization: `Bearer ${token}` } : {}),
+    ...(options.headers || {}),
+  };
 
-    let payload: ControllerResponse<T> | null = null;
+  const init: RequestInit = {
+    method: options.method || "GET",
+    credentials: "include",
+    headers,
+    body: options.body != null ? JSON.stringify(options.body) : undefined,
+  };
+
+  let res = await fetch(`${base}${endpoint}`, init);
+
+  // Авто-рефреш токена только для .NET и только вне /Auth/*
+  if (res.status === 401 && tryRefresh && isDotnet && !endpoint.startsWith("/Auth/")) {
+    const ok = await refreshAccessToken();
+    if (!ok) throw new Error("Unauthorized");
+    const newToken = getAccessToken();
+    res = await fetch(`${base}${endpoint}`, {
+      ...init,
+      headers: { ...headers, ...(newToken ? { Authorization: `Bearer ${newToken}` } : {}) },
+    });
+  }
+
+  if (res.status === 204) {
+    // @ts-expect-error: no content expected from server
+    return undefined;
+  }
+
+  const contentType = res.headers.get("content-type") ?? "";
+  const raw = await res.text();
+  let json: unknown = null;
+  if (contentType.includes("application/json")) {
     try {
-        payload = (await response.json()) as ControllerResponse<T>;
+      json = JSON.parse(raw);
     } catch {
-        if (response.ok) {
-            // @ts-ignore
-            return undefined;
-        }
-        throw new Error(`HTTP ${response.status}`);
+      /* ignore */
+    }
+  }
+
+  if (!res.ok) {
+    if (res.status >= 500) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("API error:", {
+          url: `${base}${endpoint}`,
+          status: res.status,
+          body: options.body,
+          response: raw,
+        });
+      }
+      throw new Error("Сервер временно недоступен. Попробуйте позже.");
+    }
+    // .NET ValidationProblemDetails (errors: Record<string, string[] | string>)
+    if (
+      json &&
+      typeof json === "object" &&
+      (json as Record<string, unknown>).errors &&
+      !Array.isArray((json as Record<string, unknown>).errors)
+    ) {
+      const v = json as ValidationProblemDetails;
+      const parts: string[] = [];
+      for (const [prop, val] of Object.entries(v.errors ?? {})) {
+        const arr = Array.isArray(val) ? val : [val];
+        for (const m of arr) parts.push(`{"property":"${prop}","error":"${String(m)}"}`);
+      }
+      const msg = parts.join("\n") || v.detail || v.title || `HTTP ${res.status}`;
+      throw new Error(msg);
     }
 
-    if (!response.ok || payload.error) {
-        const err = payload.error;
-        let msg: string;
-        if (err && typeof err === "object" && "message" in err) {
-            // @ts-ignore
-            msg = err.message;
-        } else {
-            msg = String(err) || `HTTP ${response.status}`;
-        }
-        throw new Error(msg);
+    // Наш формат: { errors: [{ property, error }...] }
+    if (
+      json &&
+      typeof json === "object" &&
+      Array.isArray((json as Record<string, unknown>).errors)
+    ) {
+      const parts = (
+        (json as { errors: { property?: string; error?: unknown }[] }).errors
+      ).map((e) =>
+        `{"property":"${e?.property ?? "?"}","error":"${String(e?.error ?? "Ошибка")}"}`,
+      );
+      throw new Error(parts.join("\n"));
     }
 
-    return payload.data!;
+    if (
+      !json ||
+      typeof json !== "object" ||
+      (!(json as Record<string, unknown>).title &&
+        !(json as Record<string, unknown>).detail &&
+        !(json as Record<string, unknown>).message)
+    ) {
+      json = { title: `HTTP ${res.status}`, detail: raw };
+    }
+
+    // ProblemDetails / произвольное сообщение
+    const pdMsg =
+      (json &&
+        typeof json === "object" &&
+        ((json as Record<string, unknown>).detail ||
+          (json as Record<string, unknown>).title ||
+          (json as Record<string, unknown>).message)) ||
+      `HTTP ${res.status}${raw ? `: ${raw}` : ""}`;
+
+    if (process.env.NODE_ENV !== "production") {
+      console.error("API error:", {
+        url: `${base}${endpoint}`,
+        status: res.status,
+        body: options.body,
+        response: raw,
+      });
+    }
+
+    throw new Error(String(pdMsg));
+  }
+
+  // API-обёртка { statusCode, data }
+  if (json && typeof json === "object" && "data" in (json as Record<string, unknown>)) {
+    return (json as ApiOk<T>).data;
+  }
+  if (contentType.includes("application/json")) {
+    return json as T;
+  }
+  return raw as T;
 }
 
-async function refreshToken(): Promise<void> {
-    const resp = await fetch(`${API_BASE_URL}/auth/refresh`, {
-        method: "POST",
-        credentials: "include",
-    });
-    try {
-        const json = (await resp.json()) as ControllerResponse<string>;
-        if (resp.ok && json.data) {
-            localStorage.setItem("access_token", json.data);
-        } else {
-            localStorage.removeItem("access_token");
-        }
-    } catch {
-        localStorage.removeItem("access_token");
-    }
-}
+// ===== AUTH (.NET)
 
-// === Auth ===
-export async function login(
-    email: string,
-    password: string
-): Promise<void> {
-    const token = await apiFetch<string>("/auth/login", {
-        method: "POST",
-        body: { email, password },
-    });
-    localStorage.setItem("access_token", token);
+export async function login(email: string, password: string): Promise<void> {
+  const res = await request<{ accessToken: string }>(API_DOTNET, "/Auth/login", {
+    method: "POST",
+    body: { email, password },
+  });
+  setAccessToken(res.accessToken);
 }
 
 export async function register(
-    email: string,
-    password: string,
-    name: string,
-    phoneNumber?: string,
-    city?: string
+  email: string,
+  password: string,
+  name: string,
+  phoneNumber?: string,
+  city?: string,
+  passwordConfirm?: string
 ): Promise<void> {
-    const token = await apiFetch<string>("/auth/registration", {
-        method: "POST",
-        body: { email, password, name, phoneNumber, city },
-    });
-    localStorage.setItem("access_token", token);
+  const normalizedPhone = normalizePhoneForApi(phoneNumber);
+  const res = await request<{ accessToken: string }>(API_DOTNET, "/Auth/register", {
+    method: "POST",
+    body: {
+      email,
+      name,
+      password,
+      passwordConfirm: passwordConfirm ?? password,
+      phoneNumber: normalizedPhone, // <- только цифры
+      city,
+    },
+  });
+  setAccessToken(res.accessToken);
 }
 
 export async function logout(): Promise<void> {
-    try {
-        await apiFetch<unknown>("/auth/logout", { method: "POST" });
-    } finally {
-        localStorage.removeItem("access_token");
-    }
+  try {
+    await request<void>(API_DOTNET, "/Auth/logout", { method: "POST" }, { tryRefresh: false });
+  } finally {
+    setAccessToken(null);
+    window.location.href = "/";
+  }
 }
 
-// === Categories ===
-export interface CategoryDto {
-    id: string;
-    name: string;
-    subcategories: { id: string; name: string }[];
-}
-export async function getCategories(): Promise<CategoryDto[]> {
-    return apiFetch<CategoryDto[]>("/categories", { method: "GET" });
-}
-export async function getCategoryById(
-    id: string
-): Promise<CategoryDto> {
-    return apiFetch<CategoryDto>(`/categories/${id}`, { method: "GET" });
+async function refreshAccessToken(): Promise<boolean> {
+  const res = await fetch(`${API_DOTNET}/Auth/refresh`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+  });
+  if (!res.ok) {
+    setAccessToken(null);
+    return false;
+  }
+  const json = (await res.json()) as ApiOk<{ accessToken: string }>;
+  if (json?.data?.accessToken) {
+    setAccessToken(json.data.accessToken);
+    return true;
+  }
+  setAccessToken(null);
+  return false;
 }
 
-// === User ===
+// ===== USERS (.NET)
+
 export async function getCurrentUser(): Promise<UserProfile> {
-    return apiFetch<UserProfile>("/users", { method: "GET" });
+  return request<UserProfile>(API_DOTNET, "/Users/profile", { method: "GET" });
 }
 
-export async function updateCurrentUser(
-    patch: Partial<UserProfile>
-): Promise<UserProfile> {
-    return apiFetch<UserProfile>("/users", {
-        method: "PATCH",
-        body: patch,
-    });
-}
-
-// === Announcements ===
-/**
- * Получить объявления (с опциональной фильтрацией по категории/подкатегории)
- */
-export async function getAnnouncements(
-    categoryId?: string,
-    subcategoryId?: string
-): Promise<Announcement[]> {
-    const params = new URLSearchParams();
-    if (categoryId) params.append("categoryId", categoryId);
-    if (subcategoryId) params.append("subcategoryId", subcategoryId);
-    const query = params.toString() ? `?${params.toString()}` : "";
-    return apiFetch<Announcement[]>(`/announcements${query}`);
-}
-
-export async function getAnnouncementById(
-    id: string
-): Promise<Announcement> {
-    return apiFetch<Announcement>(`/announcements/${id}`);
-}
-
-export async function addAnnouncement(
-    payload: AddAnnouncementRequest
-): Promise<Announcement> {
-    const token = localStorage.getItem("access_token");
-    const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    };
-
-    const response = await fetch(`${API_BASE_URL}/announcements`, {
-        method: "POST",
-        credentials: "include",
-        headers,
-        body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-        let errorText = `HTTP ${response.status}`;
-        try {
-            const errJson = await response.json();
-            errorText =
-                errJson.error && typeof errJson.error === "string"
-                    ? errJson.error
-                    : JSON.stringify(errJson);
-        } catch {
-            // ignore
-        }
-        throw new Error(errorText);
-    }
-
-    const location = response.headers.get("Location");
-    if (!location) {
-        throw new Error("Missing Location header in response");
-    }
-    const parts = location.split("/");
-    const id = parts.pop() || "";
-    if (!id) {
-        throw new Error(
-            "Cannot parse announcement ID from Location header"
-        );
-    }
-    return getAnnouncementById(id);
-}
-
-export async function updateAnnouncement(
-    id: string,
-    patch: UpdateAnnouncementRequest
-): Promise<Announcement> {
-    return apiFetch<Announcement>(`/announcements/${id}`, {
-        method: "PATCH",
-        body: patch,
-    });
-}
-
-// === Favorites ===
-export async function addToFavorites(
-    id: string
-): Promise<void> {
-    await apiFetch<void>(`/favorites/${id}`, { method: "POST" });
-}
-
-export async function removeFromFavorites(
-    id: string
-): Promise<void> {
-    await apiFetch<void>(`/favorites/${id}`, { method: "DELETE" });
-}
-
-export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
-    await apiFetch<void>(`/reviews/${announcementId}`, {
-        method: "POST",
-        body: { score, description },
-    });
+export async function updateCurrentUser(patch: Partial<UserProfile>): Promise<UserProfile> {
+  return request<UserProfile>(API_DOTNET, "/Users", { method: "PATCH", body: patch });
 }
 
 export async function getUserById(id: string): Promise<UserProfile> {
-    return apiFetch<UserProfile>(`/users/${id}`, { method: "GET" });
+  return request<UserProfile>(API_DOTNET, `/Users/${encodeURIComponent(id)}`, { method: "GET" });
+}
+
+// ===== CATEGORIES & ANNOUNCEMENTS (публичные эндпоинты без авторизации)
+
+export interface CategoryDto {
+  id: string;
+  name: string;
+  subcategories: { id: string; name: string }[];
+}
+
+export type Announcement = AnnouncementType;
+
+export async function getCategories(): Promise<CategoryDto[]> {
+  return request<CategoryDto[]>(API_DOTNET, "/Categories", { method: "GET" });
+}
+
+export async function getCategoryById(id: string): Promise<CategoryDto> {
+  return request<CategoryDto>(API_DOTNET, `/Categories/${encodeURIComponent(id)}`, { method: "GET" });
+}
+
+export async function getAnnouncements(
+  categoryId?: string,
+  subcategoryId?: string
+): Promise<Announcement[]> {
+  const params = new URLSearchParams();
+  if (categoryId) params.set("categoryId", categoryId);
+  if (subcategoryId) params.set("subcategoryId", subcategoryId);
+  const q = params.toString() ? `?${params.toString()}` : "";
+  return request<Announcement[]>(API_DOTNET, `/Announcements${q}`, { method: "GET" });
+}
+
+export async function getAnnouncementById(id: string): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, { method: "GET" });
+}
+
+// ===== ANNOUNCEMENTS write-эндпоинты (.NET)
+
+export async function addAnnouncement(payload: AddAnnouncementRequest): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, "/Announcements", {
+    method: "POST",
+    body: payload,
+  });
+}
+
+export async function updateAnnouncement(id: string, patch: UpdateAnnouncementRequest): Promise<Announcement> {
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: patch,
+  });
+}
+
+export async function addToFavorites(id: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}/favorites`, {
+    method: "POST",
+  });
+}
+
+export async function removeFromFavorites(id: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}/favorites`, {
+    method: "DELETE",
+  });
+}
+
+export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
+  await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(announcementId)}/reviews`, {
+    method: "POST",
+    body: { score, description },
+  });
 }

@@ -37,9 +37,10 @@ export interface Announcement {
     price: number;
     city: string;
     count: number;
+    subcategoryId: UUID;
     images?: string[];
-    category?: Category[];
-    subcategory?: Subcategory[];
+    category?: Category;
+    subcategory?: Subcategory;
     createdAt: string;
     isFavorite?: boolean;
     isHidden: boolean;
@@ -63,13 +64,13 @@ export interface Category {
     id: UUID;
     name: string;
     image?: string;
-    subcategory?: Subcategory[];
+    subcategories?: Subcategory[];
 }
 
 export interface Subcategory {
     id: UUID;
     name: string;
-    category: Category[];
+    category: Category;
     image?: string;
 }
 

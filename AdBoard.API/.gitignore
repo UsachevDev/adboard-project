@@ -1,0 +1,10 @@
+﻿#Сгенерированное
+/AdBoard.API/obj
+/AdBoard.DAL/obj
+/AdBoard.Services/obj
+/AdBoard.API/bin
+/AdBoard.DAL/bin
+/AdBoard.Services/bin
+/.vs
+.idea
+
