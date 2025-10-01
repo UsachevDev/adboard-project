@@ -1,19 +1,19 @@
+// Next 14/15, TS-версия
 import type { NextConfig } from "next";
 
-// Базовый URL API. По умолчанию используется локальный backend.
-// При работе в Docker значение следует переопределять через NEXT_PUBLIC_API_URL.
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const raw = process.env.API_INTERNAL_URL ?? "http://adboard-backend:8080";
+const API_INTERNAL_URL = raw.replace(/\/$/, "");
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  sassOptions: { sourceMap: true },
   async rewrites() {
     return [
-      // .NET
-      { source: "/api/:path*", destination: `${API_URL}/api/:path*` },
+      {
+        source: "/api/:path*",
+        destination: `${API_INTERNAL_URL}/api/:path*`,
+      },
     ];
   },
+  output: "standalone",
 };
 
 export default nextConfig;

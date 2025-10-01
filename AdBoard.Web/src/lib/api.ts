@@ -10,7 +10,14 @@ import type {
 const API_DOTNET = "/api"; // next.config.ts -> http://adboard-backend:8080/api
 
 type ApiOk<T> = { statusCode: number; data: T };
-type ProblemDetails = { type?: string; title?: string; status?: number; detail?: string; instance?: string; traceId?: string };
+type ProblemDetails = {
+  type?: string;
+  title?: string;
+  status?: number;
+  detail?: string;
+  instance?: string;
+  traceId?: string;
+};
 type ValidationProblemDetails = ProblemDetails & { errors?: Record<string, string[] | string> };
 
 type FetchOptions = Omit<RequestInit, "body" | "headers"> & {
@@ -18,9 +25,29 @@ type FetchOptions = Omit<RequestInit, "body" | "headers"> & {
   headers?: Record<string, string>;
 };
 
+// ---------- access token storage + pub/sub (важно для обновления хэдера) ----------
 let accessTokenCache: string | null = null;
+type TokenListener = (token: string | null) => void;
+let tokenListeners: TokenListener[] = [];
 
-function getAccessToken(): string | null {
+export function onAccessTokenChange(listener: TokenListener): () => void {
+  tokenListeners.push(listener);
+  return () => {
+    tokenListeners = tokenListeners.filter((l) => l !== listener);
+  };
+}
+
+function emitTokenChanged(token: string | null) {
+  for (const l of tokenListeners) {
+    try {
+      l(token);
+    } catch {
+      // no-op
+    }
+  }
+}
+
+export function getAccessToken(): string | null {
   if (accessTokenCache !== null) return accessTokenCache;
   accessTokenCache = typeof window !== "undefined" ? localStorage.getItem("access_token") : null;
   return accessTokenCache;
@@ -32,11 +59,16 @@ function setAccessToken(token: string | null) {
     if (token) localStorage.setItem("access_token", token);
     else localStorage.removeItem("access_token");
   }
+  emitTokenChanged(token);
 }
 
+// на случай входа/выхода в другом табе — обновим кэш
 if (typeof window !== "undefined") {
   window.addEventListener("storage", (e) => {
-    if (e.key === "access_token") accessTokenCache = e.newValue;
+    if (e.key === "access_token") {
+      accessTokenCache = e.newValue;
+      emitTokenChanged(accessTokenCache);
+    }
   });
 }
 
@@ -51,15 +83,13 @@ async function request<T>(
   base: string,
   endpoint: string,
   options: FetchOptions = {},
-  { tryRefresh = true }: { tryRefresh?: boolean } = {}
+  { tryRefresh = true }: { tryRefresh?: boolean } = {},
 ): Promise<T> {
   const token = getAccessToken();
   const isDotnet = base === API_DOTNET;
 
   const AUTH_NO_BEARER = /^\/Auth\/(login|register|refresh)\b/;
-  const shouldAttachAuth = Boolean(
-    isDotnet && token && !AUTH_NO_BEARER.test(endpoint)
-  );
+  const shouldAttachAuth = Boolean(isDotnet && token && !AUTH_NO_BEARER.test(endpoint));
 
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -106,22 +136,21 @@ async function request<T>(
   if (!res.ok) {
     if (res.status >= 500) {
       if (process.env.NODE_ENV !== "production") {
-        console.error("API error:", {
+        console.error("API error (5xx):", {
           url: `${base}${endpoint}`,
+          method: init.method,
           status: res.status,
-          body: options.body,
+          requestHeaders: headers,
           response: raw,
         });
       }
       throw new Error("Сервер временно недоступен. Попробуйте позже.");
     }
+
     // .NET ValidationProblemDetails (errors: Record<string, string[] | string>)
-    if (
-      json &&
-      typeof json === "object" &&
-      (json as Record<string, unknown>).errors &&
-      !Array.isArray((json as Record<string, unknown>).errors)
-    ) {
+    if (json && typeof json === "object" && (json as Record<string, unknown>).errors && !Array.isArray(
+      (json as Record<string, unknown>).errors,
+    )) {
       const v = json as ValidationProblemDetails;
       const parts: string[] = [];
       for (const [prop, val] of Object.entries(v.errors ?? {})) {
@@ -133,16 +162,10 @@ async function request<T>(
     }
 
     // Наш формат: { errors: [{ property, error }...] }
-    if (
-      json &&
-      typeof json === "object" &&
-      Array.isArray((json as Record<string, unknown>).errors)
-    ) {
+    if (json && typeof json === "object" && Array.isArray((json as Record<string, unknown>).errors)) {
       const parts = (
         (json as { errors: { property?: string; error?: unknown }[] }).errors
-      ).map((e) =>
-        `{"property":"${e?.property ?? "?"}","error":"${String(e?.error ?? "Ошибка")}"}`,
-      );
+      ).map((e) => `{"property":"${e?.property ?? "?"}","error":"${String(e?.error ?? "Ошибка")}"}`);
       throw new Error(parts.join("\n"));
     }
 
@@ -156,7 +179,6 @@ async function request<T>(
       json = { title: `HTTP ${res.status}`, detail: raw };
     }
 
-    // ProblemDetails / произвольное сообщение
     const pdMsg =
       (json &&
         typeof json === "object" &&
@@ -168,6 +190,7 @@ async function request<T>(
     if (process.env.NODE_ENV !== "production") {
       console.error("API error:", {
         url: `${base}${endpoint}`,
+        method: init.method,
         status: res.status,
         body: options.body,
         response: raw,
@@ -194,7 +217,7 @@ export async function login(email: string, password: string): Promise<void> {
     method: "POST",
     body: { email, password },
   });
-  setAccessToken(res.accessToken);
+  setAccessToken(res.accessToken); // триггерим onAccessTokenChange
 }
 
 export async function register(
@@ -203,7 +226,7 @@ export async function register(
   name: string,
   phoneNumber?: string,
   city?: string,
-  passwordConfirm?: string
+  passwordConfirm?: string,
 ): Promise<void> {
   const normalizedPhone = normalizePhoneForApi(phoneNumber);
   const res = await request<{ accessToken: string }>(API_DOTNET, "/Auth/register", {
@@ -213,19 +236,23 @@ export async function register(
       name,
       password,
       passwordConfirm: passwordConfirm ?? password,
-      phoneNumber: normalizedPhone, // <- только цифры
+      phoneNumber: normalizedPhone,
       city,
     },
   });
-  setAccessToken(res.accessToken);
+  setAccessToken(res.accessToken); // триггерим onAccessTokenChange
 }
 
 export async function logout(): Promise<void> {
   try {
+    // моментально чистим токен (обновит хэдер), запрос делаем best-effort
+    setAccessToken(null);
     await request<void>(API_DOTNET, "/Auth/logout", { method: "POST" }, { tryRefresh: false });
   } finally {
-    setAccessToken(null);
-    window.location.href = "/";
+    // мягко перезагрузим главную, чтобы сбросить любые клиентские кэши
+    if (typeof window !== "undefined") {
+      window.location.href = "/";
+    }
   }
 }
 
@@ -241,7 +268,7 @@ async function refreshAccessToken(): Promise<boolean> {
   }
   const json = (await res.json()) as ApiOk<{ accessToken: string }>;
   if (json?.data?.accessToken) {
-    setAccessToken(json.data.accessToken);
+    setAccessToken(json.data.accessToken); // триггерим onAccessTokenChange
     return true;
   }
   setAccessToken(null);
@@ -282,7 +309,7 @@ export async function getCategoryById(id: string): Promise<CategoryDto> {
 
 export async function getAnnouncements(
   categoryId?: string,
-  subcategoryId?: string
+  subcategoryId?: string,
 ): Promise<Announcement[]> {
   const params = new URLSearchParams();
   if (categoryId) params.set("categoryId", categoryId);
@@ -292,7 +319,9 @@ export async function getAnnouncements(
 }
 
 export async function getAnnouncementById(id: string): Promise<Announcement> {
-  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, { method: "GET" });
+  return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, {
+    method: "GET",
+  });
 }
 
 // ===== ANNOUNCEMENTS write-эндпоинты (.NET)
@@ -304,7 +333,10 @@ export async function addAnnouncement(payload: AddAnnouncementRequest): Promise<
   });
 }
 
-export async function updateAnnouncement(id: string, patch: UpdateAnnouncementRequest): Promise<Announcement> {
+export async function updateAnnouncement(
+  id: string,
+  patch: UpdateAnnouncementRequest,
+): Promise<Announcement> {
   return request<Announcement>(API_DOTNET, `/Announcements/${encodeURIComponent(id)}`, {
     method: "PATCH",
     body: patch,
@@ -323,7 +355,11 @@ export async function removeFromFavorites(id: string): Promise<void> {
   });
 }
 
-export async function addReview(announcementId: string, score: number, description: string): Promise<void> {
+export async function addReview(
+  announcementId: string,
+  score: number,
+  description: string,
+): Promise<void> {
   await request<void>(API_DOTNET, `/Announcements/${encodeURIComponent(announcementId)}/reviews`, {
     method: "POST",
     body: { score, description },

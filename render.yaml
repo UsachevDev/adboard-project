@@ -1,0 +1,54 @@
+services:
+  # Backend (.NET 8) — Docker
+  - type: web
+    name: adboard-backend
+    env: docker
+    region: frankfurt
+    plan: free
+    autoDeploy: true
+    dockerContext: .
+    dockerfilePath: AdBoard.API/Dockerfile
+    healthCheckPath: /swagger/index.html
+    envVars:
+      # ASP.NET слушает порт из Dockerfile (EXPOSE 8080) — этого достаточно.
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+
+      # === СЕКРЕТЫ ВБЕЙ В КОНСОЛИ RENDER (Values) ===
+      - key: ConnectionStrings__AdBoardDbConnection
+        sync: false
+      - key: Supabase__Url
+        sync: false
+      - key: Supabase__Key
+        sync: false
+
+      # Секция Security из твоего appsettings.json
+      - key: Security__JwtAccessTokenKey
+        sync: false
+      - key: Security__JwtAccessTokenDurationInMinutes
+        value: "10"
+      - key: Security__JwtRefreshTokenDurationInDays
+        value: "7"
+      - key: Security__AuthHttpOnlyCookieName
+        value: adboard_refresh_token
+      - key: Security__BCryptWorkFactor
+        value: "10"
+
+  # Frontend (Next.js) — Node
+  - type: web
+    name: adboard-frontend
+    env: node
+    region: frankfurt
+    plan: free
+    autoDeploy: true
+    buildCommand: |
+      corepack enable || true
+      pnpm install --frozen-lockfile || npm ci
+      pnpm build || npm run build
+    startCommand: pnpm start || npm start
+    envVars:
+      # этот URL Render создаст после деплоя backend
+      - key: API_INTERNAL_URL
+        value: https://adboard-backend.onrender.com
+      - key: NODE_ENV
+        value: production
