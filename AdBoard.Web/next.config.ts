@@ -1,5 +1,6 @@
 // Next 14/15, TS-версия
 import type { NextConfig } from "next";
+import path from "path";
 
 const API_INTERNAL_URL = (
   process.env.API_INTERNAL_URL ??
@@ -16,6 +17,14 @@ const nextConfig: NextConfig = {
         destination: `${API_INTERNAL_URL}/api/:path*`,
       },
     ];
+  },
+
+  webpack(config) {
+    config.resolve.alias = {
+      ...(config.resolve.alias || {}),
+      "@": path.resolve(__dirname, "src"), // ← алиас для '@/...'
+    };
+    return config;
   },
 
   eslint: {
