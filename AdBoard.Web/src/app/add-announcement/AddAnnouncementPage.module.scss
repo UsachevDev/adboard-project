@@ -31,7 +31,7 @@
 
     &.success {
         background-color: color.adjust($color-success, $alpha: -0.8);
-        color: $color-success-dark;
+        color: $color-success;
         border: 1px solid $color-success;
     }
 
